@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 export const searchBooksSchema = z.object({
-  q: z.string().trim().min(2, "Recherche trop courte.").max(120)
+  q: z.string().trim().min(2, "Recherche trop courte.").max(120),
+  startIndex: z.coerce.number().int().min(0).default(0)
 });
 
 export const manualBookSchema = z.object({

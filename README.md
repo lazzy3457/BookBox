@@ -5,6 +5,7 @@ BooksBox est une application web desktop-first pour lecteurs francophones : rech
 ## Fonctionnalites V1
 
 - Recherche Google Books cote serveur.
+- Recherche Google Books paginee avec bouton "Afficher plus" au-dela des premiers resultats.
 - Ajout de livres a la bibliotheque avec statut de lecture.
 - Ajout manuel enrichi : couverture, date via calendrier, nombre de pages, editeur, langue et description.
 - Bibliotheque triable par ajout recent, titre, auteur, date de publication, pages et statut.

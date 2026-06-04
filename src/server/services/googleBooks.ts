@@ -15,6 +15,7 @@ export type GoogleBookCandidate = {
 };
 
 type GoogleBooksResponse = {
+  totalItems?: number;
   items?: Array<{
     id: string;
     volumeInfo?: {
@@ -33,6 +34,8 @@ type GoogleBooksResponse = {
   }>;
 };
 
+export const GOOGLE_BOOKS_PAGE_SIZE = 12;
+
 export function normalizeGoogleBook(item: NonNullable<GoogleBooksResponse["items"]>[number]) {
   const volume = item.volumeInfo ?? {};
 
@@ -49,10 +52,11 @@ export function normalizeGoogleBook(item: NonNullable<GoogleBooksResponse["items
   });
 }
 
-export async function searchGoogleBooks(query: string): Promise<GoogleBookCandidate[]> {
+export async function searchGoogleBooks(query: string, startIndex = 0) {
   const url = new URL(GOOGLE_BOOKS_URL);
   url.searchParams.set("q", query);
-  url.searchParams.set("maxResults", "12");
+  url.searchParams.set("maxResults", String(GOOGLE_BOOKS_PAGE_SIZE));
+  url.searchParams.set("startIndex", String(startIndex));
   url.searchParams.set("langRestrict", "fr");
   url.searchParams.set("printType", "books");
 
@@ -72,5 +76,12 @@ export async function searchGoogleBooks(query: string): Promise<GoogleBookCandid
   }
 
   const payload = (await response.json()) as GoogleBooksResponse;
-  return (payload.items ?? []).map(normalizeGoogleBook);
+  const items = (payload.items ?? []).map(normalizeGoogleBook);
+
+  return {
+    items,
+    totalItems: payload.totalItems ?? 0,
+    nextStartIndex: startIndex + items.length,
+    hasMore: startIndex + items.length < (payload.totalItems ?? 0)
+  };
 }
