@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  background: #08090d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(0, 212, 116, 0.11), transparent 30rem),
+    radial-gradient(circle at 82% 10%, rgba(76, 163, 255, 0.11), transparent 28rem),
+    linear-gradient(180deg, #071017 0%, #0b1620 52%, #071017 100%);
+  color: #f7f1e8;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(0, 212, 116, 0.35);
+}
+
+.cover-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-sheen::after {
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.18) 42%, transparent 62%);
+  content: "";
+  inset: -40%;
+  position: absolute;
+  transform: translateX(-45%) rotate(18deg);
+  transition: transform 220ms ease;
+}
+
+.group:hover .cover-sheen::after,
+.cover-sheen:hover::after {
+  transform: translateX(45%) rotate(18deg);
+}

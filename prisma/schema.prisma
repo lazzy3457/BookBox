@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReadingStatus {
+  TO_READ
+  READING
+  READ
+  ABANDONED
+}
+
+enum ReactionKind {
+  LIKE
+  TO_READ
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  library        UserBook[]
+  reviews        Review[]
+  reactions      ReviewReaction[]
+  comments       ReviewComment[]
+  commentLikes   ReviewCommentReaction[]
+  following      Follow[]         @relation("following")
+  followers      Follow[]         @relation("followers")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Book {
+  id                  String   @id @default(cuid())
+  googleBooksVolumeId String?  @unique
+  title               String
+  authors             String[]
+  description         String?
+  thumbnailUrl        String?
+  publishedDate       String?
+  publisher           String?
+  pageCount           Int?
+  language            String?
+  source              String   @default("manual")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  libraries UserBook[]
+  reviews   Review[]
+}
+
+model UserBook {
+  id        String        @id @default(cuid())
+  userId    String
+  bookId    String
+  status    ReadingStatus
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@index([status])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  rating    Int
+  body      String?
+  spoiler   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book             @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  reactions ReviewReaction[]
+  comments  ReviewComment[]
+
+  @@unique([userId, bookId])
+  @@index([createdAt])
+}
+
+model ReviewReaction {
+  id        String       @id @default(cuid())
+  reviewId  String
+  userId    String
+  kind      ReactionKind
+  createdAt DateTime     @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId, kind])
+}
+
+model ReviewComment {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  parentId  String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  review  Review          @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  ReviewComment?  @relation("comment_thread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies ReviewComment[] @relation("comment_thread")
+  likes   ReviewCommentReaction[]
+
+  @@index([reviewId])
+}
+
+model ReviewCommentReaction {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment ReviewComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}

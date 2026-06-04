@@ -1,0 +1,216 @@
+"use client";
+
+import { useState } from "react";
+import { Clock, Plus, Search } from "lucide-react";
+import { BookCard } from "@/components/books/BookCard";
+
+type Candidate = {
+  googleBooksVolumeId: string;
+  title: string;
+  authors: string[];
+  description?: string;
+  thumbnailUrl?: string;
+  publishedDate?: string;
+};
+
+export function SearchWorkspace() {
+  const [query, setQuery] = useState("");
+  const [items, setItems] = useState<Candidate[]>([]);
+  const [status, setStatus] = useState("");
+  const [history, setHistory] = useState<string[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
+    const raw = window.localStorage.getItem("booksbox.searchHistory");
+    return raw ? JSON.parse(raw) : [];
+  });
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [manualTitle, setManualTitle] = useState("");
+  const [manualAuthor, setManualAuthor] = useState("");
+
+  function rememberSearch(value: string) {
+    const normalized = value.trim();
+
+    if (!normalized) {
+      return;
+    }
+
+    const nextHistory = [normalized, ...history.filter((item) => item.toLowerCase() !== normalized.toLowerCase())].slice(0, 8);
+    setHistory(nextHistory);
+    window.localStorage.setItem("booksbox.searchHistory", JSON.stringify(nextHistory));
+  }
+
+  async function search(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("Recherche en cours...");
+    rememberSearch(query);
+
+    const response = await fetch(`/api/books/search?q=${encodeURIComponent(query)}`);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setStatus(payload.error?.message ?? "Recherche indisponible.");
+      return;
+    }
+
+    setItems(payload.items);
+    setStatus(payload.items.length ? "" : "Aucun resultat net. Tu peux ajouter le livre a la main.");
+  }
+
+  async function addBookToLibrary(bookId: string) {
+    const response = await fetch("/api/library", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookId, status: "TO_READ" })
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message ?? "Impossible d'ajouter ce livre a ta bibliotheque.");
+    }
+
+    return payload;
+  }
+
+  async function persistBook(book: Candidate) {
+    setSavingId(book.googleBooksVolumeId);
+    setStatus("Ajout du livre a ta bibliotheque...");
+
+    const response = await fetch("/api/books", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(book)
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setStatus(payload.error?.message ?? "Impossible d'ajouter le livre au catalogue.");
+      setSavingId(null);
+      return;
+    }
+
+    try {
+      await addBookToLibrary(payload.id);
+      setSavedIds((current) => new Set(current).add(book.googleBooksVolumeId));
+      setStatus(`"${payload.title}" est dans ta bibliotheque, statut A lire.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Impossible d'ajouter ce livre a ta bibliotheque.");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function createManual(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("Creation du livre et ajout a ta bibliotheque...");
+
+    const response = await fetch("/api/books", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: manualTitle, authors: [manualAuthor] })
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setStatus(payload.error?.message ?? "Impossible de creer le livre.");
+      return;
+    }
+
+    try {
+      await addBookToLibrary(payload.id);
+      setManualTitle("");
+      setManualAuthor("");
+      setStatus(`"${payload.title}" est dans ta bibliotheque, statut A lire.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Livre cree, mais impossible de l'ajouter a ta bibliotheque.");
+    }
+  }
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+      <div>
+        <form onSubmit={search} className="rounded border border-line bg-panel/75 p-4 shadow-poster">
+          <div className="flex gap-3">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="h-12 flex-1 rounded border border-line bg-ink px-4 text-white outline-none transition placeholder:text-muted/45 focus:border-mint"
+              placeholder="Titre, auteur, ISBN..."
+            />
+            <button className="inline-flex h-12 items-center gap-2 rounded bg-mint px-5 font-black text-ink transition hover:bg-lime">
+              <Search size={18} />
+              Rechercher
+            </button>
+          </div>
+          {history.length ? (
+            <div className="mt-4 border-t border-line pt-3">
+              <div className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-muted">
+                <Clock size={13} />
+                Historique de recherche
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {history.map((entry) => (
+                  <button
+                    key={entry}
+                    type="button"
+                    onClick={() => setQuery(entry)}
+                    className="rounded border border-line bg-ink px-3 py-1.5 text-xs font-bold text-muted transition hover:border-mint hover:text-paper"
+                  >
+                    {entry}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </form>
+
+        {status ? <p className="mt-4 rounded border border-line bg-panelSoft px-4 py-3 text-sm text-muted">{status}</p> : null}
+
+        <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+          {items.map((book) => {
+            const isSaved = savedIds.has(book.googleBooksVolumeId);
+            const isSaving = savingId === book.googleBooksVolumeId;
+
+            return (
+              <div key={book.googleBooksVolumeId} className="relative">
+                <BookCard book={book} variant="poster" />
+                <button
+                  onClick={() => persistBook(book)}
+                  disabled={isSaving || isSaved}
+                  className="absolute right-2 top-2 inline-flex items-center gap-2 rounded bg-mint px-3 py-2 text-xs font-black text-ink shadow-poster transition hover:bg-lime disabled:cursor-default disabled:bg-panelSoft disabled:text-muted"
+                >
+                  <Plus size={14} />
+                  {isSaved ? "Ajoute" : isSaving ? "Ajout..." : "Ajouter"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <form onSubmit={createManual} className="h-fit rounded border border-line bg-panel/90 p-5 shadow-poster">
+        <h2 className="text-lg font-black text-paper">Ajout manuel</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">Pour les livres introuvables ou les metadonnees trop faibles.</p>
+        <input
+          value={manualTitle}
+          onChange={(event) => setManualTitle(event.target.value)}
+          className="mt-5 h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+          placeholder="Titre"
+        />
+        <input
+          value={manualAuthor}
+          onChange={(event) => setManualAuthor(event.target.value)}
+          className="mt-3 h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+          placeholder="Auteur"
+        />
+        <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded bg-white px-4 py-3 text-sm font-black text-ink transition hover:bg-paper">
+          <Plus size={16} />
+          Creer le livre
+        </button>
+      </form>
+    </div>
+  );
+}
