@@ -5,7 +5,7 @@ import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getTrendingBooks } from "@/server/services/trending";
 import { BookCard } from "@/components/books/BookCard";
-import { FollowButton } from "@/components/community/FollowButton";
+import { CommunityReaderSearch } from "@/components/community/CommunityReaderSearch";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StarRating } from "@/components/reviews/StarRating";
 
@@ -50,6 +50,18 @@ export default async function CommunityPage() {
   ]);
 
   const followingIds = new Set(following.map((follow) => follow.followingId));
+  const mappedReaders = readers.map((reader) => ({
+    id: reader.id,
+    name: reader.name,
+    username: reader.username,
+    email: reader.email,
+    isFollowing: followingIds.has(reader.id),
+    counts: {
+      library: reader._count.library,
+      reviews: reader._count.reviews,
+      followers: reader._count.followers
+    }
+  }));
   const communityStats = [
     { label: "Lecteurs", value: readers.length, Icon: UsersRound },
     { label: "Reviews recentes", value: recentReviews.length, Icon: MessageSquareText },
@@ -80,50 +92,10 @@ export default async function CommunityPage() {
       </section>
 
       <div className="grid gap-8 xl:grid-cols-[1fr_420px]">
-        <section>
+        <div>
           <SectionHeader eyebrow="Lecteurs" title="A suivre" />
-          <div className="grid gap-4 xl:grid-cols-2">
-            {readers.map((reader) => (
-              <article
-                key={reader.id}
-                className="rounded border border-line bg-panel/80 p-5 shadow-poster transition hover:border-mint/60 hover:bg-panelSoft"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <Link href={`/profile/${reader.id}`} className="flex min-w-0 flex-1 items-center gap-4">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded border border-line bg-ink text-xl font-black text-mint">
-                      {(reader.name ?? reader.username ?? "B").slice(0, 1)}
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="truncate font-black text-paper">{reader.name ?? reader.username ?? "Lecteur BooksBox"}</h2>
-                      <p className="mt-1 truncate text-xs text-muted">
-                        {reader.username ? `@${reader.username}` : reader.email ?? "Lecteur BooksBox"}
-                      </p>
-                    </div>
-                  </Link>
-                  {currentUserId ? (
-                    <div className="shrink-0">
-                      <FollowButton userId={reader.id} initiallyFollowing={followingIds.has(reader.id)} />
-                    </div>
-                  ) : null}
-                </div>
-                <Link
-                  href={`/profile/${reader.id}`}
-                  className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-bold text-muted"
-                  aria-label={`Voir le profil de ${reader.name ?? reader.username ?? "ce lecteur"}`}
-                >
-                  <div className="rounded bg-ink/55 px-2 py-2">{reader._count.library} livres</div>
-                  <div className="rounded bg-ink/55 px-2 py-2">{reader._count.reviews} reviews</div>
-                  <div className="rounded bg-ink/55 px-2 py-2">{reader._count.followers} followers</div>
-                </Link>
-              </article>
-            ))}
-          </div>
-          {!readers.length ? (
-            <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-              Aucun lecteur a afficher pour le moment.
-            </div>
-          ) : null}
-        </section>
+          <CommunityReaderSearch initialReaders={mappedReaders} canFollow={Boolean(currentUserId)} />
+        </div>
 
         <aside>
           <SectionHeader eyebrow="Livres" title="Qui tournent" />
