@@ -44,3 +44,28 @@ export async function POST(request: Request) {
     return apiError(error);
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const userId = await requireCurrentUserId();
+    const { searchParams } = new URL(request.url);
+    const bookId = searchParams.get("bookId");
+
+    if (!bookId) {
+      throw Object.assign(new Error("bookId est obligatoire."), { status: 400, code: "BOOK_ID_REQUIRED" });
+    }
+
+    await prisma.userBook.delete({
+      where: {
+        userId_bookId: {
+          userId,
+          bookId
+        }
+      }
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return apiError(error);
+  }
+}

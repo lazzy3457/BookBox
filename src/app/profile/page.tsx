@@ -4,6 +4,7 @@ import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { BookCard } from "@/components/books/BookCard";
+import { StarRating } from "@/components/reviews/StarRating";
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +110,9 @@ export default async function ProfilePage() {
                 </div>
                 <div className="min-w-0">
                   <div className="line-clamp-1 text-sm font-black text-paper">{review.book.title}</div>
-                  <div className="mt-1 text-xs font-bold text-amber">{review.rating}/5</div>
+                  <div className="mt-2">
+                    <StarRating value={review.rating} />
+                  </div>
                   {review.body ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{review.spoiler ? "Review marquee comme spoiler." : review.body}</p> : null}
                   <div className="mt-3 text-xs font-bold text-muted">
                     {review.reactions.length} reactions · {review.comments.length} commentaires
