@@ -13,6 +13,7 @@ BooksBox est une application web desktop-first pour lecteurs francophones : rech
 - Likes sur reviews et commentaires.
 - Commentaires de review avec edition et suppression par l'auteur.
 - Profil avec historique de livres et reviews.
+- Profils publics accessibles depuis les cartes lecteur de la page Commu.
 - Page Commu avec lecteurs a suivre, reviews recentes et livres actifs.
 - Historique de recherche textuel et historique visuel des 5 derniers livres ajoutes.
 - Deconnexion depuis le header.

@@ -84,24 +84,37 @@ export default async function CommunityPage() {
           <SectionHeader eyebrow="Lecteurs" title="A suivre" />
           <div className="grid gap-4 xl:grid-cols-2">
             {readers.map((reader) => (
-              <article key={reader.id} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
+              <article
+                key={reader.id}
+                className="rounded border border-line bg-panel/80 p-5 shadow-poster transition hover:border-mint/60 hover:bg-panelSoft"
+              >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="grid h-14 w-14 place-items-center rounded border border-line bg-ink text-xl font-black text-mint">
+                  <Link href={`/profile/${reader.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded border border-line bg-ink text-xl font-black text-mint">
                       {(reader.name ?? reader.username ?? "B").slice(0, 1)}
                     </div>
-                    <div>
-                      <h2 className="font-black text-paper">{reader.name ?? reader.username ?? "Lecteur BooksBox"}</h2>
-                      <p className="mt-1 text-xs text-muted">{reader.email}</p>
+                    <div className="min-w-0">
+                      <h2 className="truncate font-black text-paper">{reader.name ?? reader.username ?? "Lecteur BooksBox"}</h2>
+                      <p className="mt-1 truncate text-xs text-muted">
+                        {reader.username ? `@${reader.username}` : reader.email ?? "Lecteur BooksBox"}
+                      </p>
                     </div>
-                  </div>
-                  {currentUserId ? <FollowButton userId={reader.id} initiallyFollowing={followingIds.has(reader.id)} /> : null}
+                  </Link>
+                  {currentUserId ? (
+                    <div className="shrink-0">
+                      <FollowButton userId={reader.id} initiallyFollowing={followingIds.has(reader.id)} />
+                    </div>
+                  ) : null}
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-bold text-muted">
+                <Link
+                  href={`/profile/${reader.id}`}
+                  className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-bold text-muted"
+                  aria-label={`Voir le profil de ${reader.name ?? reader.username ?? "ce lecteur"}`}
+                >
                   <div className="rounded bg-ink/55 px-2 py-2">{reader._count.library} livres</div>
                   <div className="rounded bg-ink/55 px-2 py-2">{reader._count.reviews} reviews</div>
                   <div className="rounded bg-ink/55 px-2 py-2">{reader._count.followers} followers</div>
-                </div>
+                </Link>
               </article>
             ))}
           </div>
@@ -153,7 +166,7 @@ export default async function CommunityPage() {
                     </p>
                   ) : null}
                   <div className="mt-3 text-xs font-bold text-muted">
-                    {review.reactions.length} likes · {review.comments.length} commentaires
+                    {review.reactions.length} likes - {review.comments.length} commentaires
                   </div>
                 </div>
               </div>
