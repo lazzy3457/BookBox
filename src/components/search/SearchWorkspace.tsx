@@ -25,9 +25,13 @@ type RecentBook = {
 };
 
 export function SearchWorkspace() {
+  const [lastQuery, setLastQuery] = useState("");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<Candidate[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextStartIndex, setNextStartIndex] = useState(0);
   const [status, setStatus] = useState("");
+  const [loadingMore, setLoadingMore] = useState(false);
   const [history, setHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") {
       return [];
@@ -78,7 +82,8 @@ export function SearchWorkspace() {
     setStatus("Recherche en cours...");
     rememberSearch(query);
 
-    const response = await fetch(`/api/books/search?q=${encodeURIComponent(query)}`);
+    const normalizedQuery = query.trim();
+    const response = await fetch(`/api/books/search?q=${encodeURIComponent(normalizedQuery)}&startIndex=0`);
     const payload = await response.json();
 
     if (!response.ok) {
@@ -86,8 +91,36 @@ export function SearchWorkspace() {
       return;
     }
 
+    setLastQuery(normalizedQuery);
     setItems(payload.items);
+    setHasMore(payload.hasMore);
+    setNextStartIndex(payload.nextStartIndex);
     setStatus(payload.items.length ? "" : "Aucun resultat net. Tu peux ajouter le livre a la main.");
+  }
+
+  async function loadMore() {
+    if (!lastQuery || loadingMore || !hasMore) {
+      return;
+    }
+
+    setLoadingMore(true);
+    setStatus("");
+
+    try {
+      const response = await fetch(`/api/books/search?q=${encodeURIComponent(lastQuery)}&startIndex=${nextStartIndex}`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setStatus(payload.error?.message ?? "Impossible de charger plus de livres.");
+        return;
+      }
+
+      setItems((current) => [...current, ...payload.items]);
+      setHasMore(payload.hasMore);
+      setNextStartIndex(payload.nextStartIndex);
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   async function addBookToLibrary(bookId: string) {
@@ -265,6 +298,18 @@ export function SearchWorkspace() {
             );
           })}
         </div>
+        {items.length > 0 && hasMore ? (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="inline-flex h-12 items-center justify-center rounded border border-line bg-panel px-5 text-sm font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-default disabled:opacity-60"
+            >
+              {loadingMore ? "Chargement..." : "Afficher plus"}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <form onSubmit={createManual} className="h-fit rounded border border-line bg-panel/90 p-5 shadow-poster">
