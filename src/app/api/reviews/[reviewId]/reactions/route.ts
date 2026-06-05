@@ -9,23 +9,30 @@ export async function POST(request: Request, { params }: { params: Promise<{ rev
     const userId = await requireCurrentUserId();
     const { reviewId } = await params;
     const input = reactionMutationSchema.parse(await request.json());
-    const reaction = await prisma.reviewReaction.upsert({
+    const existing = await prisma.reviewReaction.findUnique({
       where: {
         reviewId_userId_kind: {
           reviewId,
           userId,
           kind: input.kind
         }
-      },
-      update: {},
-      create: {
+      }
+    });
+
+    if (existing) {
+      await prisma.reviewReaction.delete({ where: { id: existing.id } });
+      return NextResponse.json({ liked: false });
+    }
+
+    const reaction = await prisma.reviewReaction.create({
+      data: {
         reviewId,
         userId,
         kind: input.kind
       }
     });
 
-    return NextResponse.json(reaction, { status: 201 });
+    return NextResponse.json({ liked: true, reaction }, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { BookOpen } from "lucide-react";
+import { authOptions } from "@/server/auth/options";
 import { getBookDetails } from "@/server/services/books";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { LibraryActions } from "@/components/library/LibraryActions";
@@ -10,11 +12,15 @@ export const dynamic = "force-dynamic";
 
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
-  const book = await getBookDetails(bookId);
+  const [book, session] = await Promise.all([getBookDetails(bookId), getServerSession(authOptions)]);
 
   if (!book) {
     notFound();
   }
+
+  const currentLibraryEntry = session?.user?.id
+    ? book.libraries.find((entry) => entry.userId === session.user?.id)
+    : null;
 
   return (
     <div>
@@ -37,7 +43,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </div>
           <div className="self-end rounded border border-line bg-ink/55 p-4">
             <h2 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-muted">Bibliothèque</h2>
-            <LibraryActions bookId={book.id} />
+            <LibraryActions bookId={book.id} initialStatus={currentLibraryEntry?.status ?? null} />
           </div>
         </div>
       </section>
@@ -80,12 +86,15 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     body: review.body,
                     spoiler: review.spoiler,
                     userName: review.user.name ?? "Lecteur BooksBox",
+                    canManage: review.userId === session?.user?.id,
                     reactionsCount: review.reactions.length,
                     comments: review.comments.map((comment) => ({
                       id: comment.id,
                       body: comment.body,
                       userName: comment.user.name ?? "Lecteur BooksBox",
-                      createdAt: comment.createdAt.toISOString()
+                      canManage: comment.userId === session?.user?.id,
+                      createdAt: comment.createdAt.toISOString(),
+                      likesCount: comment.likes.length
                     }))
                   }}
                 />

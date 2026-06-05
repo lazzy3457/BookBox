@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Clock, Plus, Search } from "lucide-react";
 import { BookCard } from "@/components/books/BookCard";
 
@@ -11,6 +12,16 @@ type Candidate = {
   description?: string;
   thumbnailUrl?: string;
   publishedDate?: string;
+  publisher?: string;
+  pageCount?: number;
+  language?: string;
+};
+
+type RecentBook = {
+  id: string;
+  title: string;
+  authors: string[];
+  thumbnailUrl?: string | null;
 };
 
 export function SearchWorkspace() {
@@ -25,10 +36,24 @@ export function SearchWorkspace() {
     const raw = window.localStorage.getItem("booksbox.searchHistory");
     return raw ? JSON.parse(raw) : [];
   });
+  const [recentBooks, setRecentBooks] = useState<RecentBook[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
+    const raw = window.localStorage.getItem("booksbox.recentBooks");
+    return raw ? JSON.parse(raw) : [];
+  });
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [manualTitle, setManualTitle] = useState("");
   const [manualAuthor, setManualAuthor] = useState("");
+  const [manualThumbnailUrl, setManualThumbnailUrl] = useState("");
+  const [manualPublishedDate, setManualPublishedDate] = useState("");
+  const [manualPublisher, setManualPublisher] = useState("");
+  const [manualPageCount, setManualPageCount] = useState("");
+  const [manualLanguage, setManualLanguage] = useState("");
+  const [manualDescription, setManualDescription] = useState("");
 
   function rememberSearch(value: string) {
     const normalized = value.trim();
@@ -40,6 +65,12 @@ export function SearchWorkspace() {
     const nextHistory = [normalized, ...history.filter((item) => item.toLowerCase() !== normalized.toLowerCase())].slice(0, 8);
     setHistory(nextHistory);
     window.localStorage.setItem("booksbox.searchHistory", JSON.stringify(nextHistory));
+  }
+
+  function rememberBook(book: RecentBook) {
+    const nextRecentBooks = [book, ...recentBooks.filter((item) => item.id !== book.id)].slice(0, 5);
+    setRecentBooks(nextRecentBooks);
+    window.localStorage.setItem("booksbox.recentBooks", JSON.stringify(nextRecentBooks));
   }
 
   async function search(event: React.FormEvent<HTMLFormElement>) {
@@ -94,6 +125,12 @@ export function SearchWorkspace() {
 
     try {
       await addBookToLibrary(payload.id);
+      rememberBook({
+        id: payload.id,
+        title: payload.title,
+        authors: payload.authors,
+        thumbnailUrl: payload.thumbnailUrl
+      });
       setSavedIds((current) => new Set(current).add(book.googleBooksVolumeId));
       setStatus(`"${payload.title}" est dans ta bibliotheque, statut A lire.`);
     } catch (error) {
@@ -110,7 +147,16 @@ export function SearchWorkspace() {
     const response = await fetch("/api/books", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: manualTitle, authors: [manualAuthor] })
+      body: JSON.stringify({
+        title: manualTitle,
+        authors: manualAuthor.split(",").map((author) => author.trim()).filter(Boolean),
+        thumbnailUrl: manualThumbnailUrl || undefined,
+        publishedDate: manualPublishedDate || undefined,
+        publisher: manualPublisher || undefined,
+        pageCount: manualPageCount ? Number(manualPageCount) : undefined,
+        language: manualLanguage || undefined,
+        description: manualDescription || undefined
+      })
     });
     const payload = await response.json();
 
@@ -121,8 +167,20 @@ export function SearchWorkspace() {
 
     try {
       await addBookToLibrary(payload.id);
+      rememberBook({
+        id: payload.id,
+        title: payload.title,
+        authors: payload.authors,
+        thumbnailUrl: payload.thumbnailUrl
+      });
       setManualTitle("");
       setManualAuthor("");
+      setManualThumbnailUrl("");
+      setManualPublishedDate("");
+      setManualPublisher("");
+      setManualPageCount("");
+      setManualLanguage("");
+      setManualDescription("");
       setStatus(`"${payload.title}" est dans ta bibliotheque, statut A lire.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Livre cree, mais impossible de l'ajouter a ta bibliotheque.");
@@ -161,6 +219,24 @@ export function SearchWorkspace() {
                   >
                     {entry}
                   </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {recentBooks.length ? (
+            <div className="mt-4 border-t border-line pt-3">
+              <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-muted">5 derniers livres ajoutes</div>
+              <div className="grid grid-cols-5 gap-3">
+                {recentBooks.map((book) => (
+                  <Link key={book.id} href={`/books/${book.id}`} className="group">
+                    <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panelSoft shadow-poster transition group-hover:border-mint">
+                      {book.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="mt-2 line-clamp-2 text-[11px] font-black leading-tight text-paper">{book.title}</div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -204,7 +280,50 @@ export function SearchWorkspace() {
           value={manualAuthor}
           onChange={(event) => setManualAuthor(event.target.value)}
           className="mt-3 h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
-          placeholder="Auteur"
+          placeholder="Auteur(s), separes par virgule"
+        />
+        <input
+          value={manualThumbnailUrl}
+          onChange={(event) => setManualThumbnailUrl(event.target.value)}
+          className="mt-3 h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+          placeholder="URL de couverture"
+        />
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <input
+            value={manualPublishedDate}
+            onChange={(event) => setManualPublishedDate(event.target.value)}
+            className="h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+            placeholder="Publication"
+            type="date"
+          />
+          <input
+            value={manualPageCount}
+            onChange={(event) => setManualPageCount(event.target.value)}
+            className="h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+            placeholder="Pages"
+            type="number"
+            min="1"
+          />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <input
+            value={manualPublisher}
+            onChange={(event) => setManualPublisher(event.target.value)}
+            className="h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+            placeholder="Editeur"
+          />
+          <input
+            value={manualLanguage}
+            onChange={(event) => setManualLanguage(event.target.value)}
+            className="h-11 w-full rounded border border-line bg-ink px-3 text-sm outline-none focus:border-mint"
+            placeholder="Langue"
+          />
+        </div>
+        <textarea
+          value={manualDescription}
+          onChange={(event) => setManualDescription(event.target.value)}
+          className="mt-3 min-h-28 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm outline-none focus:border-mint"
+          placeholder="Description"
         />
         <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded bg-white px-4 py-3 text-sm font-black text-ink transition hover:bg-paper">
           <Plus size={16} />

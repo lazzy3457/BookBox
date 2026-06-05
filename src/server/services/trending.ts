@@ -31,7 +31,11 @@ export async function getTrendingBooks() {
 
         return {
           ...book,
-          score: readScore + toReadScore + reviewScore + reactionScore
+          score: readScore + toReadScore + reviewScore + reactionScore,
+          averageRating:
+            book.reviews.length > 0
+              ? book.reviews.reduce((total, review) => total + review.rating, 0) / book.reviews.length
+              : null
         };
       })
       .filter((book) => book.score > 0)
