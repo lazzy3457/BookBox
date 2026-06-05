@@ -22,7 +22,7 @@ export default async function ProfilePage() {
     );
   }
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews] = await Promise.all([
+  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, favorites] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.userBook.count({ where: { userId: session.user.id } }),
     prisma.review.count({ where: { userId: session.user.id } }),
@@ -32,14 +32,19 @@ export default async function ProfilePage() {
       where: { userId: session.user.id },
       orderBy: { updatedAt: "desc" },
       take: 10,
-      include: { book: true }
+      include: { book: true },
     }),
     prisma.review.findMany({
       where: { userId: session.user.id },
       orderBy: { updatedAt: "desc" },
       take: 8,
-      include: { book: true, reactions: true, comments: true }
-    })
+      include: { book: true, reactions: true, comments: true },
+    }),
+    prisma.userBook.findMany({
+      where: { userId: session.user.id, isFavorite: true },
+      orderBy: { updatedAt: "desc" },
+      include: { book: true },
+    }),
   ]);
 
   return (
@@ -57,13 +62,34 @@ export default async function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {favorites.length > 0 && (
+        <section className="mb-8">
+          <SectionHeader
+            eyebrow="Coups de cœur"
+            title="Mes favoris"
+            description="Les livres que tu as marqués comme coups de cœur."
+          />
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-10">
+            {favorites.map((entry) => (
+              <BookCard
+                key={entry.id}
+                book={entry.book}
+                href={`/books/${entry.bookId}`}
+                variant="poster"
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <SectionHeader eyebrow="Stats" title="Activité" />
       <div className="grid gap-4 xl:grid-cols-4">
         {[
           ["Livres", libraryCount],
           ["Reviews", reviewCount],
           ["Followers", followerCount],
-          ["Abonnements", followingCount]
+          ["Abonnements", followingCount],
         ].map(([label, value]) => (
           <div key={label} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
             <div className="text-sm text-muted">{label}</div>
@@ -110,7 +136,11 @@ export default async function ProfilePage() {
                 <div className="min-w-0">
                   <div className="line-clamp-1 text-sm font-black text-paper">{review.book.title}</div>
                   <div className="mt-1 text-xs font-bold text-amber">{review.rating}/5</div>
-                  {review.body ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{review.spoiler ? "Review marquee comme spoiler." : review.body}</p> : null}
+                  {review.body ? (
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
+                      {review.spoiler ? "Review marquee comme spoiler." : review.body}
+                    </p>
+                  ) : null}
                   <div className="mt-3 text-xs font-bold text-muted">
                     {review.reactions.length} reactions · {review.comments.length} commentaires
                   </div>

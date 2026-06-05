@@ -1,8 +1,12 @@
 import { notFound } from "next/navigation";
 import { BookOpen } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/server/auth/options";
+import { prisma } from "@/server/db/prisma";
 import { getBookDetails } from "@/server/services/books";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { LibraryActions } from "@/components/library/LibraryActions";
+import { FavoriteButton } from "@/components/library/FavoriteButton";
 import { ReviewComposer } from "@/components/reviews/ReviewComposer";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
 
@@ -10,11 +14,21 @@ export const dynamic = "force-dynamic";
 
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
-  const book = await getBookDetails(bookId);
+
+  const [book, session] = await Promise.all([
+    getBookDetails(bookId),
+    getServerSession(authOptions),
+  ]);
 
   if (!book) {
     notFound();
   }
+
+  const userBook = session?.user?.id
+    ? await prisma.userBook.findUnique({
+        where: { userId_bookId: { userId: session.user.id, bookId: book.id } },
+      })
+    : null;
 
   return (
     <div>
@@ -38,6 +52,9 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           <div className="self-end rounded border border-line bg-ink/55 p-4">
             <h2 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-muted">Bibliothèque</h2>
             <LibraryActions bookId={book.id} />
+            {userBook && (
+              <FavoriteButton bookId={book.id} initial={userBook.isFavorite} />
+            )}
           </div>
         </div>
       </section>
@@ -65,7 +82,6 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         </aside>
 
         <section className="space-y-6">
-
           <ReviewComposer bookId={book.id} />
 
           <div>
