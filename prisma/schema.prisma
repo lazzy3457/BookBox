@@ -40,6 +40,7 @@ model User {
   commentLikes   ReviewCommentReaction[]
   following      Follow[]         @relation("following")
   followers      Follow[]         @relation("followers")
+  lists          BookList[]
 }
 
 model Account {
@@ -92,17 +93,19 @@ model Book {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  libraries UserBook[]
-  reviews   Review[]
+  libraries   UserBook[]
+  reviews     Review[]
+  listEntries BookListEntry[]
 }
 
 model UserBook {
-  id        String        @id @default(cuid())
-  userId    String
-  bookId    String
-  status    ReadingStatus
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id         String        @id @default(cuid())
+  userId     String
+  bookId     String
+  status     ReadingStatus
+  isFavorite Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
@@ -152,10 +155,10 @@ model ReviewComment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  review  Review          @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent  ReviewComment?  @relation("comment_thread", fields: [parentId], references: [id], onDelete: Cascade)
-  replies ReviewComment[] @relation("comment_thread")
+  review  Review                 @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user    User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  ReviewComment?         @relation("comment_thread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies ReviewComment[]        @relation("comment_thread")
   likes   ReviewCommentReaction[]
 
   @@index([reviewId])
@@ -183,4 +186,35 @@ model Follow {
   following User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
+}
+
+model BookList {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  rating      Float?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries BookListEntry[]
+
+  @@index([userId])
+}
+
+model BookListEntry {
+  id        String   @id @default(cuid())
+  listId    String
+  bookId    String
+  note      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  list BookList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  book Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, bookId])
+  @@index([listId])
 }
