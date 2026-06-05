@@ -7,9 +7,9 @@ import { getBookDetails } from "@/server/services/books";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { LibraryActions } from "@/components/library/LibraryActions";
 import { FavoriteButton } from "@/components/library/FavoriteButton";
+import { AddToListButton } from "@/components/lists/AddToListButton";
 import { ReviewComposer } from "@/components/reviews/ReviewComposer";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
-import { AddToListButton } from "@/components/lists/AddToListButton";
 
 export const dynamic = "force-dynamic";
 
@@ -46,9 +46,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             <div className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-mint">Fiche livre</div>
             <h1 className="max-w-3xl text-5xl font-black leading-none text-paper">{book.title}</h1>
             <p className="mt-4 text-lg font-bold text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
-            {book.description && (
-              <p className="mt-5 line-clamp-5 max-w-3xl leading-7 text-white/65">{book.description}</p>
-            )}
+            {book.description ? <p className="mt-5 line-clamp-5 max-w-3xl leading-7 text-white/65">{book.description}</p> : null}
           </div>
           <div className="self-end rounded border border-line bg-ink/55 p-4">
             <h2 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-muted">Bibliothèque</h2>
@@ -109,11 +107,11 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                   }}
                 />
               ))}
-              {!book.reviews.length && (
+              {!book.reviews.length ? (
                 <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
                   Aucune review pour ce livre. La première a souvent un petit goût de privilège.
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </section>

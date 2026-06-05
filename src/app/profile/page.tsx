@@ -4,6 +4,7 @@ import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { BookCard } from "@/components/books/BookCard";
+import { ListCard } from "@/components/lists/ListCard";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
     );
   }
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, favorites] = await Promise.all([
+  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, favorites, lists] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.userBook.count({ where: { userId: session.user.id } }),
     prisma.review.count({ where: { userId: session.user.id } }),
@@ -45,10 +46,23 @@ export default async function ProfilePage() {
       orderBy: { updatedAt: "desc" },
       include: { book: true },
     }),
+    prisma.bookList.findMany({
+      where: { userId: session.user.id },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        entries: {
+          orderBy: { order: "asc" },
+          take: 5,
+          include: { book: { select: { thumbnailUrl: true, title: true } } },
+        },
+        _count: { select: { entries: true } },
+      },
+    }),
   ]);
 
   return (
     <div>
+      {/* Header profil */}
       <section className="mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
         <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
         <div className="flex items-end gap-6 px-7 pb-7">
@@ -63,6 +77,7 @@ export default async function ProfilePage() {
         </div>
       </section>
 
+      {/* Favoris */}
       {favorites.length > 0 && (
         <section className="mb-8">
           <SectionHeader
@@ -72,17 +87,13 @@ export default async function ProfilePage() {
           />
           <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-10">
             {favorites.map((entry) => (
-              <BookCard
-                key={entry.id}
-                book={entry.book}
-                href={`/books/${entry.bookId}`}
-                variant="poster"
-              />
+              <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} variant="poster" />
             ))}
           </div>
         </section>
       )}
 
+      {/* Stats */}
       <SectionHeader eyebrow="Stats" title="Activité" />
       <div className="grid gap-4 xl:grid-cols-4">
         {[
@@ -98,6 +109,38 @@ export default async function ProfilePage() {
         ))}
       </div>
 
+      {/* Listes */}
+      <section className="mt-9">
+        <div className="flex items-center justify-between">
+          <SectionHeader
+            eyebrow="Collections"
+            title="Mes listes"
+            description="Tes sagas, thématiques et sélections personnelles."
+          />
+          <Link
+            href="/lists/new"
+            className="shrink-0 rounded border border-line bg-panel/60 px-4 py-2 text-xs font-black text-muted transition hover:border-mint/50 hover:text-mint"
+          >
+            + Nouvelle liste
+          </Link>
+        </div>
+        {lists.length > 0 ? (
+          <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+            {lists.map((list) => (
+              <ListCard key={list.id} list={list} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
+            Aucune liste pour le moment.{" "}
+            <Link href="/lists/new" className="font-bold text-mint hover:underline">
+              Créer ta première liste →
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* Historique */}
       <section className="mt-9">
         <SectionHeader
           eyebrow="Historique"
@@ -117,6 +160,7 @@ export default async function ProfilePage() {
         )}
       </section>
 
+      {/* Reviews */}
       <section className="mt-9">
         <SectionHeader
           eyebrow="Reviews"
