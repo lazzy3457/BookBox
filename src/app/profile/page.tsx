@@ -5,6 +5,7 @@ import { prisma } from "@/server/db/prisma";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { BookCard } from "@/components/books/BookCard";
 import { ListCard } from "@/components/lists/ListCard";
+import { EditProfileButton } from "@/components/profile/EditProfileButton";
 
 export const dynamic = "force-dynamic";
 
@@ -63,19 +64,28 @@ export default async function ProfilePage() {
   return (
     <div>
       {/* Header profil */}
-      <section className="mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
-        <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
-        <div className="flex items-end gap-6 px-7 pb-7">
-          <div className="-mt-12 grid h-28 w-28 place-items-center rounded border-4 border-panel bg-ink text-4xl font-black text-mint">
-            {(user?.name ?? "B").slice(0, 1)}
+        <section className="mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
+          <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
+          <div className="flex items-end gap-6 px-7 pb-7">
+            <div className="-mt-12 h-28 w-28 shrink-0 overflow-hidden rounded border-4 border-panel bg-ink">
+              {user?.image ? (
+                <img src={user.image} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="grid h-full w-full place-items-center text-4xl font-black text-mint">
+                  {(user?.name ?? "B").slice(0, 1)}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-1 items-end justify-between gap-4 pb-1">
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
+                <h1 className="mt-2 text-4xl font-black text-paper">{user?.name ?? "Lecteur BooksBox"}</h1>
+                <p className="mt-2 text-sm text-muted">{user?.bio ?? "Profil simple V1 avec stats de lecture."}</p>
+              </div>
+              <EditProfileButton user={{ name: user?.name ?? null, bio: user?.bio ?? null, image: user?.image ?? null }} />
+            </div>
           </div>
-          <div className="pb-1">
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
-            <h1 className="mt-2 text-4xl font-black text-paper">{user?.name ?? "Lecteur BooksBox"}</h1>
-            <p className="mt-2 text-sm text-muted">{user?.bio ?? "Profil simple V1 avec stats de lecture."}</p>
-          </div>
-        </div>
-      </section>
+        </section>
 
       {/* Favoris */}
       {favorites.length > 0 && (
