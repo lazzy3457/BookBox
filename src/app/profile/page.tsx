@@ -160,45 +160,50 @@ export default async function ProfilePage() {
         )}
       </section>
 
-      {/* Reviews */}
-      <section className="mt-9">
-        <SectionHeader
-          eyebrow="Reviews"
-          title="Dernieres reviews"
-          description="Tes avis les plus recents, avec reactions et commentaires."
-        />
-        <div className="grid gap-4 xl:grid-cols-2">
-          {recentReviews.map((review) => (
-            <article key={review.id} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
-              <div className="flex gap-4">
-                <div className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
-                  {review.book.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                  ) : null}
-                </div>
-                <div className="min-w-0">
-                  <div className="line-clamp-1 text-sm font-black text-paper">{review.book.title}</div>
-                  <div className="mt-1 text-xs font-bold text-amber">{review.rating}/5</div>
-                  {review.body ? (
-                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
-                      {review.spoiler ? "Review marquee comme spoiler." : review.body}
-                    </p>
-                  ) : null}
-                  <div className="mt-3 text-xs font-bold text-muted">
-                    {review.reactions.length} reactions · {review.comments.length} commentaires
-                  </div>
-                </div>
+  {/* Reviews */}
+  <section className="mt-9">
+    <SectionHeader
+      eyebrow="Reviews"
+      title="Dernieres reviews"
+      description="Tes avis les plus recents, avec reactions et commentaires."
+    />
+    <div className="grid gap-4 xl:grid-cols-2">
+      {recentReviews.map((review) => (
+        <Link
+          key={review.id}
+          href={`/books/${review.bookId}`}
+          className="group rounded border border-line bg-panel/80 p-5 shadow-poster transition hover:border-mint/50 hover:bg-panelSoft"
+        >
+          <div className="flex gap-4">
+            <div className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
+              {review.book.thumbnailUrl ? (
+                <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              <div className="line-clamp-1 text-sm font-black text-paper group-hover:text-mint transition">
+                {review.book.title}
               </div>
-            </article>
-          ))}
-        </div>
-        {!recentReviews.length ? (
-          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-            Aucune review publiee pour le moment.
+              <div className="mt-1 text-xs font-bold text-amber">{review.rating}/5</div>
+              {review.body ? (
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
+                  {review.spoiler ? "Review marquée comme spoiler." : review.body}
+                </p>
+              ) : null}
+              <div className="mt-3 text-xs font-bold text-muted">
+                {review.reactions.length} réactions · {review.comments.length} commentaires
+              </div>
+            </div>
           </div>
-        ) : null}
-      </section>
+        </Link>
+      ))}
+    </div>
+    {!recentReviews.length ? (
+      <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
+        Aucune review publiée pour le moment.
+      </div>
+    ) : null}
+  </section>
     </div>
   );
 }
