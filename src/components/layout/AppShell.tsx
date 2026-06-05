@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Library, Search, Sparkles, UserRound } from "lucide-react";
+import { BookOpen, Library, Search, Settings, Sparkles, UserRound, UsersRound } from "lucide-react";
 import { SessionButton } from "@/components/auth/SessionButton";
 
 type AppShellProps = {
@@ -15,8 +15,10 @@ const navItems = [
   { href: "/", label: "Accueil", icon: Sparkles },
   { href: "/search", label: "Recherche", icon: Search },
   { href: "/library", label: "Bibliothèque", icon: Library },
+  { href: "/commu", label: "Commu", icon: UsersRound },
   { href: "/trending", label: "Tendance", icon: BookOpen },
-  { href: "/profile", label: "Profil", icon: UserRound }
+  { href: "/profile", label: "Profil", icon: UserRound },
+  { href: "/settings", label: "Paramètres", icon: Settings }
 ];
 
 export function AppShell({ children, user }: AppShellProps) {

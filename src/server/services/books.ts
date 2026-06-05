@@ -36,14 +36,22 @@ export async function createManualBook(input: {
   title: string;
   authors: string[];
   description?: string;
+  thumbnailUrl?: string;
   publishedDate?: string;
+  publisher?: string;
+  pageCount?: number;
+  language?: string;
 }) {
   return prisma.book.create({
     data: {
       title: input.title,
       authors: input.authors,
       description: input.description,
+      thumbnailUrl: input.thumbnailUrl,
       publishedDate: input.publishedDate,
+      publisher: input.publisher,
+      pageCount: input.pageCount,
+      language: input.language,
       source: "manual"
     }
   });

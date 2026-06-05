@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { BookOpen } from "lucide-react";
 import { getServerSession } from "next-auth";
+import { BookOpen } from "lucide-react";
 import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBookDetails } from "@/server/services/books";
@@ -27,6 +27,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
     ? await prisma.userBook.findUnique({
         where: { userId_bookId: { userId: session.user.id, bookId: book.id } },
       })
+    : null;
+
+  const currentLibraryEntry = session?.user?.id
+    ? book.libraries.find((entry) => entry.userId === session.user?.id)
     : null;
 
   return (
@@ -99,13 +103,16 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     body: review.body,
                     spoiler: review.spoiler,
                     userName: review.user.name ?? "Lecteur BooksBox",
+                    canManage: review.userId === session?.user?.id,
                     reactionsCount: review.reactions.length,
                     comments: review.comments.map((comment) => ({
                       id: comment.id,
                       body: comment.body,
                       userName: comment.user.name ?? "Lecteur BooksBox",
+                      canManage: comment.userId === session?.user?.id,
                       createdAt: comment.createdAt.toISOString(),
-                    })),
+                      likesCount: comment.likes.length
+                    }))
                   }}
                 />
               ))}

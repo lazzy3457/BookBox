@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BookOpen, Star } from "lucide-react";
+import { BookOpen } from "lucide-react";
+import { StarRating } from "@/components/reviews/StarRating";
 
 export type BookCardBook = {
   id?: string;
@@ -8,6 +9,7 @@ export type BookCardBook = {
   thumbnailUrl?: string | null;
   publishedDate?: string | null;
   score?: number;
+  averageRating?: number | null;
 };
 
 type BookCardProps = {
@@ -40,9 +42,14 @@ export function BookCard({ book, href, badge, compact, variant = "row" }: BookCa
         <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper">{book.title}</h3>
         <p className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
         {typeof book.score === "number" ? (
-          <div className="mt-2 inline-flex items-center gap-1 text-xs font-black text-amber">
-            <Star size={13} fill="currentColor" />
-            {book.score}
+          <div className="mt-2 inline-flex rounded bg-amber/15 px-2 py-1 text-xs font-black text-amber">
+            Score {book.score}
+          </div>
+        ) : null}
+        {typeof book.averageRating === "number" ? (
+          <div className="mt-2 flex items-center gap-2">
+            <StarRating value={Math.round(book.averageRating)} />
+            <span className="text-[11px] font-bold text-muted">{book.averageRating.toFixed(1)}/5</span>
           </div>
         ) : null}
       </div>
@@ -66,9 +73,14 @@ export function BookCard({ book, href, badge, compact, variant = "row" }: BookCa
           <p className="mt-2 line-clamp-2 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
           {book.publishedDate ? <p className="mt-3 text-xs text-muted/70">{book.publishedDate}</p> : null}
           {typeof book.score === "number" ? (
-            <div className="mt-4 inline-flex items-center gap-1 rounded bg-amber/15 px-2 py-1 text-xs font-bold text-amber">
-              <Star size={14} />
-              {book.score} tendance
+            <div className="mt-4 inline-flex rounded bg-amber/15 px-2 py-1 text-xs font-bold text-amber">
+              Score {book.score}
+            </div>
+          ) : null}
+          {typeof book.averageRating === "number" ? (
+            <div className="mt-3 flex items-center gap-2">
+              <StarRating value={Math.round(book.averageRating)} />
+              <span className="text-xs font-bold text-muted">{book.averageRating.toFixed(1)}/5</span>
             </div>
           ) : null}
         </div>

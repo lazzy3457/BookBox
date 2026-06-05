@@ -1,7 +1,7 @@
 "use client";
 
 import { ReadingStatus } from "@prisma/client";
-import { BookOpen, Calendar, FileText } from "lucide-react";
+import { BookOpen, Calendar, FileText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -46,10 +46,21 @@ const sortLabels: Record<SortKey, string> = {
 };
 
 export function LibraryShelf({ items }: LibraryShelfProps) {
+  const [libraryItems, setLibraryItems] = useState(items);
   const [sortKey, setSortKey] = useState<SortKey>("recent");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
-  const visibleItems = items
+  async function removeFromLibrary(bookId: string) {
+    const response = await fetch(`/api/library?bookId=${encodeURIComponent(bookId)}`, {
+      method: "DELETE"
+    });
+
+    if (response.ok) {
+      setLibraryItems((current) => current.filter((item) => item.book.id !== bookId));
+    }
+  }
+
+  const visibleItems = libraryItems
     .filter((item) => statusFilter === "ALL" || item.status === statusFilter)
     .sort((a, b) => {
       if (sortKey === "recent") {
@@ -108,20 +119,32 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
 
       <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {visibleItems.map((item) => (
-          <Link key={item.id} href={`/books/${item.book.id}`} className="group">
-            <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panel shadow-poster transition group-hover:-translate-y-1 group-hover:border-mint/70">
-              {item.book.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="grid h-full place-items-center">
-                  <BookOpen className="text-muted" />
-                </div>
-              )}
-            </div>
+          <div key={item.id} className="group relative">
+            <Link href={`/books/${item.book.id}`}>
+              <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panel shadow-poster transition group-hover:-translate-y-1 group-hover:border-mint/70">
+                {item.book.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full place-items-center">
+                    <BookOpen className="text-muted" />
+                  </div>
+                )}
+              </div>
+            </Link>
+            <button
+              type="button"
+              onClick={() => removeFromLibrary(item.book.id)}
+              className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-ink/85 text-muted shadow-poster transition hover:bg-coral hover:text-white"
+              title="Retirer de ma bibliotheque"
+            >
+              <Trash2 size={14} />
+            </button>
             <div className="mt-3">
               <div className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-mint">{statusLabels[item.status]}</div>
-              <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper">{item.book.title}</h3>
+              <Link href={`/books/${item.book.id}`}>
+                <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper">{item.book.title}</h3>
+              </Link>
               <p className="mt-1 line-clamp-1 text-xs text-muted">{item.book.authors.join(", ") || "Auteur inconnu"}</p>
               <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-muted">
                 {item.book.publishedDate ? (
@@ -139,7 +162,7 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
               </div>
               {item.book.publisher ? <p className="mt-1 line-clamp-1 text-[11px] text-muted/75">{item.book.publisher}</p> : null}
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
