@@ -14,7 +14,7 @@ export default async function ProfilePage() {
   if (!session?.user?.id) {
     return (
       <div className="rounded border border-line bg-panel/75 p-8">
-        <h1 className="text-2xl font-black text-paper">Profil lecteur</h1>
+        <h1 className="text-2xl font-black text-paper">Profil lecteur !</h1>
         <p className="mt-3 text-muted">Connecte-toi pour voir ton profil.</p>
         <Link href="/login" className="mt-5 inline-block rounded bg-mint px-5 py-3 font-black text-ink">
           Connexion
