@@ -23,4 +23,5 @@ export async function updateProfile(data: {
   });
 
   revalidatePath("/profile");
+  revalidatePath("/", "layout");
 }
