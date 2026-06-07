@@ -3,6 +3,7 @@
 import { ReadingStatus } from "@prisma/client";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Toast } from "@/components/ui/Toast";
 
 type LibraryActionsProps = {
   bookId: string;
@@ -18,40 +19,38 @@ const labels: Record<ReadingStatus, string> = {
 
 export function LibraryActions({ bookId, initialStatus = null }: LibraryActionsProps) {
   const [status, setCurrentStatus] = useState<ReadingStatus | null>(initialStatus);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
 
   async function setStatus(nextStatus: ReadingStatus) {
-    setMessage("");
+    setToast(null);
     const response = await fetch("/api/library", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bookId, status: nextStatus })
     });
-    const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de modifier la bibliotheque.");
+      setToast({ tone: "error", message: "Ta bibliotheque n'a pas pu etre mise a jour." });
       return;
     }
 
     setCurrentStatus(nextStatus);
-    setMessage(`Dans ta bibliotheque : ${labels[nextStatus]}.`);
+    setToast({ tone: "success", message: `Statut mis a jour : ${labels[nextStatus]}.` });
   }
 
   async function removeFromLibrary() {
-    setMessage("");
+    setToast(null);
     const response = await fetch(`/api/library?bookId=${encodeURIComponent(bookId)}`, {
       method: "DELETE"
     });
-    const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de retirer ce livre.");
+      setToast({ tone: "error", message: "Ce livre n'a pas pu etre retire de ta bibliotheque." });
       return;
     }
 
     setCurrentStatus(null);
-    setMessage("Livre retire de ta bibliotheque.");
+    setToast({ tone: "success", message: "Livre retire de ta bibliotheque." });
   }
 
   return (
@@ -86,7 +85,7 @@ export function LibraryActions({ bookId, initialStatus = null }: LibraryActionsP
           Retirer de ma bibliotheque
         </button>
       ) : null}
-      {message ? <p className="mt-3 text-xs text-muted">{message}</p> : null}
+      {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </div>
   );
 }

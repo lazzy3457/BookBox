@@ -32,8 +32,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       });
 
       if (!response.ok) {
-        const payload = await response.json();
-        setMessage(payload.error?.message ?? "Inscription impossible.");
+        setMessage("Ton compte n'a pas pu etre cree. Verifie les champs et reessaie.");
         return;
       }
     }
@@ -45,7 +44,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     });
 
     if (result?.error) {
-      setMessage("Identifiants invalides.");
+      setMessage("Email ou mot de passe incorrect.");
       return;
     }
 

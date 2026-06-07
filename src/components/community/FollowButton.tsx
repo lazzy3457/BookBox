@@ -2,6 +2,7 @@
 
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
+import { Toast } from "@/components/ui/Toast";
 
 type FollowButtonProps = {
   userId: string;
@@ -10,29 +11,28 @@ type FollowButtonProps = {
 
 export function FollowButton({ userId, initiallyFollowing = false }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(initiallyFollowing);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   async function followUser() {
     setIsSaving(true);
-    setMessage("");
+    setToast(null);
 
     const response = await fetch("/api/follows", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ followingId: userId })
     });
-    const payload = await response.json();
 
     setIsSaving(false);
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de suivre ce lecteur.");
+      setToast({ tone: "error", message: "Ce lecteur n'a pas pu etre ajoute a ton cercle." });
       return;
     }
 
     setIsFollowing(true);
-    setMessage("Ajoute a ton cercle.");
+    setToast({ tone: "success", message: "Lecteur ajoute a ton cercle." });
   }
 
   return (
@@ -46,7 +46,7 @@ export function FollowButton({ userId, initiallyFollowing = false }: FollowButto
         <UserPlus size={14} />
         {isFollowing ? "Suivi" : isSaving ? "Ajout..." : "Suivre"}
       </button>
-      {message ? <p className="mt-2 text-xs text-muted">{message}</p> : null}
+      {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </div>
   );
 }

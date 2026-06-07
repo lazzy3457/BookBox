@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Clock, Plus, Search } from "lucide-react";
 import { BookCard } from "@/components/books/BookCard";
+import { Toast } from "@/components/ui/Toast";
 
 type Candidate = {
   googleBooksVolumeId: string;
@@ -25,12 +26,17 @@ type RecentBook = {
 };
 
 export function SearchWorkspace() {
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [lastQuery, setLastQuery] = useState("");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<Candidate[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [nextStartIndex, setNextStartIndex] = useState(0);
   const [status, setStatus] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
+  const [suggestions, setSuggestions] = useState<Candidate[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [history, setHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") {
@@ -59,6 +65,47 @@ export function SearchWorkspace() {
   const [manualLanguage, setManualLanguage] = useState("");
   const [manualDescription, setManualDescription] = useState("");
 
+  useEffect(() => {
+    const normalizedQuery = query.trim();
+
+    if (normalizedQuery.length < 2) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsSuggesting(true);
+
+      try {
+        const response = await fetch(`/api/books/search?q=${encodeURIComponent(normalizedQuery)}&startIndex=0`, {
+          signal: controller.signal
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          setSuggestions([]);
+          return;
+        }
+
+        setSuggestions(payload.items.slice(0, 5));
+        setShowSuggestions(true);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setSuggestions([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSuggesting(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [query]);
+
   function rememberSearch(value: string) {
     const normalized = value.trim();
 
@@ -77,17 +124,37 @@ export function SearchWorkspace() {
     window.localStorage.setItem("booksbox.recentBooks", JSON.stringify(nextRecentBooks));
   }
 
+  function updateQuery(value: string) {
+    setQuery(value);
+
+    if (value.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsSuggesting(false);
+    }
+  }
+
   async function search(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus("Recherche en cours...");
-    rememberSearch(query);
+    setStatus("On cherche dans les livres disponibles...");
+    setShowSuggestions(false);
 
-    const normalizedQuery = query.trim();
+    const formData = new FormData(event.currentTarget);
+    const normalizedQuery = String(formData.get("q") ?? searchInputRef.current?.value ?? query).trim();
+    setQuery(normalizedQuery);
+    rememberSearch(normalizedQuery);
+
+    if (normalizedQuery.length < 2) {
+      setItems([]);
+      setStatus("Entre au moins 2 caracteres pour lancer la recherche.");
+      return;
+    }
+
     const response = await fetch(`/api/books/search?q=${encodeURIComponent(normalizedQuery)}&startIndex=0`);
     const payload = await response.json();
 
     if (!response.ok) {
-      setStatus(payload.error?.message ?? "Recherche indisponible.");
+      setStatus("La recherche ne repond pas pour le moment. Reessaie dans quelques instants.");
       return;
     }
 
@@ -95,7 +162,26 @@ export function SearchWorkspace() {
     setItems(payload.items);
     setHasMore(payload.hasMore);
     setNextStartIndex(payload.nextStartIndex);
-    setStatus(payload.items.length ? "" : "Aucun resultat net. Tu peux ajouter le livre a la main.");
+    setStatus(payload.items.length ? "" : "Aucun livre trouve pour cette recherche. Tu peux l'ajouter manuellement.");
+  }
+
+  function selectSuggestion(book: Candidate) {
+    setQuery(book.title);
+    setLastQuery(book.title);
+    setItems([book]);
+    setHasMore(false);
+    setNextStartIndex(0);
+    setStatus("");
+    setSuggestions([]);
+    setShowSuggestions(false);
+    rememberSearch(book.title);
+  }
+
+  function clearSearchSuggestions() {
+    setQuery("");
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setIsSuggesting(false);
   }
 
   async function loadMore() {
@@ -111,7 +197,7 @@ export function SearchWorkspace() {
       const payload = await response.json();
 
       if (!response.ok) {
-        setStatus(payload.error?.message ?? "Impossible de charger plus de livres.");
+        setStatus("On n'a pas pu afficher plus de resultats. Reessaie dans un instant.");
         return;
       }
 
@@ -133,7 +219,7 @@ export function SearchWorkspace() {
     const payload = await response.json();
 
     if (!response.ok) {
-      throw new Error(payload.error?.message ?? "Impossible d'ajouter ce livre a ta bibliotheque.");
+      throw new Error("Ce livre n'a pas pu etre ajoute a ta bibliotheque.");
     }
 
     return payload;
@@ -142,6 +228,7 @@ export function SearchWorkspace() {
   async function persistBook(book: Candidate) {
     setSavingId(book.googleBooksVolumeId);
     setStatus("Ajout du livre a ta bibliotheque...");
+    setToast(null);
 
     const response = await fetch("/api/books", {
       method: "POST",
@@ -151,7 +238,8 @@ export function SearchWorkspace() {
     const payload = await response.json();
 
     if (!response.ok) {
-      setStatus(payload.error?.message ?? "Impossible d'ajouter le livre au catalogue.");
+      setStatus("");
+      setToast({ tone: "error", message: "Ce livre n'a pas pu etre ajoute. Reessaie." });
       setSavingId(null);
       return;
     }
@@ -165,9 +253,15 @@ export function SearchWorkspace() {
         thumbnailUrl: payload.thumbnailUrl
       });
       setSavedIds((current) => new Set(current).add(book.googleBooksVolumeId));
-      setStatus(`"${payload.title}" est dans ta bibliotheque, statut A lire.`);
+      setStatus("");
+      clearSearchSuggestions();
+      setToast({ tone: "success", message: `"${payload.title}" est dans ta bibliotheque.` });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Impossible d'ajouter ce livre a ta bibliotheque.");
+      setStatus("");
+      setToast({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Ce livre n'a pas pu etre ajoute a ta bibliotheque."
+      });
     } finally {
       setSavingId(null);
     }
@@ -175,7 +269,8 @@ export function SearchWorkspace() {
 
   async function createManual(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus("Creation du livre et ajout a ta bibliotheque...");
+    setStatus("Creation du livre...");
+    setToast(null);
 
     const response = await fetch("/api/books", {
       method: "POST",
@@ -194,7 +289,8 @@ export function SearchWorkspace() {
     const payload = await response.json();
 
     if (!response.ok) {
-      setStatus(payload.error?.message ?? "Impossible de creer le livre.");
+      setStatus("");
+      setToast({ tone: "error", message: "Le livre n'a pas pu etre cree. Verifie les champs." });
       return;
     }
 
@@ -214,9 +310,14 @@ export function SearchWorkspace() {
       setManualPageCount("");
       setManualLanguage("");
       setManualDescription("");
-      setStatus(`"${payload.title}" est dans ta bibliotheque, statut A lire.`);
+      setStatus("");
+      setToast({ tone: "success", message: `"${payload.title}" est cree et ajoute a ta bibliotheque.` });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Livre cree, mais impossible de l'ajouter a ta bibliotheque.");
+      setStatus("");
+      setToast({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Le livre est cree, mais il n'a pas pu etre ajoute a ta bibliotheque."
+      });
     }
   }
 
@@ -225,15 +326,50 @@ export function SearchWorkspace() {
       <div>
         <form onSubmit={search} className="rounded border border-line bg-panel/75 p-4 shadow-poster">
           <div className="flex gap-3">
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="h-12 flex-1 rounded border border-line bg-ink px-4 text-white outline-none transition placeholder:text-muted/45 focus:border-mint"
-              placeholder="Titre, auteur, ISBN..."
-            />
-            <button className="inline-flex h-12 items-center gap-2 rounded bg-mint px-5 font-black text-ink transition hover:bg-lime">
+            <div className="relative flex-1">
+              <input
+                ref={searchInputRef}
+                name="q"
+                value={query}
+                onChange={(event) => updateQuery(event.target.value)}
+                onInput={(event) => updateQuery(event.currentTarget.value)}
+                onFocus={() => setShowSuggestions(suggestions.length > 0)}
+                className="h-12 w-full rounded border border-line bg-ink px-4 text-white outline-none transition placeholder:text-muted/45 focus:border-mint"
+                placeholder="Titre, auteur, ISBN..."
+              />
+              {showSuggestions ? (
+                <div className="absolute left-0 right-0 top-14 z-20 max-h-80 overflow-y-auto rounded border border-line bg-ink shadow-2xl shadow-black/40">
+                  {suggestions.map((book) => (
+                    <button
+                      key={book.googleBooksVolumeId}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => selectSuggestion(book)}
+                      className="flex w-full items-center gap-3 border-b border-line px-3 py-2 text-left transition last:border-b-0 hover:bg-panel"
+                    >
+                      <div className="grid h-14 w-10 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft">
+                        {book.thumbnailUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Search size={15} className="text-muted" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="line-clamp-1 text-sm font-black text-paper">{book.title}</div>
+                        <div className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="submit"
+              className="inline-flex h-12 items-center gap-2 rounded bg-mint px-5 font-black text-ink transition hover:bg-lime"
+            >
               <Search size={18} />
-              Rechercher
+              {isSuggesting ? "Propositions..." : "Rechercher"}
             </button>
           </div>
           {history.length ? (
@@ -277,6 +413,7 @@ export function SearchWorkspace() {
         </form>
 
         {status ? <p className="mt-4 rounded border border-line bg-panelSoft px-4 py-3 text-sm text-muted">{status}</p> : null}
+        {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
 
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
           {items.map((book) => {

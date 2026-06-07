@@ -1,24 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
 import { RatingControl } from "@/components/reviews/RatingControl";
+import { Toast } from "@/components/ui/Toast";
 
 type ReviewComposerProps = {
   bookId: string;
+  hasUserReview?: boolean;
 };
 
-export function ReviewComposer({ bookId }: ReviewComposerProps) {
+export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposerProps) {
+  const router = useRouter();
   const [rating, setRating] = useState(4);
   const [body, setBody] = useState("");
   const [spoiler, setSpoiler] = useState(false);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   async function submitReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (hasUserReview) {
+      setToast({
+        tone: "info",
+        message: "Tu as deja une review sur ce livre. Utilise le bouton modifier sur ta review pour la mettre a jour."
+      });
+      return;
+    }
+
     setIsSaving(true);
-    setMessage("");
+    setToast(null);
 
     const response = await fetch("/api/reviews", {
       method: "POST",
@@ -27,7 +40,22 @@ export function ReviewComposer({ bookId }: ReviewComposerProps) {
     });
 
     setIsSaving(false);
-    setMessage(response.ok ? "Review enregistrée. Joli petit rituel accompli." : "Impossible d'enregistrer la review.");
+
+    if (!response.ok) {
+      setToast({
+        tone: response.status === 409 ? "info" : "error",
+        message:
+          response.status === 409
+            ? "Tu as deja publie une review pour ce livre. Tu peux modifier ta review existante."
+            : "La review n'a pas pu etre publiee. Reessaie dans un instant."
+      });
+      return;
+    }
+
+    setBody("");
+    setSpoiler(false);
+    setToast({ tone: "success", message: "Ta review est publiee." });
+    router.refresh();
   }
 
   return (
@@ -54,15 +82,20 @@ export function ReviewComposer({ bookId }: ReviewComposerProps) {
         </label>
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaving || hasUserReview}
           className="inline-flex items-center gap-2 rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-60"
         >
           <Send size={16} />
-          {isSaving ? "Publication..." : "Publier"}
+          {hasUserReview ? "Review deja publiee" : isSaving ? "Publication..." : "Publier"}
         </button>
       </div>
 
-      {message ? <p className="mt-3 text-sm text-mint">{message}</p> : null}
+      {hasUserReview ? (
+        <p className="mt-3 rounded border border-line bg-ink/55 px-3 py-2 text-sm text-muted">
+          Tu ne peux publier qu'une seule review par livre. Tu peux modifier ta review existante plus bas.
+        </p>
+      ) : null}
+      {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </form>
   );
 }
