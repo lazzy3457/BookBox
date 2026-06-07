@@ -10,18 +10,18 @@ export default async function TrendingPage() {
   return (
     <div>
       <SectionHeader
-        eyebrow="Découverte"
+        eyebrow="Decouverte"
         title="Livres tendance"
-        description="Score V1 sur 30 jours : lectures, envies de lire, reviews et réactions."
+        description="Les livres qui circulent le plus dans la communaute sur les 30 derniers jours."
       />
       <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {books.map((book) => (
-          <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="Tendance" variant="poster" />
+          <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="Tendance" showScore={false} variant="poster" />
         ))}
       </div>
       {!books.length ? (
         <div className="rounded border border-line bg-panel/65 p-8 text-sm text-muted">
-          Les tendances apparaîtront dès que la communauté ajoute et review des livres.
+          Les tendances apparaitront des que la communaute ajoute et review des livres.
         </div>
       ) : null}
     </div>

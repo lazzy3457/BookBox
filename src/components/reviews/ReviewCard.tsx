@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit3, Eye, MessageCircle, Send, ThumbsUp, Trash2, TriangleAlert } from "lucide-react";
@@ -22,7 +23,9 @@ type ReviewCardProps = {
     rating: number;
     body: string | null;
     spoiler: boolean;
+    userId?: string;
     userName: string;
+    userImage?: string | null;
     canManage: boolean;
     reactionsCount: number;
     comments: CommentView[];
@@ -48,6 +51,19 @@ export function ReviewCard({ review }: ReviewCardProps) {
   if (isDeleted) {
     return toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null;
   }
+
+  const userAvatar = (
+    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded bg-mint text-sm font-black text-ink">
+      {review.userImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={review.userImage} alt="" className="h-full w-full object-cover" />
+      ) : (
+        review.userName.slice(0, 1).toUpperCase()
+      )}
+    </span>
+  );
+
+  const userName = <span className="font-black text-paper">{review.userName}</span>;
 
   async function toggleReviewLike() {
     const response = await fetch(`/api/reviews/${review.id}/reactions`, {
@@ -214,10 +230,25 @@ export function ReviewCard({ review }: ReviewCardProps) {
   return (
     <article className="rounded border border-line bg-panel/82 p-5 shadow-poster">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="font-black text-paper">{review.userName}</div>
-          <div className="mt-2">
-            <StarRating value={rating} />
+        <div className="flex min-w-0 items-start gap-3">
+          {review.userId ? (
+            <Link href={`/profile/${review.userId}`} className="transition hover:opacity-85">
+              {userAvatar}
+            </Link>
+          ) : (
+            userAvatar
+          )}
+          <div className="min-w-0">
+            {review.userId ? (
+              <Link href={`/profile/${review.userId}`} className="transition hover:text-mint">
+                {userName}
+              </Link>
+            ) : (
+              userName
+            )}
+            <div className="mt-2">
+              <StarRating value={rating} />
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -2,6 +2,7 @@
 
 import { ReadingStatus } from "@prisma/client";
 import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Toast } from "@/components/ui/Toast";
 
@@ -18,6 +19,7 @@ const labels: Record<ReadingStatus, string> = {
 };
 
 export function LibraryActions({ bookId, initialStatus = null }: LibraryActionsProps) {
+  const router = useRouter();
   const [status, setCurrentStatus] = useState<ReadingStatus | null>(initialStatus);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
 
@@ -36,6 +38,7 @@ export function LibraryActions({ bookId, initialStatus = null }: LibraryActionsP
 
     setCurrentStatus(nextStatus);
     setToast({ tone: "success", message: `Statut mis a jour : ${labels[nextStatus]}.` });
+    router.refresh();
   }
 
   async function removeFromLibrary() {
@@ -51,6 +54,7 @@ export function LibraryActions({ bookId, initialStatus = null }: LibraryActionsP
 
     setCurrentStatus(null);
     setToast({ tone: "success", message: "Livre retire de ta bibliotheque." });
+    router.refresh();
   }
 
   return (

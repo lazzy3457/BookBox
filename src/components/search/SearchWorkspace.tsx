@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Clock, Plus, Search } from "lucide-react";
 import { BookCard } from "@/components/books/BookCard";
 import { Toast } from "@/components/ui/Toast";
@@ -26,6 +27,7 @@ type RecentBook = {
 };
 
 export function SearchWorkspace() {
+  const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [lastQuery, setLastQuery] = useState("");
   const [query, setQuery] = useState("");
@@ -64,6 +66,7 @@ export function SearchWorkspace() {
   const [manualPageCount, setManualPageCount] = useState("");
   const [manualLanguage, setManualLanguage] = useState("");
   const [manualDescription, setManualDescription] = useState("");
+  const [openingId, setOpeningId] = useState<string | null>(null);
 
   useEffect(() => {
     const normalizedQuery = query.trim();
@@ -225,11 +228,7 @@ export function SearchWorkspace() {
     return payload;
   }
 
-  async function persistBook(book: Candidate) {
-    setSavingId(book.googleBooksVolumeId);
-    setStatus("Ajout du livre a ta bibliotheque...");
-    setToast(null);
-
+  async function saveBook(book: Candidate) {
     const response = await fetch("/api/books", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -238,13 +237,44 @@ export function SearchWorkspace() {
     const payload = await response.json();
 
     if (!response.ok) {
-      setStatus("");
-      setToast({ tone: "error", message: "Ce livre n'a pas pu etre ajoute. Reessaie." });
-      setSavingId(null);
-      return;
+      throw new Error("Ce livre n'a pas pu etre ouvert. Reessaie.");
     }
 
+    return payload;
+  }
+
+  async function openBookPage(book: Candidate) {
+    setOpeningId(book.googleBooksVolumeId);
+    setToast(null);
+
     try {
+      const savedBook = await saveBook(book);
+      rememberBook({
+        id: savedBook.id,
+        title: savedBook.title,
+        authors: savedBook.authors,
+        thumbnailUrl: savedBook.thumbnailUrl
+      });
+      setSuggestions([]);
+      setShowSuggestions(false);
+      router.push(`/books/${savedBook.id}`);
+    } catch (error) {
+      setToast({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Ce livre n'a pas pu etre ouvert. Reessaie."
+      });
+    } finally {
+      setOpeningId(null);
+    }
+  }
+
+  async function persistBook(book: Candidate) {
+    setSavingId(book.googleBooksVolumeId);
+    setStatus("Ajout du livre a ta bibliotheque...");
+    setToast(null);
+
+    try {
+      const payload = await saveBook(book);
       await addBookToLibrary(payload.id);
       rememberBook({
         id: payload.id,
@@ -372,44 +402,6 @@ export function SearchWorkspace() {
               {isSuggesting ? "Propositions..." : "Rechercher"}
             </button>
           </div>
-          {history.length ? (
-            <div className="mt-4 border-t border-line pt-3">
-              <div className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-muted">
-                <Clock size={13} />
-                Historique de recherche
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {history.map((entry) => (
-                  <button
-                    key={entry}
-                    type="button"
-                    onClick={() => setQuery(entry)}
-                    className="rounded border border-line bg-ink px-3 py-1.5 text-xs font-bold text-muted transition hover:border-mint hover:text-paper"
-                  >
-                    {entry}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {recentBooks.length ? (
-            <div className="mt-4 border-t border-line pt-3">
-              <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-muted">5 derniers livres ajoutes</div>
-              <div className="grid grid-cols-5 gap-3">
-                {recentBooks.map((book) => (
-                  <Link key={book.id} href={`/books/${book.id}`} className="group">
-                    <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panelSoft shadow-poster transition group-hover:border-mint">
-                      {book.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                      ) : null}
-                    </div>
-                    <div className="mt-2 line-clamp-2 text-[11px] font-black leading-tight text-paper">{book.title}</div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </form>
 
         {status ? <p className="mt-4 rounded border border-line bg-panelSoft px-4 py-3 text-sm text-muted">{status}</p> : null}
@@ -422,7 +414,14 @@ export function SearchWorkspace() {
 
             return (
               <div key={book.googleBooksVolumeId} className="relative">
-                <BookCard book={book} variant="poster" />
+                <button
+                  type="button"
+                  onClick={() => openBookPage(book)}
+                  disabled={openingId === book.googleBooksVolumeId}
+                  className="block w-full text-left disabled:cursor-wait disabled:opacity-70"
+                >
+                  <BookCard book={book} variant="poster" />
+                </button>
                 <button
                   onClick={() => persistBook(book)}
                   disabled={isSaving || isSaved}
@@ -445,6 +444,46 @@ export function SearchWorkspace() {
             >
               {loadingMore ? "Chargement..." : "Afficher plus"}
             </button>
+          </div>
+        ) : null}
+
+        {history.length ? (
+          <div className="mt-6 rounded border border-line bg-panel/75 p-4">
+            <div className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-muted">
+              <Clock size={13} />
+              Historique de recherche
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {history.map((entry) => (
+                <button
+                  key={entry}
+                  type="button"
+                  onClick={() => setQuery(entry)}
+                  className="rounded border border-line bg-ink px-3 py-1.5 text-xs font-bold text-muted transition hover:border-mint hover:text-paper"
+                >
+                  {entry}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {recentBooks.length ? (
+          <div className="mt-4 rounded border border-line bg-panel/75 p-4">
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-muted">5 derniers livres ajoutes</div>
+            <div className="grid grid-cols-5 gap-3">
+              {recentBooks.map((book) => (
+                <Link key={book.id} href={`/books/${book.id}`} className="group">
+                  <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panelSoft shadow-poster transition group-hover:border-mint">
+                    {book.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="mt-2 line-clamp-2 text-[11px] font-black leading-tight text-paper">{book.title}</div>
+                </Link>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>

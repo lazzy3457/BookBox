@@ -10,7 +10,10 @@ type Review = {
   rating: number;
   body: string | null;
   spoiler: boolean;
+  userId?: string;
   userName: string;
+  userImage?: string | null;
+  canManage?: boolean;
   reactionsCount: number;
   bookTitle: string;
   bookId: string;
@@ -18,7 +21,9 @@ type Review = {
     id: string;
     body: string;
     userName: string;
+    canManage?: boolean;
     createdAt: string;
+    likesCount?: number;
   }>;
 };
 
@@ -41,7 +46,17 @@ export function ListReviews({ reviews }: { reviews: Review[] }) {
             <span className="text-muted/50">↳</span>
             {review.bookTitle}
           </Link>
-          <ReviewCard review={review} />
+          <ReviewCard
+            review={{
+              ...review,
+              canManage: review.canManage ?? false,
+              comments: review.comments.map((comment) => ({
+                ...comment,
+                canManage: comment.canManage ?? false,
+                likesCount: comment.likesCount ?? 0
+              }))
+            }}
+          />
         </div>
       ))}
 
