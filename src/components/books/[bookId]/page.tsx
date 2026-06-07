@@ -96,13 +96,18 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     rating: review.rating,
                     body: review.body,
                     spoiler: review.spoiler,
+                    userId: review.userId,
                     userName: review.user.name ?? "Lecteur BooksBox",
+                    userImage: review.user.image,
+                    canManage: review.userId === session?.user?.id,
                     reactionsCount: review.reactions.length,
                     comments: review.comments.map((comment) => ({
                       id: comment.id,
                       body: comment.body,
                       userName: comment.user.name ?? "Lecteur BooksBox",
+                      canManage: comment.userId === session?.user?.id,
                       createdAt: comment.createdAt.toISOString(),
+                      likesCount: comment.likes.length
                     })),
                   }}
                 />
