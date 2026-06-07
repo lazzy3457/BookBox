@@ -4,6 +4,7 @@ import { ReadingStatus } from "@prisma/client";
 import { BookOpen, Calendar, FileText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { Toast } from "@/components/ui/Toast";
 
 type LibraryItem = {
   id: string;
@@ -49,15 +50,21 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
   const [libraryItems, setLibraryItems] = useState(items);
   const [sortKey, setSortKey] = useState<SortKey>("recent");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
 
-  async function removeFromLibrary(bookId: string) {
+  async function removeFromLibrary(bookId: string, title: string) {
+    setToast(null);
     const response = await fetch(`/api/library?bookId=${encodeURIComponent(bookId)}`, {
       method: "DELETE"
     });
 
     if (response.ok) {
       setLibraryItems((current) => current.filter((item) => item.book.id !== bookId));
+      setToast({ tone: "success", message: `"${title}" a ete retire de ta bibliotheque.` });
+      return;
     }
+
+    setToast({ tone: "error", message: "Ce livre n'a pas pu etre retire de ta bibliotheque." });
   }
 
   const visibleItems = libraryItems
@@ -134,7 +141,7 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
             </Link>
             <button
               type="button"
-              onClick={() => removeFromLibrary(item.book.id)}
+              onClick={() => removeFromLibrary(item.book.id, item.book.title)}
               className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-ink/85 text-muted shadow-poster transition hover:bg-coral hover:text-white"
               title="Retirer de ma bibliotheque"
             >
@@ -171,6 +178,7 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
           Aucun livre ne correspond a ce filtre.
         </div>
       ) : null}
+      {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </div>
   );
 }

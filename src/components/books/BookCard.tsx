@@ -17,10 +17,11 @@ type BookCardProps = {
   href?: string;
   badge?: string;
   compact?: boolean;
+  showScore?: boolean;
   variant?: "poster" | "row";
 };
 
-export function BookCard({ book, href, badge, compact, variant = "row" }: BookCardProps) {
+export function BookCard({ book, href, badge, compact, showScore = true, variant = "row" }: BookCardProps) {
   const poster = (
     <div className="group">
       <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panel shadow-poster transition group-hover:-translate-y-1 group-hover:border-mint/70">
@@ -41,7 +42,7 @@ export function BookCard({ book, href, badge, compact, variant = "row" }: BookCa
         {badge ? <div className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-mint">{badge}</div> : null}
         <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper">{book.title}</h3>
         <p className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
-        {typeof book.score === "number" ? (
+        {showScore && typeof book.score === "number" ? (
           <div className="mt-2 inline-flex rounded bg-amber/15 px-2 py-1 text-xs font-black text-amber">
             Score {book.score}
           </div>
@@ -49,7 +50,7 @@ export function BookCard({ book, href, badge, compact, variant = "row" }: BookCa
         {typeof book.averageRating === "number" ? (
           <div className="mt-2 flex items-center gap-2">
             <StarRating value={Math.round(book.averageRating)} />
-            <span className="text-[11px] font-bold text-muted">{book.averageRating.toFixed(1)}/5</span>
+            <span className="text-[11px] font-bold text-muted">Moyenne {book.averageRating.toFixed(1)}/5</span>
           </div>
         ) : null}
       </div>
@@ -72,7 +73,7 @@ export function BookCard({ book, href, badge, compact, variant = "row" }: BookCa
           <h3 className="line-clamp-2 text-lg font-black leading-tight text-paper">{book.title}</h3>
           <p className="mt-2 line-clamp-2 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
           {book.publishedDate ? <p className="mt-3 text-xs text-muted/70">{book.publishedDate}</p> : null}
-          {typeof book.score === "number" ? (
+          {showScore && typeof book.score === "number" ? (
             <div className="mt-4 inline-flex rounded bg-amber/15 px-2 py-1 text-xs font-bold text-amber">
               Score {book.score}
             </div>
@@ -80,7 +81,7 @@ export function BookCard({ book, href, badge, compact, variant = "row" }: BookCa
           {typeof book.averageRating === "number" ? (
             <div className="mt-3 flex items-center gap-2">
               <StarRating value={Math.round(book.averageRating)} />
-              <span className="text-xs font-bold text-muted">{book.averageRating.toFixed(1)}/5</span>
+              <span className="text-xs font-bold text-muted">Moyenne {book.averageRating.toFixed(1)}/5</span>
             </div>
           ) : null}
         </div>

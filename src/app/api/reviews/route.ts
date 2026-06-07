@@ -1,26 +1,25 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
-import { apiError } from "@/server/http/errors";
+import { apiError, conflict } from "@/server/http/errors";
 import { reviewMutationSchema } from "@/server/validation/reviews";
 
 export async function POST(request: Request) {
   try {
     const userId = await requireCurrentUserId();
     const input = reviewMutationSchema.parse(await request.json());
-    const review = await prisma.review.upsert({
+    const existingReview = await prisma.review.findUnique({
       where: {
-        userId_bookId: {
-          userId,
-          bookId: input.bookId
-        }
-      },
-      update: {
-        rating: input.rating,
-        body: input.body,
-        spoiler: input.spoiler
-      },
-      create: {
+        userId_bookId: { userId, bookId: input.bookId }
+      }
+    });
+
+    if (existingReview) {
+      throw conflict("Tu as deja publie une review pour ce livre. Tu peux modifier ta review existante.", "REVIEW_ALREADY_EXISTS");
+    }
+
+    const review = await prisma.review.create({
+      data: {
         userId,
         bookId: input.bookId,
         rating: input.rating,

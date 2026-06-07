@@ -28,7 +28,7 @@ export function CommunityReaderSearch({ initialReaders, canFollow }: CommunityRe
     if (normalizedQuery.length < 2) {
       setHasSearched(false);
       setResults(initialReaders);
-      setStatus("Entre au moins 2 caracteres pour trouver un lecteur.");
+      setStatus("Entre au moins 2 caracteres pour chercher un lecteur.");
       return;
     }
 
@@ -40,13 +40,13 @@ export function CommunityReaderSearch({ initialReaders, canFollow }: CommunityRe
       const payload = (await response.json()) as SearchPayload & { error?: { message?: string } };
 
       if (!response.ok) {
-        setStatus(payload.error?.message ?? "Impossible de rechercher des lecteurs.");
+        setStatus("La recherche de lecteurs ne repond pas pour le moment.");
         return;
       }
 
       setHasSearched(true);
       setResults(payload.readers);
-      setStatus(payload.readers.length ? "" : "Aucun lecteur ne correspond a cette recherche.");
+      setStatus(payload.readers.length ? "" : "Aucun lecteur trouve avec cette recherche.");
     } finally {
       setIsSearching(false);
     }

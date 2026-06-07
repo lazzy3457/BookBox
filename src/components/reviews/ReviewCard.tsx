@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Edit3, Eye, MessageCircle, Send, ThumbsUp, Trash2, TriangleAlert } from "lucide-react";
 import { RatingControl } from "@/components/reviews/RatingControl";
 import { StarRating } from "@/components/reviews/StarRating";
+import { Toast } from "@/components/ui/Toast";
 
 type CommentView = {
   id: string;
@@ -28,6 +30,7 @@ type ReviewCardProps = {
 };
 
 export function ReviewCard({ review }: ReviewCardProps) {
+  const router = useRouter();
   const [isDeleted, setIsDeleted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(!review.spoiler);
   const [isEditing, setIsEditing] = useState(false);
@@ -39,11 +42,11 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState("");
   const [body, setBody] = useState("");
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   if (isDeleted) {
-    return null;
+    return toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null;
   }
 
   async function toggleReviewLike() {
@@ -55,11 +58,13 @@ export function ReviewCard({ review }: ReviewCardProps) {
     const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de liker cette review.");
+      setToast({ tone: "error", message: "Ton like n'a pas ete pris en compte. Reessaie." });
       return;
     }
 
     setLikesCount((current) => Math.max(0, current + (payload.liked ? 1 : -1)));
+    setToast({ tone: "success", message: payload.liked ? "Review ajoutee a tes likes." : "Like retire." });
+    router.refresh();
   }
 
   async function toggleCommentLike(commentId: string) {
@@ -69,7 +74,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de liker ce commentaire.");
+      setToast({ tone: "error", message: "Ton like n'a pas ete pris en compte. Reessaie." });
       return;
     }
 
@@ -80,6 +85,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
           : comment
       )
     );
+    setToast({ tone: "success", message: payload.liked ? "Commentaire aime." : "Like retire." });
+    router.refresh();
   }
 
   function startEditComment(comment: CommentView) {
@@ -88,7 +95,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   }
 
   async function saveComment(commentId: string) {
-    setMessage("");
+    setToast(null);
     const response = await fetch(`/api/comments/${commentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -97,7 +104,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de modifier ce commentaire.");
+      setToast({ tone: "error", message: "Le commentaire n'a pas pu etre modifie." });
       return;
     }
 
@@ -106,26 +113,29 @@ export function ReviewCard({ review }: ReviewCardProps) {
     );
     setEditingCommentId(null);
     setEditingCommentBody("");
+    setToast({ tone: "success", message: "Commentaire modifie." });
+    router.refresh();
   }
 
   async function deleteComment(commentId: string) {
-    setMessage("");
+    setToast(null);
     const response = await fetch(`/api/comments/${commentId}`, {
       method: "DELETE"
     });
-    const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de supprimer ce commentaire.");
+      setToast({ tone: "error", message: "Le commentaire n'a pas pu etre supprime." });
       return;
     }
 
     setComments((current) => current.filter((comment) => comment.id !== commentId));
+    setToast({ tone: "success", message: "Commentaire supprime." });
+    router.refresh();
   }
 
   async function saveReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
+    setToast(null);
     setIsSaving(true);
 
     const response = await fetch(`/api/reviews/${review.id}`, {
@@ -133,30 +143,32 @@ export function ReviewCard({ review }: ReviewCardProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating, body: reviewBody || undefined, spoiler })
     });
-    const payload = await response.json();
 
     setIsSaving(false);
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de modifier cette review.");
+      setToast({ tone: "error", message: "Ta review n'a pas pu etre modifiee." });
       return;
     }
 
     setIsEditing(false);
     setIsRevealed(!spoiler);
+    setToast({ tone: "success", message: "Ta review a ete mise a jour." });
+    router.refresh();
   }
 
   async function deleteReview() {
-    setMessage("");
+    setToast(null);
     const response = await fetch(`/api/reviews/${review.id}`, { method: "DELETE" });
-    const payload = await response.json();
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible de supprimer cette review.");
+      setToast({ tone: "error", message: "Ta review n'a pas pu etre supprimee." });
       return;
     }
 
     setIsDeleted(true);
+    setToast({ tone: "success", message: "Review supprimee." });
+    router.refresh();
   }
 
   async function submitComment(event: React.FormEvent<HTMLFormElement>) {
@@ -167,7 +179,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     }
 
     setIsSaving(true);
-    setMessage("");
+    setToast(null);
 
     const response = await fetch(`/api/reviews/${review.id}/comments`, {
       method: "POST",
@@ -179,7 +191,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     setIsSaving(false);
 
     if (!response.ok) {
-      setMessage(payload.error?.message ?? "Impossible d'ajouter le commentaire.");
+      setToast({ tone: "error", message: "Ton commentaire n'a pas pu etre publie." });
       return;
     }
 
@@ -195,6 +207,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
       }
     ]);
     setBody("");
+    setToast({ tone: "success", message: "Commentaire publie." });
+    router.refresh();
   }
 
   return (
@@ -367,7 +381,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </button>
       </form>
 
-      {message ? <p className="mt-3 text-sm text-coral">{message}</p> : null}
+      {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </article>
   );
 }

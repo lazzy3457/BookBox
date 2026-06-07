@@ -73,7 +73,7 @@ export default async function HomePage() {
         {trending.length ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
             {trending.slice(0, 8).map((book) => (
-              <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="Hot" variant="poster" />
+              <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="Hot" showScore={false} variant="poster" />
             ))}
           </div>
         ) : (
@@ -126,7 +126,7 @@ export default async function HomePage() {
           <div className="space-y-4">
             {trending.length ? (
               trending.slice(0, 4).map((book) => (
-                <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="30 jours" compact />
+                <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="30 jours" compact showScore={false} />
               ))
             ) : (
               <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">

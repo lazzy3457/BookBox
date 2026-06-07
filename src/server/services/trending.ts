@@ -15,7 +15,6 @@ export async function getTrendingBooks() {
           }
         },
         reviews: {
-          where: { createdAt: { gte: since } },
           include: { reactions: true }
         }
       },
@@ -26,8 +25,9 @@ export async function getTrendingBooks() {
       .map((book) => {
         const readScore = book.libraries.filter((entry) => entry.status === ReadingStatus.READ).length * 3;
         const toReadScore = book.libraries.filter((entry) => entry.status === ReadingStatus.TO_READ).length * 2;
-        const reviewScore = book.reviews.length * 4;
-        const reactionScore = book.reviews.reduce((total, review) => total + review.reactions.length, 0);
+        const recentReviews = book.reviews.filter((review) => review.createdAt >= since);
+        const reviewScore = recentReviews.length * 4;
+        const reactionScore = recentReviews.reduce((total, review) => total + review.reactions.length, 0);
 
         return {
           ...book,

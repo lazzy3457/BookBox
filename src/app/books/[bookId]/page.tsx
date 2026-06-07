@@ -32,6 +32,9 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   const currentLibraryEntry = session?.user?.id
     ? book.libraries.find((entry) => entry.userId === session.user?.id)
     : null;
+  const currentUserReview = session?.user?.id
+    ? book.reviews.find((review) => review.userId === session.user?.id)
+    : null;
 
   return (
     <div>
@@ -90,7 +93,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         </aside>
 
         <section className="space-y-6">
-          <ReviewComposer bookId={book.id} />
+          <ReviewComposer bookId={book.id} hasUserReview={Boolean(currentUserReview)} />
           <div>
             <h2 className="mb-4 text-xl font-black text-paper">Reviews</h2>
             <div className="space-y-4">

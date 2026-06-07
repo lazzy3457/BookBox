@@ -55,3 +55,13 @@ select {
 .cover-sheen:hover::after {
   transform: translateX(45%) rotate(18deg);
 }
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
