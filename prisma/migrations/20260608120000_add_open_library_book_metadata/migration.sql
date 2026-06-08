@@ -1,0 +1,5 @@
+ALTER TABLE "Book" ADD COLUMN "openLibraryKey" TEXT;
+ALTER TABLE "Book" ADD COLUMN "isbn10" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Book" ADD COLUMN "isbn13" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+
+CREATE UNIQUE INDEX "Book_openLibraryKey_key" ON "Book"("openLibraryKey");

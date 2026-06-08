@@ -7,7 +7,7 @@ export default function SearchPage() {
       <SectionHeader
         eyebrow="Catalogue"
         title="Recherche et ajout de livres"
-        description="Cherche dans Google Books côté serveur, puis ajoute un résultat au catalogue ou crée un livre manuel."
+        description="Cherche dans Google Books et Open Library, compare les editions, puis ajoute le bon livre a ta bibliotheque."
       />
       <SearchWorkspace />
     </div>

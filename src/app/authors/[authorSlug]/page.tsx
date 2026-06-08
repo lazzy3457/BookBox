@@ -4,8 +4,9 @@ import { BookOpen, MessageSquareText, Star, UserRound, UsersRound } from "lucide
 import { prisma } from "@/server/db/prisma";
 import { slugifyAuthor } from "@/lib/authors";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { BookCard } from "@/components/books/BookCard";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
+import { AuthorBookshelf } from "@/components/authors/AuthorBookshelf";
+import { AuthorExternalEditions } from "@/components/authors/AuthorExternalEditions";
 import { StarRating } from "@/components/reviews/StarRating";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +83,11 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
 
   const authorSummary = await getAuthorSummary(authorName);
   const mappedBooks = books.map((book) => ({
-    ...book,
+    id: book.id,
+    title: book.title,
+    authors: book.authors,
+    thumbnailUrl: book.thumbnailUrl,
+    publishedDate: book.publishedDate,
     averageRating: book.reviews.length
       ? book.reviews.reduce((total, review) => total + review.rating, 0) / book.reviews.length
       : null
@@ -162,13 +167,22 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         ) : null}
       </section>
 
-      <div className="grid gap-8 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section>
-          <SectionHeader eyebrow="Bibliographie" title="Livres dans BooksBox" />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
-            {mappedBooks.map((book) => (
-              <BookCard key={book.id} book={book} href={`/books/${book.id}`} variant="poster" showScore={false} />
-            ))}
+          <SectionHeader
+            eyebrow="BooksBox"
+            title="Livres dans le catalogue"
+            description="Les livres deja presents dans BooksBox, avec les notes et lectures de la communaute."
+          />
+          <AuthorBookshelf books={mappedBooks} />
+
+          <div className="mt-10">
+            <SectionHeader
+              eyebrow="Sources externes"
+              title="Autres livres et editions trouvees"
+              description="Editions Google Books et Open Library, paginees et importables une par une."
+            />
+            <AuthorExternalEditions authorSlug={authorSlug} />
           </div>
         </section>
 
