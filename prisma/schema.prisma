@@ -81,6 +81,9 @@ model VerificationToken {
 model Book {
   id                  String   @id @default(cuid())
   googleBooksVolumeId String?  @unique
+  openLibraryKey      String?  @unique
+  isbn10              String[] @default([])
+  isbn13              String[] @default([])
   title               String
   authors             String[]
   description         String?
