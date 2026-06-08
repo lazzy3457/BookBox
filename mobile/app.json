@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "BookBox",
+    "slug": "bookbox-mobile",
+    "scheme": "bookbox",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true
+    }
+  }
+}

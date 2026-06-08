@@ -1,23 +1,22 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
+import { getCurrentUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 
 export async function GET(
-  _req: Request,
+  request: Request,
   { params }: { params: Promise<{ bookId: string }> }
 ) {
   const { bookId } = await params;
-  const session = await getServerSession(authOptions);
+  const userId = await getCurrentUserId(request);
 
-  if (!session?.user?.id) {
+  if (!userId) {
     return NextResponse.json([], { status: 200 });
   }
 
   const entries = await prisma.bookListEntry.findMany({
     where: {
       bookId,
-      list: { userId: session.user.id },
+      list: { userId },
     },
     select: { listId: true },
   });

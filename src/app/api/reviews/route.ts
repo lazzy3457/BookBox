@@ -6,7 +6,7 @@ import { reviewMutationSchema } from "@/server/validation/reviews";
 
 export async function POST(request: Request) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const input = reviewMutationSchema.parse(await request.json());
     const existingReview = await prisma.review.findUnique({
       where: {

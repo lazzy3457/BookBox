@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
-import { authOptions } from "@/server/auth/options";
+import { getCurrentUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { apiError } from "@/server/http/errors";
 
@@ -11,8 +10,7 @@ const userSearchSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const currentUserId = session?.user?.id;
+    const currentUserId = await getCurrentUserId(request);
     const { searchParams } = new URL(request.url);
     const { q } = userSearchSchema.parse({ q: searchParams.get("q") ?? "" });
 

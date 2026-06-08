@@ -6,7 +6,7 @@ import { commentMutationSchema } from "@/server/validation/reviews";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ commentId: string }> }) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const { commentId } = await params;
     const input = commentMutationSchema.pick({ body: true }).parse(await request.json());
     const existing = await prisma.reviewComment.findUnique({ where: { id: commentId } });
@@ -31,9 +31,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ co
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ commentId: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ commentId: string }> }) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const { commentId } = await params;
     const existing = await prisma.reviewComment.findUnique({ where: { id: commentId } });
 
