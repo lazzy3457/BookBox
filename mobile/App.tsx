@@ -18,6 +18,7 @@ import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { PublicProfileScreen } from "./src/screens/PublicProfileScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
 import { SearchScreen } from "./src/screens/SearchScreen";
+import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { colors } from "./src/theme";
 import type { AuthStackParamList, MainTabParamList, RootStackParamList } from "./src/types";
 
@@ -40,8 +41,12 @@ function AuthNavigator() {
   );
 }
 
-function TabLabel({ label }: { label: string }) {
-  return <Text style={{ color: colors.paper, fontSize: 11, fontWeight: "900" }}>{label}</Text>;
+function TabLabel({ label, focused }: { label: string; focused: boolean }) {
+  return <Text style={{ color: focused ? colors.mint : colors.muted, fontSize: 11, fontWeight: "900" }}>{label}</Text>;
+}
+
+function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
+  return <Text style={{ color: focused ? colors.mint : colors.muted, fontSize: 21, fontWeight: "900" }}>{icon}</Text>;
 }
 
 function MainNavigator() {
@@ -58,11 +63,51 @@ function MainNavigator() {
         }
       }}
     >
-      <MainTabs.Screen component={HomeScreen} name="Home" options={{ tabBarLabel: () => <TabLabel label="Accueil" />, title: "Accueil" }} />
-      <MainTabs.Screen component={SearchScreen} name="Search" options={{ tabBarLabel: () => <TabLabel label="Recherche" />, title: "Recherche" }} />
-      <MainTabs.Screen component={LibraryScreen} name="Library" options={{ tabBarLabel: () => <TabLabel label="Biblio" />, title: "Bibliotheque" }} />
-      <MainTabs.Screen component={CommunityScreen} name="Community" options={{ tabBarLabel: () => <TabLabel label="Commu" />, title: "Communaute" }} />
-      <MainTabs.Screen component={ProfileScreen} name="Profile" options={{ tabBarLabel: () => <TabLabel label="Profil" />, title: "Profil" }} />
+      <MainTabs.Screen
+        component={HomeScreen}
+        name="Home"
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="⌂" />,
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Accueil" />,
+          title: "Accueil"
+        }}
+      />
+      <MainTabs.Screen
+        component={SearchScreen}
+        name="Search"
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="⌕" />,
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Recherche" />,
+          title: "Recherche"
+        }}
+      />
+      <MainTabs.Screen
+        component={LibraryScreen}
+        name="Library"
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="▤" />,
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Biblio" />,
+          title: "Bibliotheque"
+        }}
+      />
+      <MainTabs.Screen
+        component={CommunityScreen}
+        name="Community"
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="◎" />,
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Commu" />,
+          title: "Communaute"
+        }}
+      />
+      <MainTabs.Screen
+        component={ProfileScreen}
+        name="Profile"
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="◉" />,
+          tabBarLabel: ({ focused }) => <TabLabel focused={focused} label="Profil" />,
+          title: "Profil"
+        }}
+      />
     </MainTabs.Navigator>
   );
 }
@@ -89,6 +134,7 @@ function RootNavigator() {
           <RootStack.Screen component={AuthorDetailsScreen} name="AuthorDetails" options={{ title: "Auteur" }} />
           <RootStack.Screen component={ListDetailsScreen} name="ListDetails" options={{ title: "Liste" }} />
           <RootStack.Screen component={PublicProfileScreen} name="PublicProfile" options={{ title: "Lecteur" }} />
+          <RootStack.Screen component={SettingsScreen} name="Settings" options={{ title: "Parametres" }} />
         </>
       ) : (
         <RootStack.Screen component={AuthNavigator} name="Auth" options={{ headerShown: false }} />

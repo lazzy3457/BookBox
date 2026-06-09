@@ -1,6 +1,5 @@
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-console.log("[BookBox API] EXPO_PUBLIC_API_URL =", API_URL ?? "<undefined>");
+export const apiBaseUrl = API_URL ?? "Non configuree";
 
 type ApiRequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
@@ -29,8 +28,6 @@ export function apiUrl(path: string) {
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}) {
   const url = apiUrl(path);
-
-  console.log("[BookBox API] request =", url);
 
   const response = await fetch(url, {
     method: options.method ?? "GET",

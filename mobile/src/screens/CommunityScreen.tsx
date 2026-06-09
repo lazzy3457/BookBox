@@ -1,125 +1,120 @@
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../auth/AuthContext";
 import { apiRequest } from "../api/client";
-import { BookRow } from "../components/BookRow";
-import { EmptyState, LoadingState, Screen, SectionTitle } from "../components/Screen";
-import { colors, spacing } from "../theme";
-import type { Book, RootStackParamList, User } from "../types";
-
-type Reader = User & {
-  isFollowing: boolean;
-  counts: { library: number; reviews: number; followers: number };
-};
+import { BookHorizontalCard, ReviewCard, UserCard } from "../components/Cards";
+import { FormInput } from "../components/Controls";
+import { EmptyState, ErrorState, LoadingSkeleton, Screen, SectionTitle } from "../components/Screen";
+import type { Book, Reader, Review, RootStackParamList } from "../types";
 
 export function CommunityScreen() {
   const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [readers, setReaders] = useState<Reader[]>([]);
   const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
+  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+
+  const load = useCallback(async (refreshing = false) => {
+    if (refreshing) setIsRefreshing(true);
+    else setIsLoading(true);
+    setError("");
+
+    try {
+      const payload = await apiRequest<{ readers: Reader[]; trendingBooks: Book[]; recentReviews: Review[] }>("/api/mobile/community", { token });
+      setReaders(payload.readers);
+      setTrendingBooks(payload.trendingBooks);
+      setRecentReviews(payload.recentReviews);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Communaute indisponible.");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {
-      let isMounted = true;
-      setIsLoading(true);
-      apiRequest<{ readers: Reader[]; trendingBooks: Book[] }>("/api/mobile/community", { token })
-        .then((payload) => {
-          if (!isMounted) return;
-          setReaders(payload.readers);
-          setTrendingBooks(payload.trendingBooks);
-        })
-        .finally(() => {
-          if (isMounted) setIsLoading(false);
-        });
-      return () => {
-        isMounted = false;
-      };
-    }, [token])
+      load();
+      return () => undefined;
+    }, [load])
   );
+
+  async function searchReaders() {
+    if (query.trim().length < 2) {
+      await load(true);
+      return;
+    }
+
+    setError("");
+    try {
+      const payload = await apiRequest<{ readers: Reader[] }>(`/api/users/search?q=${encodeURIComponent(query)}`, { token });
+      setReaders(payload.readers);
+    } catch (searchError) {
+      setError(searchError instanceof Error ? searchError.message : "Recherche impossible.");
+    }
+  }
 
   async function follow(userId: string) {
     await apiRequest("/api/follows", { method: "POST", token, body: { followingId: userId } });
     setReaders((current) => current.map((reader) => (reader.id === userId ? { ...reader, isFollowing: true } : reader)));
   }
 
-  if (isLoading) return <LoadingState />;
+  async function unfollow(userId: string) {
+    await apiRequest(`/api/follows?followingId=${encodeURIComponent(userId)}`, { method: "DELETE", token });
+    setReaders((current) => current.map((reader) => (reader.id === userId ? { ...reader, isFollowing: false } : reader)));
+  }
+
+  if (isLoading) {
+    return (
+      <Screen>
+        <SectionTitle eyebrow="Social" title="Communaute" />
+        <LoadingSkeleton rows={6} />
+      </Screen>
+    );
+  }
 
   return (
-    <Screen>
+    <Screen refreshing={isRefreshing} onRefresh={() => load(true)}>
       <SectionTitle eyebrow="Social" title="Communaute" />
+      <FormInput onChangeText={setQuery} placeholder="Chercher un lecteur" value={query} />
+      <BookHorizontalCard
+        book={{ id: "search", title: "Recherche lecteurs", authors: ["BookBox"], thumbnailUrl: null }}
+        actionLabel="Chercher"
+        detail="Trouve des personnes a suivre pour alimenter ton feed."
+        onAction={searchReaders}
+      />
+      {error ? <ErrorState detail={error} title="Communaute indisponible" /> : null}
       {readers.length ? (
         readers.map((reader) => (
-          <Pressable key={reader.id} onPress={() => navigation.navigate("PublicProfile", { userId: reader.id })} style={styles.reader}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{(reader.name ?? reader.username ?? "B").slice(0, 1).toUpperCase()}</Text>
-            </View>
-            <View style={styles.readerBody}>
-              <Text style={styles.readerName}>{reader.name ?? reader.username ?? "Lecteur BookBox"}</Text>
-              <Text style={styles.readerMeta}>
-                {reader.counts.library} livres - {reader.counts.reviews} reviews - {reader.counts.followers} followers
-              </Text>
-            </View>
-            <Pressable disabled={reader.isFollowing} onPress={() => follow(reader.id)} style={styles.followButton}>
-              <Text style={styles.followText}>{reader.isFollowing ? "Suivi" : "Suivre"}</Text>
-            </Pressable>
-          </Pressable>
+          <UserCard
+            key={reader.id}
+            reader={reader}
+            onFollow={() => (reader.isFollowing ? unfollow(reader.id) : follow(reader.id))}
+            onPress={() => navigation.navigate("PublicProfile", { userId: reader.id })}
+          />
         ))
       ) : (
         <EmptyState title="Aucun lecteur" />
       )}
 
+      <SectionTitle eyebrow="Reviews" title="Dernieres discussions" />
+      {recentReviews.length ? (
+        recentReviews.slice(0, 6).map((review) => (
+          <ReviewCard key={review.id} review={review} />
+        ))
+      ) : (
+        <EmptyState title="Aucune review recente" />
+      )}
+
       <SectionTitle eyebrow="Livres" title="Qui tournent" />
       {trendingBooks.slice(0, 6).map((book) => (
-        <BookRow key={book.id} book={book} badge="Commu" onPress={() => navigation.navigate("BookDetails", { bookId: book.id })} />
+        <BookHorizontalCard key={book.id} book={book} badge="Commu" onPress={() => navigation.navigate("BookDetails", { bookId: book.id })} />
       ))}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  reader: {
-    alignItems: "center",
-    backgroundColor: colors.panel,
-    borderColor: colors.line,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.md,
-    padding: spacing.md
-  },
-  avatar: {
-    alignItems: "center",
-    backgroundColor: colors.mint,
-    height: 44,
-    justifyContent: "center",
-    width: 44
-  },
-  avatarText: {
-    color: colors.ink,
-    fontWeight: "900"
-  },
-  readerBody: {
-    flex: 1
-  },
-  readerName: {
-    color: colors.paper,
-    fontWeight: "900"
-  },
-  readerMeta: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 3
-  },
-  followButton: {
-    backgroundColor: colors.mint,
-    paddingHorizontal: 10,
-    paddingVertical: 8
-  },
-  followText: {
-    color: colors.ink,
-    fontSize: 12,
-    fontWeight: "900"
-  }
-});

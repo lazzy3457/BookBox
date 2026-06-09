@@ -1,22 +1,30 @@
 import React from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
-import { colors } from "../theme";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { colors, radius } from "../theme";
 
 type PrimaryButtonProps = {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  isLoading?: boolean;
   tone?: "primary" | "ghost" | "danger";
+  compact?: boolean;
 };
 
-export function PrimaryButton({ label, onPress, disabled, tone = "primary" }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress, disabled, isLoading, tone = "primary", compact }: PrimaryButtonProps) {
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
-      style={[styles.button, styles[tone], disabled ? styles.disabled : null]}
+      disabled={disabled || isLoading}
+      style={[styles.button, compact ? styles.compact : null, styles[tone], disabled || isLoading ? styles.disabled : null]}
     >
-      <Text style={[styles.label, tone === "primary" ? styles.primaryLabel : styles.ghostLabel]}>{label}</Text>
+      {isLoading ? (
+        <ActivityIndicator color={tone === "primary" ? colors.ink : colors.paper} />
+      ) : (
+        <Text style={[styles.label, tone === "primary" ? styles.primaryLabel : tone === "danger" ? styles.dangerLabel : styles.ghostLabel]}>
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -25,8 +33,13 @@ const styles = StyleSheet.create({
   button: {
     alignItems: "center",
     borderWidth: 1,
+    borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 13
+  },
+  compact: {
+    paddingHorizontal: 12,
+    paddingVertical: 9
   },
   primary: {
     backgroundColor: colors.mint,
@@ -51,5 +64,8 @@ const styles = StyleSheet.create({
   },
   ghostLabel: {
     color: colors.paper
+  },
+  dangerLabel: {
+    color: colors.coral
   }
 });

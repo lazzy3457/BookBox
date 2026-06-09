@@ -46,8 +46,27 @@ export type Review = {
   spoiler: boolean;
   user?: User;
   book?: Book;
-  reactions?: unknown[];
-  comments?: unknown[];
+  reactions?: ReviewReaction[];
+  comments?: ReviewComment[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type ReviewReaction = {
+  id: string;
+  reviewId: string;
+  userId: string;
+  kind: ReactionKind;
+};
+
+export type ReviewComment = {
+  id: string;
+  reviewId?: string;
+  userId?: string;
+  body: string;
+  createdAt: string;
+  user?: User;
+  likes?: unknown[];
 };
 
 export type BookList = {
@@ -56,8 +75,20 @@ export type BookList = {
   description?: string | null;
   rating?: number | null;
   isPublic: boolean;
-  entries?: Array<{ id: string; bookId: string; note?: string | null; book: Book }>;
+  entries?: Array<{ id: string; bookId: string; note?: string | null; book: Book & { reviews?: Review[] } }>;
   _count?: { entries: number };
+};
+
+export type ActivityItem = {
+  id: string;
+  type: "review" | "library";
+  review?: Review & { book: Book; user: User };
+  entry?: LibraryItem & { user: User };
+};
+
+export type Reader = User & {
+  isFollowing: boolean;
+  counts: { library: number; reviews: number; followers: number };
 };
 
 export type RootStackParamList = {
@@ -67,6 +98,7 @@ export type RootStackParamList = {
   AuthorDetails: { authorSlug: string; authorName?: string };
   ListDetails: { listId: string };
   PublicProfile: { userId: string };
+  Settings: undefined;
 };
 
 export type AuthStackParamList = {

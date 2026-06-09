@@ -1,10 +1,11 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../auth/AuthContext";
+import { FormInput } from "../components/Controls";
 import { PrimaryButton } from "../components/PrimaryButton";
-import { Screen } from "../components/Screen";
-import { colors, spacing } from "../theme";
+import { ErrorState, Screen } from "../components/Screen";
+import { colors, radius, shadows, spacing } from "../theme";
 import type { AuthStackParamList } from "../types";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
@@ -31,28 +32,17 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <View style={styles.card}>
+      <View style={styles.hero}>
         <Text style={styles.brand}>BookBox</Text>
+        <Text style={styles.heroTitle}>Retrouve tes lectures, tes reviews et ton cercle.</Text>
+        <Text style={styles.heroText}>Une app sociale pour noter, classer et decouvrir des livres.</Text>
+      </View>
+      <View style={styles.card}>
         <Text style={styles.title}>Connexion</Text>
-        <TextInput
-          autoCapitalize="none"
-          keyboardType="email-address"
-          onChangeText={setEmail}
-          placeholder="Email"
-          placeholderTextColor={colors.muted}
-          style={styles.input}
-          value={email}
-        />
-        <TextInput
-          onChangeText={setPassword}
-          placeholder="Mot de passe"
-          placeholderTextColor={colors.muted}
-          secureTextEntry
-          style={styles.input}
-          value={password}
-        />
-        <PrimaryButton disabled={isSubmitting} label={isSubmitting ? "Connexion..." : "Se connecter"} onPress={submit} />
-        {message ? <Text style={styles.error}>{message}</Text> : null}
+        <FormInput keyboardType="email-address" onChangeText={setEmail} placeholder="Email" value={email} />
+        <FormInput onChangeText={setPassword} placeholder="Mot de passe" secureTextEntry value={password} />
+        <PrimaryButton isLoading={isSubmitting} label="Se connecter" onPress={submit} />
+        {message ? <ErrorState detail={message} title="Connexion impossible" /> : null}
         <PrimaryButton label="Creer un compte" onPress={() => navigation.navigate("Register")} tone="ghost" />
       </View>
     </Screen>
@@ -60,12 +50,28 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  hero: {
+    gap: spacing.sm,
+    paddingTop: spacing.xl
+  },
+  heroTitle: {
+    color: colors.paper,
+    fontSize: 36,
+    fontWeight: "900",
+    lineHeight: 40
+  },
+  heroText: {
+    color: colors.muted,
+    fontSize: 15,
+    lineHeight: 22
+  },
   card: {
+    ...shadows.card,
     backgroundColor: colors.panel,
     borderColor: colors.line,
+    borderRadius: radius.lg,
     borderWidth: 1,
     gap: spacing.md,
-    marginTop: 70,
     padding: spacing.lg
   },
   brand: {
@@ -79,17 +85,4 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "900"
   },
-  input: {
-    backgroundColor: colors.ink,
-    borderColor: colors.line,
-    borderWidth: 1,
-    color: colors.paper,
-    fontSize: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 13
-  },
-  error: {
-    color: colors.coral,
-    lineHeight: 20
-  }
 });
