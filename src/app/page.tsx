@@ -26,7 +26,7 @@ export default async function HomePage() {
           <div className="flex flex-col justify-between">
             <div>
               <div className="mb-4 inline-flex rounded bg-mint/12 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-mint">
-                BooksBox V1 desktop
+                BooksBox
               </div>
               <h1 className="max-w-4xl text-6xl font-black leading-[0.96] tracking-normal text-paper">
                 Ton carnet de lecture devient un mur de couvertures vivant.

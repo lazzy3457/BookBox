@@ -1,5 +1,5 @@
-import React from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+﻿import React from "react";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, radius, spacing, statusLabels } from "../theme";
 import type { ReadingStatus } from "../types";
 
@@ -44,7 +44,7 @@ export function RatingInput({ value, onChange }: { value: number; onChange: (val
     <View style={styles.ratingWrap}>
       {[1, 2, 3, 4, 5].map((rating) => (
         <Pressable key={rating} onPress={() => onChange(rating)} style={[styles.ratingButton, value >= rating ? styles.ratingActive : null]}>
-          <Text style={[styles.ratingText, value >= rating ? styles.ratingTextActive : null]}>★</Text>
+          <Text style={[styles.ratingText, value >= rating ? styles.ratingTextActive : null]}>{String.fromCharCode(9733)}</Text>
         </Pressable>
       ))}
     </View>
@@ -66,19 +66,37 @@ export function FormInput({
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address";
 }) {
+  const [passwordVisible, setPasswordVisible] = React.useState(false);
+  const isPassword = Boolean(secureTextEntry);
+
   return (
-    <TextInput
-      autoCapitalize={keyboardType === "email-address" ? "none" : undefined}
-      keyboardType={keyboardType}
-      multiline={multiline}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor={colors.subtle}
-      secureTextEntry={secureTextEntry}
-      style={[styles.input, multiline ? styles.multiline : null]}
-      textAlignVertical={multiline ? "top" : undefined}
-      value={value}
-    />
+    <View style={styles.inputWrap}>
+      <TextInput
+        autoCapitalize={keyboardType === "email-address" ? "none" : undefined}
+        keyboardType={keyboardType}
+        multiline={multiline}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.subtle}
+        secureTextEntry={isPassword && !passwordVisible}
+        style={[styles.input, multiline ? styles.multiline : null, isPassword ? styles.inputWithEye : null]}
+        textAlignVertical={multiline ? "top" : undefined}
+        value={value}
+      />
+      {isPassword ? (
+        <Pressable
+          accessibilityLabel={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          onPress={() => setPasswordVisible((current) => !current)}
+          style={styles.eyeButton}
+        >
+          <Image
+            resizeMode="contain"
+            source={passwordVisible ? require("../assets/icons/eye-open.png") : require("../assets/icons/eye-closed.png")}
+            style={styles.eyeImage}
+          />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -161,6 +179,9 @@ const styles = StyleSheet.create({
   ratingTextActive: {
     color: colors.ink
   },
+  inputWrap: {
+    justifyContent: "center"
+  },
   input: {
     backgroundColor: colors.panel,
     borderColor: colors.line,
@@ -171,7 +192,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 13
   },
+  inputWithEye: {
+    paddingRight: 54
+  },
+  eyeButton: {
+    alignItems: "center",
+    height: 44,
+    justifyContent: "center",
+    position: "absolute",
+    right: 6,
+    width: 44
+  },
+  eyeImage: {
+    height: 24,
+    tintColor: colors.mint,
+    width: 24
+  },
   multiline: {
     minHeight: 110
   }
 });
+
