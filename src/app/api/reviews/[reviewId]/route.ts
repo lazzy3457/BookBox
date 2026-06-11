@@ -6,7 +6,7 @@ import { reviewMutationSchema } from "@/server/validation/reviews";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ reviewId: string }> }) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const { reviewId } = await params;
     const input = reviewMutationSchema.omit({ bookId: true }).parse(await request.json());
 
@@ -32,9 +32,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ reviewId: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ reviewId: string }> }) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const { reviewId } = await params;
     const existing = await prisma.review.findUnique({ where: { id: reviewId } });
 

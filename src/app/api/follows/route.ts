@@ -10,7 +10,7 @@ const followSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const followerId = await requireCurrentUserId();
+    const followerId = await requireCurrentUserId(request);
     const { followingId } = followSchema.parse(await request.json());
 
     if (followerId === followingId) {
@@ -35,6 +35,29 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(follow, { status: 201 });
+  } catch (error) {
+    return apiError(error);
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const followerId = await requireCurrentUserId(request);
+    const { searchParams } = new URL(request.url);
+    const followingId = searchParams.get("followingId");
+
+    if (!followingId) {
+      throw Object.assign(new Error("followingId est obligatoire."), { status: 400, code: "FOLLOWING_ID_REQUIRED" });
+    }
+
+    await prisma.follow.deleteMany({
+      where: {
+        followerId,
+        followingId
+      }
+    });
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return apiError(error);
   }

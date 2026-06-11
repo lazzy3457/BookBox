@@ -4,9 +4,9 @@ import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError } from "@/server/http/errors";
 import { libraryMutationSchema } from "@/server/validation/library";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const items = await prisma.userBook.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
@@ -21,7 +21,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const input = libraryMutationSchema.parse(await request.json());
     const item = await prisma.userBook.upsert({
       where: {
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const { searchParams } = new URL(request.url);
     const bookId = searchParams.get("bookId");
 

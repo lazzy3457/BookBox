@@ -6,7 +6,7 @@ import { commentMutationSchema } from "@/server/validation/reviews";
 
 export async function POST(request: Request, { params }: { params: Promise<{ reviewId: string }> }) {
   try {
-    const userId = await requireCurrentUserId();
+    const userId = await requireCurrentUserId(request);
     const { reviewId } = await params;
     const input = commentMutationSchema.parse(await request.json());
     const comment = await prisma.reviewComment.create({
