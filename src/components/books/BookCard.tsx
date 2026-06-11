@@ -23,7 +23,7 @@ type BookCardProps = {
 
 export function BookCard({ book, href, badge, compact, showScore = true, variant = "row" }: BookCardProps) {
   const poster = (
-    <div className="group">
+    <div className="group min-w-0 max-w-full overflow-hidden">
       <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panel shadow-poster transition group-hover:-translate-y-1 group-hover:border-mint/70">
         {book.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -38,7 +38,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
           </div>
         )}
       </div>
-      <div className="mt-3">
+      <div className="mt-3 min-w-0">
         {badge ? <div className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-mint">{badge}</div> : null}
         <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper">{book.title}</h3>
         <p className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
@@ -48,7 +48,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
           </div>
         ) : null}
         {typeof book.averageRating === "number" ? (
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
             <StarRating value={Math.round(book.averageRating)} />
             <span className="text-[11px] font-bold text-muted">Moyenne {book.averageRating.toFixed(1)}/5</span>
           </div>
@@ -58,9 +58,9 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
   );
 
   const content = (
-    <div className="group h-full rounded border border-line bg-panel/92 p-4 transition hover:border-mint/60 hover:bg-panelSoft hover:shadow-glow">
-      <div className="flex gap-4">
-        <div className="cover-sheen grid h-36 w-24 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
+    <div className="group h-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/92 p-4 transition hover:border-mint/60 hover:bg-panelSoft hover:shadow-glow">
+      <div className="flex min-w-0 gap-3 sm:gap-4">
+        <div className="cover-sheen grid h-28 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster min-[360px]:h-32 min-[360px]:w-20 sm:h-36 sm:w-24">
           {book.thumbnailUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
@@ -70,7 +70,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
         </div>
         <div className="min-w-0 flex-1">
           {badge ? <div className="mb-2 inline-flex rounded bg-mint/10 px-2 py-1 text-xs font-black text-mint">{badge}</div> : null}
-          <h3 className="line-clamp-2 text-lg font-black leading-tight text-paper">{book.title}</h3>
+          <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper min-[360px]:text-base sm:text-lg">{book.title}</h3>
           <p className="mt-2 line-clamp-2 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
           {book.publishedDate ? <p className="mt-3 text-xs text-muted/70">{book.publishedDate}</p> : null}
           {showScore && typeof book.score === "number" ? (
@@ -79,7 +79,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
             </div>
           ) : null}
           {typeof book.averageRating === "number" ? (
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
               <StarRating value={Math.round(book.averageRating)} />
               <span className="text-xs font-bold text-muted">Moyenne {book.averageRating.toFixed(1)}/5</span>
             </div>
@@ -96,5 +96,5 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
     return body;
   }
 
-  return <Link href={href}>{body}</Link>;
+  return <Link href={href} className="block min-w-0 max-w-full overflow-hidden">{body}</Link>;
 }

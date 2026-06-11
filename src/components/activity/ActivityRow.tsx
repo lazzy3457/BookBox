@@ -13,7 +13,7 @@ export function ActivityRow({ type, userName, bookId, bookTitle, detail }: Activ
   const Icon = type === "review" ? MessageSquareText : BookMarked;
 
   return (
-    <div className="flex items-center gap-4 border-b border-line/70 bg-panel/30 px-1 py-4 transition hover:bg-panel/80">
+    <div className="flex w-full min-w-0 max-w-full items-center gap-3 overflow-hidden border-b border-line/70 bg-panel/30 px-1 py-4 transition hover:bg-panel/80 sm:gap-4">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded border border-line bg-panelSoft text-mint">
         <Icon size={18} />
       </div>

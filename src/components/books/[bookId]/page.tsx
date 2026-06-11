@@ -31,7 +31,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
   return (
     <div>
-      <section className="relative mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink p-6 shadow-poster">
+      <section className="relative mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink p-5 shadow-poster sm:p-6">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-mint via-sky to-coral" />
         <div className="grid gap-7 xl:grid-cols-[250px_1fr_320px]">
           <div className="cover-sheen grid aspect-[2/3] place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
@@ -44,7 +44,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </div>
           <div className="self-end">
             <div className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-mint">Fiche livre</div>
-            <h1 className="max-w-3xl text-5xl font-black leading-none text-paper">{book.title}</h1>
+            <h1 className="max-w-3xl text-3xl font-black leading-tight text-paper sm:text-4xl xl:text-5xl">{book.title}</h1>
             <p className="mt-4 text-lg font-bold text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
             {book.description ? <p className="mt-5 line-clamp-5 max-w-3xl leading-7 text-white/65">{book.description}</p> : null}
           </div>
@@ -63,7 +63,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
       <SectionHeader eyebrow="Détails" title="Métadonnées et discussions" description="Une fiche pensée comme une page média : information rapide, action directe, reviews sociales." />
 
-      <div className="grid gap-8 xl:grid-cols-[320px_1fr]">
+      <div className="grid gap-8 xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="space-y-4">
           <div className="rounded border border-line bg-panel/75 p-5">
             <div className="space-y-5 text-sm text-muted">

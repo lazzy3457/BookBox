@@ -53,17 +53,17 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const isOwnProfile = session?.user?.id === userId;
 
   return (
-    <div>
-      <section className="mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
+    <div className="min-w-0 overflow-hidden">
+      <section className="mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
         <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
-        <div className="flex items-end justify-between gap-6 px-7 pb-7">
-          <div className="flex items-end gap-6">
-            <div className="-mt-12 grid h-28 w-28 place-items-center rounded border-4 border-panel bg-ink text-4xl font-black text-mint">
+        <div className="grid min-w-0 gap-4 px-4 pb-5 sm:flex sm:items-end sm:justify-between sm:gap-6 sm:px-7 sm:pb-7">
+          <div className="grid min-w-0 gap-4 sm:flex sm:items-end sm:gap-6">
+            <div className="-mt-12 grid h-24 w-24 place-items-center rounded border-4 border-panel bg-ink text-3xl font-black text-mint sm:h-28 sm:w-28 sm:text-4xl">
               {(user.name ?? user.username ?? "B").slice(0, 1)}
             </div>
-            <div className="pb-1">
+            <div className="min-w-0 pb-1">
               <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
-              <h1 className="mt-2 text-4xl font-black text-paper">{user.name ?? user.username ?? "Lecteur BooksBox"}</h1>
+              <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{user.name ?? user.username ?? "Lecteur BooksBox"}</h1>
               <p className="mt-2 text-sm text-muted">
                 {user.username ? `@${user.username}` : "Lecteur de la communaute BooksBox"}
               </p>
@@ -79,7 +79,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       </section>
 
       <SectionHeader eyebrow="Stats" title="Activite" />
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-4">
         {[
           ["Livres", libraryCount],
           ["Reviews", reviewCount],
@@ -93,14 +93,14 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         ))}
       </div>
 
-      <section className="mt-9">
+      <section className="mt-9 min-w-0 overflow-hidden">
         <SectionHeader
           eyebrow="Bibliotheque"
           title="Derniers livres"
           description="Les derniers livres ajoutes ou mis a jour par ce lecteur."
         />
         {recentBooks.length ? (
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-10">
+          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-10">
             {recentBooks.map((entry) => (
               <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} badge={entry.status} variant="poster" />
             ))}
@@ -112,23 +112,23 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         )}
       </section>
 
-      <section className="mt-9">
+      <section className="mt-9 min-w-0 overflow-hidden">
         <SectionHeader
           eyebrow="Reviews"
           title="Dernieres reviews"
           description="Les derniers avis publies par ce lecteur."
         />
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
           {recentReviews.map((review) => (
-            <article key={review.id} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
-              <div className="flex gap-4">
+            <article key={review.id} className="rounded border border-line bg-panel/80 p-4 shadow-poster sm:p-5">
+              <div className="flex min-w-0 gap-3 sm:gap-4">
                 <Link href={`/books/${review.bookId}`} className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
                   {review.book.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                   ) : null}
                 </Link>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <Link href={`/books/${review.bookId}`} className="line-clamp-1 text-sm font-black text-paper">
                     {review.book.title}
                   </Link>

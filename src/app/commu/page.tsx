@@ -69,16 +69,16 @@ export default async function CommunityPage() {
   ];
 
   return (
-    <div>
+    <div className="min-w-0 overflow-hidden">
       <SectionHeader
         eyebrow="Social"
         title="Commu"
         description="Un hub pour trouver des lecteurs, lire les reviews recentes et voir les livres qui circulent dans la communaute."
       />
 
-      <section className="mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
+      <section className="mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
         <div className="h-1 bg-gradient-to-r from-mint via-sky to-coral" />
-        <div className="grid gap-6 p-6 xl:grid-cols-3">
+        <div className="grid min-w-0 gap-6 p-4 sm:p-6 xl:grid-cols-3">
           {communityStats.map(({ label, value, Icon }) => (
             <div key={label} className="rounded border border-line bg-ink/45 p-5">
               <div className="grid h-11 w-11 place-items-center rounded bg-mint/12 text-mint">
@@ -91,13 +91,13 @@ export default async function CommunityPage() {
         </div>
       </section>
 
-      <div className="grid gap-8 xl:grid-cols-[1fr_420px]">
-        <div>
+      <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+        <div className="min-w-0 overflow-hidden">
           <SectionHeader eyebrow="Lecteurs" title="A suivre" />
           <CommunityReaderSearch initialReaders={mappedReaders} canFollow={Boolean(currentUserId)} />
         </div>
 
-        <aside>
+        <aside className="min-w-0 overflow-hidden">
           <SectionHeader eyebrow="Livres" title="Qui tournent" />
           <div className="space-y-4">
             {trendingBooks.slice(0, 4).map((book) => (
@@ -112,19 +112,19 @@ export default async function CommunityPage() {
         </aside>
       </div>
 
-      <section className="mt-9">
+      <section className="mt-9 min-w-0 overflow-hidden">
         <SectionHeader eyebrow="Reviews" title="Dernieres discussions" />
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
           {recentReviews.map((review) => (
-            <article key={review.id} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
-              <div className="flex gap-4">
-                <Link href={`/books/${review.bookId}`} className="h-28 w-20 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
+            <article key={review.id} className="min-w-0 overflow-hidden rounded border border-line bg-panel/80 p-4 shadow-poster sm:p-5">
+              <div className="flex min-w-0 gap-3 sm:gap-4">
+                <Link href={`/books/${review.bookId}`} className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft sm:h-28 sm:w-20">
                   {review.book.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                   ) : null}
                 </Link>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <Link href={`/books/${review.bookId}`} className="line-clamp-1 text-sm font-black text-paper">
                     {review.book.title}
                   </Link>

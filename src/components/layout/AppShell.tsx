@@ -12,25 +12,25 @@ type AppShellProps = {
 };
 
 const navItems = [
-  { href: "/", label: "Accueil", icon: Sparkles },
-  { href: "/search", label: "Recherche", icon: Search },
-  { href: "/library", label: "Bibliotheque", icon: Library },
-  { href: "/commu", label: "Commu", icon: UsersRound },
-  { href: "/trending", label: "Tendance", icon: BookOpen }
+  { href: "/", label: "Accueil", mobileLabel: "Accueil", icon: Sparkles },
+  { href: "/search", label: "Recherche", mobileLabel: "Search", icon: Search },
+  { href: "/library", label: "Bibliotheque", mobileLabel: "Biblio", icon: Library },
+  { href: "/commu", label: "Commu", mobileLabel: "Commu", icon: UsersRound },
+  { href: "/trending", label: "Tendance", mobileLabel: "Top", icon: BookOpen }
 ];
 
 export function AppShell({ children, user }: AppShellProps) {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 lg:pb-0">
       <header className="sticky top-0 z-30 border-b border-line/80 bg-ink/90 backdrop-blur">
-        <div className="mx-auto flex min-h-16 max-w-[1520px] items-center gap-5 px-5 py-3 xl:px-10">
-          <Link href="/" className="flex shrink-0 items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded bg-mint text-ink shadow-glow">
-              <BookOpen size={22} />
+        <div className="mx-auto flex min-h-14 max-w-[1520px] items-center gap-2 px-3 py-2 sm:min-h-16 sm:gap-5 sm:px-5 sm:py-3 xl:px-10">
+          <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="grid h-8 w-8 place-items-center rounded bg-mint text-ink shadow-glow sm:h-10 sm:w-10">
+              <BookOpen size={18} />
             </div>
-            <div>
-              <div className="text-lg font-black tracking-normal text-paper">BooksBox</div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-mint/80">social reading</div>
+            <div className="min-w-0">
+              <div className="text-sm font-black tracking-normal text-paper sm:text-lg">BooksBox</div>
+              <div className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-mint/80 sm:block">social reading</div>
             </div>
           </Link>
 
@@ -47,7 +47,7 @@ export function AppShell({ children, user }: AppShellProps) {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
               href="/search"
               className="hidden rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-lime sm:inline-flex"
@@ -58,10 +58,10 @@ export function AppShell({ children, user }: AppShellProps) {
               <UserMenu user={user} />
             ) : (
               <div className="flex gap-2">
-                <Link className="rounded border border-line px-3 py-2 text-xs font-bold text-muted hover:text-paper" href="/login">
+                <Link className="rounded border border-line px-2.5 py-2 text-xs font-bold text-muted hover:text-paper sm:px-3" href="/login">
                   Connexion
                 </Link>
-                <Link className="rounded bg-white px-3 py-2 text-xs font-black text-ink" href="/signup">
+                <Link className="hidden rounded bg-white px-3 py-2 text-xs font-black text-ink sm:inline-flex" href="/signup">
                   Inscription
                 </Link>
               </div>
@@ -70,7 +70,22 @@ export function AppShell({ children, user }: AppShellProps) {
         </div>
       </header>
 
-      <main className="mx-auto min-h-screen max-w-[1520px] px-5 py-7 xl:px-10">{children}</main>
+      <main className="mx-auto min-h-screen max-w-[1520px] px-3 py-4 sm:px-5 sm:py-7 xl:px-10">{children}</main>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl shadow-black/40 backdrop-blur lg:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex min-w-0 flex-col items-center gap-1 rounded px-0.5 py-2 text-[10px] font-black text-muted transition hover:bg-white/7 hover:text-paper"
+            >
+              <item.icon size={18} />
+              <span className="w-full truncate text-center">{item.mobileLabel}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

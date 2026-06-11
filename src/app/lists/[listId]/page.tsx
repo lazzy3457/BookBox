@@ -69,8 +69,8 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
   );
 
   return (
-    <div>
-      <section className="relative mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
+    <div className="min-w-0 overflow-hidden">
+      <section className="relative mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-mint via-sky to-coral" />
 
         <div className="relative h-36 overflow-hidden">
@@ -89,14 +89,14 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
           <div className="absolute inset-0 bg-gradient-to-t from-panel via-panel/60 to-transparent" />
         </div>
 
-        <div className="px-7 pb-7 pt-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
+        <div className="px-4 pb-5 pt-4 sm:px-7 sm:pb-7">
+          <div className="grid min-w-0 gap-4 sm:flex sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-mint">
                 <span>Liste</span>
                 {list.isPublic ? <Globe size={12} /> : <Lock size={12} />}
               </div>
-              <h1 className="mt-2 text-4xl font-black text-paper">{list.title}</h1>
+              <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{list.title}</h1>
               <p className="mt-2 text-sm text-muted">
                 Par{" "}
                 <Link href="/profile" className="font-bold text-paper hover:text-mint transition">
@@ -109,7 +109,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
               )}
             </div>
 
-            <div className="shrink-0 text-right">
+            <div className="shrink-0 text-left sm:text-right">
               {list.rating != null && (
                 <div className="inline-flex items-center gap-1.5 rounded border border-amber/30 bg-amber/10 px-3 py-2">
                   <Star size={14} className="text-amber" fill="currentColor" />
@@ -147,7 +147,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
             <Link
               key={entry.id}
               href={`/books/${entry.bookId}`}
-              className="group flex items-center gap-5 rounded border border-line bg-panel/80 p-4 transition hover:border-mint/50 hover:bg-panelSoft"
+              className="group flex min-w-0 items-center gap-3 overflow-hidden rounded border border-line bg-panel/80 p-3 transition hover:border-mint/50 hover:bg-panelSoft sm:gap-5 sm:p-4"
             >
               <div className="w-7 shrink-0 text-center text-lg font-black text-muted/50 group-hover:text-mint transition">
                 {i + 1}
@@ -174,7 +174,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
                 )}
               </div>
               {entry.book.publishedDate && (
-                <div className="shrink-0 text-xs text-muted/60">{entry.book.publishedDate}</div>
+                <div className="hidden shrink-0 text-xs text-muted/60 sm:block">{entry.book.publishedDate}</div>
               )}
             </Link>
           ))}

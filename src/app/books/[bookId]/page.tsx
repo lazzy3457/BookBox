@@ -119,16 +119,16 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   ];
 
   return (
-    <div>
-      <section className="relative mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink p-6 shadow-poster">
+    <div className="min-w-0 overflow-hidden">
+      <section className="relative mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink p-5 shadow-poster sm:p-6">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-mint via-sky to-coral" />
-        <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_330px]">
-          <div>
+        <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(0,330px)]">
+          <div className="min-w-0">
             <div className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-mint">Fiche livre</div>
-            <h1 className="max-w-3xl text-5xl font-black leading-none text-paper">{book.title}</h1>
+            <h1 className="max-w-3xl text-3xl font-black leading-tight text-paper sm:text-4xl xl:text-5xl">{book.title}</h1>
 
-            <div className="mt-6 grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
-              <div className="cover-sheen grid aspect-[2/3] place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
+            <div className="mt-6 grid min-w-0 gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
+              <div className="cover-sheen mx-auto grid aspect-[2/3] w-full max-w-56 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster lg:max-w-none">
                 {book.thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
@@ -138,10 +138,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
               </div>
 
               <div className="flex min-w-0 flex-col justify-center">
-                <div className="flex flex-wrap items-center gap-2 text-lg font-bold text-muted">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 text-base font-bold text-muted sm:text-lg">
                   {book.authors.length ? (
                     book.authors.map((author, index) => (
-                      <span key={author} className="inline-flex items-center gap-2">
+                      <span key={author} className="inline-flex min-w-0 items-center gap-2">
                         <Link href={authorHref(author)} className="text-paper transition hover:text-mint">
                           {author}
                         </Link>
@@ -158,10 +158,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                   <p className="mt-5 max-w-3xl leading-7 text-muted">Aucune description disponible pour ce livre.</p>
                 )}
 
-                <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div className="mt-6 grid min-w-0 grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4">
                   {stats.map((stat) => (
-                    <div key={stat.label} className="rounded border border-line bg-ink/45 px-3 py-3">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted">
+                    <div key={stat.label} className="min-w-0 rounded border border-line bg-ink/45 px-3 py-3">
+                      <div className="mb-2 flex min-w-0 items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted">
                         <stat.icon size={13} />
                         {stat.label}
                       </div>
@@ -173,19 +173,19 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             </div>
           </div>
 
-          <div className="self-start space-y-4">
-            <div className="rounded border border-line bg-ink/55 p-4">
+          <div className="min-w-0 self-start space-y-4 overflow-hidden">
+            <div className="min-w-0 overflow-hidden rounded border border-line bg-ink/55 p-4">
               <h2 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-muted">Bibliotheque</h2>
               <LibraryActions bookId={book.id} initialStatus={userBook?.status ?? null} />
               {userBook ? <FavoriteButton bookId={book.id} initial={userBook.isFavorite} /> : null}
               {session?.user?.id ? <AddToListButton bookId={book.id} /> : null}
             </div>
-            <div className="rounded border border-line bg-panel/75 p-4">
+            <div className="min-w-0 overflow-hidden rounded border border-line bg-panel/75 p-4">
               <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-muted">
                 <BookOpenCheck size={14} />
                 Lecture
               </div>
-              <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold text-muted">
+              <div className="grid min-w-0 grid-cols-2 gap-2 text-center text-xs font-bold text-muted min-[360px]:grid-cols-4">
                 <div className="rounded bg-ink/55 px-2 py-2">
                   <div className="text-base font-black text-paper">{readCount}</div>
                   lus
@@ -214,9 +214,9 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         description="Une fiche media pour comprendre le livre, voir les notes de la communaute et publier ta review."
       />
 
-      <div className="grid gap-8 xl:grid-cols-[340px_1fr]">
-        <aside className="space-y-4">
-          <div className="rounded border border-line bg-panel/75 p-5">
+      <div className="grid min-w-0 gap-8 xl:grid-cols-[340px_minmax(0,1fr)]">
+        <aside className="min-w-0 space-y-4 overflow-hidden">
+          <div className="min-w-0 overflow-hidden rounded border border-line bg-panel/75 p-5">
             <h2 className="mb-4 text-sm font-black uppercase tracking-[0.16em] text-muted">Infos livre</h2>
             <div className="space-y-4 text-sm">
               {details.map((detail) => (
@@ -229,7 +229,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </div>
 
           {averageRating ? (
-            <div className="rounded border border-line bg-panel/75 p-5">
+            <div className="min-w-0 overflow-hidden rounded border border-line bg-panel/75 p-5">
               <h2 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-muted">Note moyenne</h2>
               <div className="flex items-center gap-3">
                 <StarRating value={Math.round(averageRating)} />
@@ -238,7 +238,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             </div>
           ) : null}
 
-          <div className="rounded border border-line bg-panel/75 p-5">
+          <div className="min-w-0 overflow-hidden rounded border border-line bg-panel/75 p-5">
             <h2 className="mb-4 text-sm font-black uppercase tracking-[0.16em] text-muted">Activite de tes follows</h2>
             {session?.user?.id ? (
               activeFollowing.length ? (
@@ -248,8 +248,8 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     const libraryEntry = user.library[0];
 
                     return (
-                      <div key={user.id} className="rounded border border-line bg-ink/45 px-3 py-3">
-                        <div className="flex items-center gap-3">
+                      <div key={user.id} className="min-w-0 overflow-hidden rounded border border-line bg-ink/45 px-3 py-3">
+                        <div className="flex min-w-0 items-center gap-3">
                           <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded bg-mint text-xs font-black text-ink">
                             {user.image ? (
                               // eslint-disable-next-line @next/next/no-img-element
@@ -279,13 +279,13 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </div>
         </aside>
 
-        <section className="space-y-8">
+        <section className="min-w-0 space-y-8 overflow-hidden">
           <ReviewComposer bookId={book.id} hasUserReview={Boolean(currentUserReview)} />
 
           {mappedAuthorBooks.length ? (
             <div>
               <SectionHeader eyebrow="Auteur" title="Autres livres" />
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+              <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
                 {mappedAuthorBooks.map((entry) => (
                   <BookCard key={entry.id} book={entry} href={`/books/${entry.id}`} variant="poster" showScore={false} />
                 ))}
@@ -295,7 +295,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
           <div>
             <h2 className="mb-4 text-xl font-black text-paper">Reviews</h2>
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4 overflow-hidden">
               {book.reviews.map((review) => (
                 <ReviewCard
                   key={review.id}

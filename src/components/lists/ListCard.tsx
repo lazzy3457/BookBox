@@ -22,7 +22,7 @@ export function ListCard({ list }: Props) {
   const covers = list.entries.slice(0, 5);
 
   return (
-    <Link href={`/lists/${list.id}`} className="group block">
+    <Link href={`/lists/${list.id}`} className="group block min-w-0 max-w-full overflow-hidden">
       {/* Stack de couvertures */}
       <div className="relative h-32 w-full overflow-hidden rounded border border-line bg-panelSoft transition group-hover:border-mint/50">
         {covers.length === 0 ? (
@@ -61,13 +61,13 @@ export function ListCard({ list }: Props) {
       </div>
 
       {/* Infos */}
-      <div className="mt-3">
-        <div className="flex items-center gap-1.5">
+      <div className="mt-3 min-w-0">
+        <div className="flex min-w-0 items-center gap-1.5">
           {list.isPublic
             ? <Globe size={11} className="shrink-0 text-muted/60" />
             : <Lock size={11} className="shrink-0 text-muted/60" />
           }
-          <h3 className="line-clamp-1 text-sm font-black text-paper group-hover:text-mint transition">
+          <h3 className="min-w-0 flex-1 truncate text-sm font-black text-paper transition group-hover:text-mint">
             {list.title}
           </h3>
         </div>

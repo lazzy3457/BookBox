@@ -66,7 +66,7 @@ export function CommunityReaderSearch({ initialReaders, canFollow }: CommunityRe
           <UsersRound size={14} />
           Trouver des amis
         </div>
-        <form onSubmit={searchReaders} className="flex gap-3">
+        <form onSubmit={searchReaders} className="grid gap-3 sm:flex">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -76,7 +76,7 @@ export function CommunityReaderSearch({ initialReaders, canFollow }: CommunityRe
           <button
             type="submit"
             disabled={isSearching}
-            className="inline-flex h-12 items-center gap-2 rounded bg-mint px-5 font-black text-ink transition hover:bg-lime disabled:cursor-default disabled:bg-panelSoft disabled:text-muted"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded bg-mint px-5 font-black text-ink transition hover:bg-lime disabled:cursor-default disabled:bg-panelSoft disabled:text-muted"
           >
             <Search size={18} />
             {isSearching ? "Recherche..." : "Trouver"}

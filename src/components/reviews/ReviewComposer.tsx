@@ -59,9 +59,9 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
   }
 
   return (
-    <form onSubmit={submitReview} className="rounded border border-line bg-panel/90 p-5 shadow-poster">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <div>
+    <form onSubmit={submitReview} className="w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/90 p-4 shadow-poster sm:p-5">
+      <div className="mb-4 grid min-w-0 gap-4 sm:flex sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-black text-paper">Publier une review</h2>
           <p className="mt-1 text-sm text-muted">La note suffit, le texte peut venir plus tard.</p>
         </div>
@@ -75,15 +75,15 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
         placeholder="Une impression, une phrase, ou rien du tout."
       />
 
-      <div className="mt-4 flex items-center justify-between gap-4">
-        <label className="flex items-center gap-2 text-sm text-muted">
+      <div className="mt-4 grid gap-4 sm:flex sm:items-center sm:justify-between">
+        <label className="flex min-w-0 items-center gap-2 text-sm text-muted">
           <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
           Contient des spoilers
         </label>
         <button
           type="submit"
           disabled={isSaving || hasUserReview}
-          className="inline-flex items-center gap-2 rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-60 sm:w-auto"
         >
           <Send size={16} />
           {hasUserReview ? "Review deja publiee" : isSaving ? "Publication..." : "Publier"}

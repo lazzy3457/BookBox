@@ -44,3 +44,23 @@ export async function getFriendActivity(userId: string) {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 30);
 }
+
+export async function getTopReviewsLast24Hours() {
+  const since = new Date();
+  since.setDate(since.getDate() - 1);
+
+  const reviews = await prisma.review.findMany({
+    where: { createdAt: { gte: since } },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    include: { book: true, user: true, reactions: true, comments: true }
+  });
+
+  return reviews
+    .map((review) => ({
+      ...review,
+      score: review.reactions.length * 2 + review.comments.length + review.rating
+    }))
+    .sort((a, b) => b.score - a.score || b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 4);
+}

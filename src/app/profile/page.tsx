@@ -15,7 +15,7 @@ export default async function ProfilePage() {
 
   if (!session?.user?.id) {
     return (
-      <div className="rounded border border-line bg-panel/75 p-8">
+      <div className="rounded border border-line bg-panel/75 p-5 sm:p-8">
         <h1 className="text-2xl font-black text-paper">Profil lecteur</h1>
         <p className="mt-3 text-muted">Connecte-toi pour voir ton profil.</p>
         <Link href="/login" className="mt-5 inline-block rounded bg-mint px-5 py-3 font-black text-ink">
@@ -63,12 +63,12 @@ export default async function ProfilePage() {
   ]);
 
   return (
-    <div>
+    <div className="min-w-0 overflow-hidden">
       {/* Header profil */}
-        <section className="mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
+        <section className="mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
           <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
-          <div className="flex items-end gap-6 px-7 pb-7">
-            <div className="-mt-12 h-28 w-28 shrink-0 overflow-hidden rounded border-4 border-panel bg-ink">
+          <div className="grid min-w-0 gap-4 px-4 pb-5 sm:flex sm:items-end sm:gap-6 sm:px-7 sm:pb-7">
+            <div className="-mt-12 h-24 w-24 shrink-0 overflow-hidden rounded border-4 border-panel bg-ink sm:h-28 sm:w-28">
               {user?.image ? (
                 <img src={user.image} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -77,10 +77,10 @@ export default async function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className="flex flex-1 items-end justify-between gap-4 pb-1">
-              <div>
+            <div className="grid min-w-0 flex-1 gap-4 pb-1 sm:flex sm:items-end sm:justify-between">
+              <div className="min-w-0">
                 <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
-                <h1 className="mt-2 text-4xl font-black text-paper">{user?.name ?? "Lecteur BooksBox"}</h1>
+                <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{user?.name ?? "Lecteur BooksBox"}</h1>
                 <p className="mt-2 text-sm text-muted">{user?.bio ?? "Profil simple V1 avec stats de lecture."}</p>
               </div>
               <EditProfileButton user={{ name: user?.name ?? null, bio: user?.bio ?? null, image: user?.image ?? null }} />
@@ -96,7 +96,7 @@ export default async function ProfilePage() {
             title="Mes favoris"
             description="Les livres que tu as marqués comme coups de cœur."
           />
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-10">
+          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-10">
             {favorites.map((entry) => (
               <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} variant="poster" />
             ))}
@@ -106,7 +106,7 @@ export default async function ProfilePage() {
 
       {/* Stats */}
       <SectionHeader eyebrow="Stats" title="Activité" />
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-4">
         {[
           ["Livres", libraryCount],
           ["Reviews", reviewCount],
@@ -121,8 +121,8 @@ export default async function ProfilePage() {
       </div>
 
       {/* Listes */}
-      <section className="mt-9">
-        <div className="flex items-center justify-between">
+      <section className="mt-9 min-w-0 overflow-hidden">
+        <div className="grid gap-3 sm:flex sm:items-center sm:justify-between">
           <SectionHeader
             eyebrow="Collections"
             title="Mes listes"
@@ -136,7 +136,7 @@ export default async function ProfilePage() {
           </Link>
         </div>
         {lists.length > 0 ? (
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
             {lists.map((list) => (
               <ListCard key={list.id} list={list} />
             ))}
@@ -152,14 +152,14 @@ export default async function ProfilePage() {
       </section>
 
       {/* Historique */}
-      <section className="mt-9">
+      <section className="mt-9 min-w-0 overflow-hidden">
         <SectionHeader
           eyebrow="Historique"
           title="Derniers livres"
           description="Les livres ajoutes ou mis a jour recemment dans ta bibliotheque."
         />
         {recentBooks.length ? (
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-10">
+          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-10">
             {recentBooks.map((entry) => (
               <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} badge={entry.status} variant="poster" />
             ))}
@@ -172,21 +172,21 @@ export default async function ProfilePage() {
       </section>
 
   {/* Reviews */}
-      <section className="mt-9">
+      <section className="mt-9 min-w-0 overflow-hidden">
         <SectionHeader
           eyebrow="Reviews"
           title="Dernieres reviews"
           description="Tes avis les plus recents, avec reactions et commentaires."
         />
         {recentReviews.length ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid min-w-0 gap-4 xl:grid-cols-2">
             {recentReviews.map((review) => (
               <Link
                 key={review.id}
                 href={`/books/${review.bookId}`}
-                className="group rounded border border-line bg-panel/80 p-5 shadow-poster transition hover:border-mint/50 hover:bg-panelSoft"
+                className="group rounded border border-line bg-panel/80 p-4 shadow-poster transition hover:border-mint/50 hover:bg-panelSoft sm:p-5"
               >
-                <div className="flex gap-4">
+                <div className="flex min-w-0 gap-3 sm:gap-4">
                   <div className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
                     {review.book.thumbnailUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element

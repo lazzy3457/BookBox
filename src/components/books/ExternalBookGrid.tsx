@@ -80,7 +80,7 @@ export function ExternalBookGrid({ books }: ExternalBookGridProps) {
   return (
     <div>
       {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 xl:grid-cols-5">
         {books.map((book) => {
           const key = bookKey(book);
           const isSaving = savingId === key;
