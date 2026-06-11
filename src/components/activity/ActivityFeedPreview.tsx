@@ -7,7 +7,9 @@ import { ActivityRow } from "@/components/activity/ActivityRow";
 type ActivityItem = {
   id: string;
   type: "review" | "library";
+  userId: string;
   userName: string;
+  userImage?: string | null;
   bookId: string;
   bookTitle: string;
   detail: string;
@@ -30,7 +32,9 @@ export function ActivityFeedPreview({ items }: ActivityFeedPreviewProps) {
         <ActivityRow
           key={item.id}
           type={item.type}
+          userId={item.userId}
           userName={item.userName}
+          userImage={item.userImage}
           bookId={item.bookId}
           bookTitle={item.bookTitle}
           detail={item.detail}

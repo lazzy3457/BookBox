@@ -1,266 +1,415 @@
----
-stepsCompleted: [1, 2, 3, 4, 5]
-inputDocuments:
-  - c:/Users/maeld/GIT/app/_bmad-output/planning-artifacts/prd-booksbox-v1.md
-  - c:/Users/maeld/GIT/app/_bmad-output/planning-artifacts/ux-design-specification.md
-workflowType: architecture
-project_name: BooksBox
-user_name: Maeld
-date: "2026-04-04"
----
+# Architecture BooksBox
 
-# Document de décisions d'architecture — BooksBox
+Date de mise a jour : 2026-06-11
 
-_Ce document est construit collaborativement étape par étape. Les sections sont ajoutées au fil des décisions d'architecture._
+BooksBox est une application full-stack composee d'un site web Next.js, d'une application mobile Expo React Native et d'un backend partage expose via les routes API Next.js. Les deux clients utilisent la meme base PostgreSQL via Prisma.
 
-## Analyse du contexte projet
+## Vue d'ensemble
 
-### Vue d'ensemble des exigences
+```text
+Navigateur web
+  -> Next.js App Router
+  -> Pages React + Server Components
+  -> Routes API Next.js
+  -> Services serveur
+  -> Prisma
+  -> PostgreSQL Docker
 
-**Exigences fonctionnelles (synthèse architecturale)**
+Application mobile Expo
+  -> Client API mobile
+  -> Routes /api/mobile/*
+  -> Services serveur partages
+  -> Prisma
+  -> PostgreSQL Docker
 
-- **Identité** : inscription, connexion, profil (avatar, bio, stats optionnelles).
-- **Catalogue** : recherche via **Google Books API** ; **ajout manuel** si aucun résultat ; fiche livre (métadonnées + couverture selon disponibilité).
-- **Bibliothèque** : lien utilisateur–livre avec statuts (À lire / En cours / Lu / Abandonné).
-- **Reviews** : une review éditable par couple (utilisateur, livre) ; note + texte optionnel ; flag spoiler.
-- **Social** : relations de suivi ; fil d'activité ; réactions (Like, À lire) ; commentaires sous review (threads possibles).
-- **Découverte** : liste « Tendance » basée sur popularité (règles métier à figer : fenêtre temporelle, pondération).
-
-**Exigences non fonctionnelles**
-
-- **UX / plateforme** : web **mobile-first**, thème **sombre** V1, **Nuxt UI + Tailwind** (spec UX).
-- **Performance** : recherche réactive ; **pagination** du feed et des listes.
-- **Fiabilité données externes** : Google Books (quotas, champs manquants, doublons) ; parcours sans impasse vers ajout manuel.
-- **Offline (spec UX)** : continuité minimale sur actions essentielles — à trancher en architecture (PWA, file locale, resync).
-- **Sécurité** : comptes, UGC (reviews, commentaires) ; modération simple en V1.
-
-**Échelle et complexité**
-
-- **Domaine principal** : application web full-stack (Nuxt) + API applicative + base de données + intégration tierce.
-- **Niveau** : **moyen** pour une V1 (social + tendance + API externe, sans multi-tenant ni conformité lourde explicite).
-- **Blocs estimés** : UI (Nuxt), API, persistance (PostgreSQL ou équivalent), auth, module livres (API + cache), feed / activité, tendance.
-
-### Contraintes et dépendances techniques
-
-- **Google Books API** : clés, quotas, locale FR.
-- **Ouverte (PRD)** : source de vérité des livres — API seule vs **cache DB** (recommandation probable : persister les livres référencés pour IDs stables et résilience).
-- **Hébergement** : non spécifié — impact déploiement, secrets, DB.
-
-### Préoccupations transverses
-
-- **Identifiants livre** (ID Google vs ID interne) pour bibliothèque, reviews, tendance.
-- **Feed et tendance** : modèle de données et requêtes performantes.
-- **Spoilers** : contrat API + affichage client.
-- **Offline** : périmètre minimal réaliste.
-- **Abus** : rate limiting, signalement minimal (should PRD).
-
-### État des lieux — stack, dossiers, BDD, API
-
-| Sujet | Statut |
-|--------|--------|
-| **Stack** | **Partiel** : figé dans la spec UX (Nuxt 3, Tailwind, Nuxt UI, thème sombre). À **consolider** en décisions formelles aux étapes **starter (3)** et **décisions (4)** du workflow architecture. |
-| **Structure des dossiers** | **Pas encore** dans ce document. Le workflow prévoit une étape dédiée (**step-06-structure**). |
-| **Schéma BDD** | **Brouillon** repris ci-dessous (aligné PRD + discussion précédente). **Pas** encore versionné comme migrations dans le dépôt d'app — à porter en Prisma / SQL selon choix d'implémentation. |
-| **Design d'API** | **Pas encore** : à produire après starter + patterns (**steps 3–5**), puis figé dans ce document. |
-
-### Modèle de données V1 (brouillon de référence)
-
-Entités principales : `users`, `books`, `user_books`, `reviews`, `review_comments`, `review_reactions`, `follows`.  
-Contraintes clés : unicité `(user_id, book_id)` sur `user_books` ; une review par `(user_id, book_id)` (éditable) ; réactions `Like` / `À lire` par `(review_id, user_id, kind)`.
-
-*(Le SQL de migration détaillé peut être recopié ici ou dans `migrations/` au moment de l'implémentation.)*
-
----
-
-## Évaluation du starter
-
-### Domaine technologique principal
-
-Application **web full-stack** : **Nuxt 3** (Vue) côté UI et routes serveur, alignée avec la spec UX (mobile-first, Nuxt UI, Tailwind, thème sombre V1).
-
-### Options de starter envisagées
-
-| Option | Intérêt | Limite |
-|--------|---------|--------|
-| **`npm create nuxt@latest`** (officiel) | Standard, bien maintenu, `@latest` pour version courante ([doc init Nuxt](https://nuxt.com/docs/3.x/api/commands/init)) | Nuxt UI à ajouter après coup |
-| **`npm create nuxt@latest -- -t ui`** | Accélère l’intégration **Nuxt UI** dès la création ([installation Nuxt UI](https://ui3.nuxt.com/getting-started/installation/nuxt)) | Moins de contrôle sur le preset minimal initial |
-
-### Starter retenu : Nuxt officiel (+ Nuxt UI)
-
-**Pourquoi ce choix**
-
-- Cohérent avec la stack UX (Nuxt 3 + Tailwind + Nuxt UI v3).
-- Chaîne de build et conventions documentées ; évolution Nuxt 3 / CLI suivie en amont.
-- Permet d’ajouter **Nuxt UI 3** soit via template `-t ui`, soit après coup avec `@nuxt/ui` et config CSS indiquée par la doc.
-
-**Commande d’initialisation (référence — à exécuter dans le dépôt ou dossier cible)**
-
-```bash
-npm create nuxt@latest
+APIs externes
+  -> Google Books
+  -> Open Library
 ```
 
-**Alternative** si tu veux Nuxt UI intégré dès le scaffold :
+Le backend est volontairement centralise dans l'application Next.js. Le mobile ne possede pas de backend separe : il appelle les routes API du projet web avec `EXPO_PUBLIC_API_URL`.
 
-```bash
-npm create nuxt@latest -- -t ui
+## Stack technique
+
+### Web et backend
+
+- Next.js App Router.
+- React.
+- TypeScript.
+- Tailwind CSS.
+- NextAuth avec provider Credentials.
+- Prisma ORM.
+- PostgreSQL.
+- Zod pour la validation.
+- Vitest pour les tests unitaires.
+- ESLint pour la qualite de code.
+
+### Mobile
+
+- Expo SDK 54.
+- React Native.
+- TypeScript.
+- React Navigation.
+- Expo Secure Store pour stocker le token mobile.
+
+### Infrastructure locale
+
+- Docker Compose lance uniquement PostgreSQL.
+- Le serveur Next.js tourne en local avec `npm run dev`.
+- Le mode mobile necessite d'exposer Next.js sur le reseau local avec `npm run dev -- -H 0.0.0.0`.
+
+## Structure des dossiers
+
+```text
+BooksBox/
+  src/
+    app/
+      api/
+        auth/             Auth web et inscription
+        mobile/           API dediee a l'application mobile
+        books/            Recherche, import et detail des livres
+        library/          Bibliotheque utilisateur
+        reviews/          Reviews, reactions et commentaires
+        comments/         Edition, suppression et likes des commentaires
+        follows/          Follow / unfollow
+        feed/             Activite sociale
+        trending/         Tendances
+        users/            Recherche utilisateurs
+      authors/            Pages auteurs web
+      books/              Pages livres web
+      commu/              Page communaute
+      library/            Page bibliotheque
+      lists/              Pages listes
+      login/              Connexion web
+      profile/            Profil prive et profils publics
+      search/             Recherche web
+      settings/           Parametres
+      signup/             Inscription web
+      trending/           Page tendances
+    components/
+      activity/           Feed et lignes d'activite
+      auth/               Formulaires et boutons auth
+      authors/            Sections auteurs
+      books/              Cartes, couvertures et fiche livre
+      community/          Recherche lecteurs et follow
+      layout/             Shell de navigation
+      library/            Bibliotheque et actions livre
+      lists/              Creation, edition et affichage listes
+      profile/            Edition profil
+      reviews/            Reviews, etoiles, commentaires
+      search/             Workspace de recherche
+      settings/           Panneau de parametres
+      ui/                 Composants UI generiques
+    server/
+      actions/            Actions serveur appelees par le web
+      auth/               NextAuth, session, mot de passe, token mobile
+      db/                 Client Prisma singleton
+      http/               Helpers d'erreurs API
+      services/           Logique metier et APIs externes
+      validation/         Schemas Zod
+    lib/                  Helpers partages
+    types/                Augmentations TypeScript
+  mobile/
+    App.tsx               Entree Expo
+    src/
+      api/                Client HTTP mobile
+      auth/               Contexte d'auth mobile
+      components/         Composants React Native
+      screens/            Ecrans mobiles
+      lib/                Helpers mobiles
+      theme.ts            Theme mobile
+      types.ts            Types mobiles
+  prisma/
+    schema.prisma         Schema relationnel
+    migrations/           Historique des migrations
+  scripts/
+    next-with-system-ca.mjs
+  docker-compose.yml
 ```
 
-*(Tu peux préciser le gestionnaire de paquets via les options du CLI, ex. `--packageManager pnpm`.)*
+## Architecture web
 
-**Si Nuxt UI est ajouté manuellement** (rappel doc actuelle) :
+Le site web utilise le dossier `src/app` de Next.js.
 
-```bash
-pnpm add @nuxt/ui@3
+- Les pages sont organisees par route : `books`, `authors`, `library`, `profile`, `search`, `commu`, `trending`, `settings`, `lists`.
+- Le layout global est dans `src/app/layout.tsx`.
+- Le shell de navigation est dans `src/components/layout/AppShell.tsx`.
+- Les interactions utilisateur passent soit par des routes API, soit par des actions serveur dans `src/server/actions`.
+
+Les composants sont regroupes par domaine fonctionnel. Par exemple, les composants de reviews sont dans `src/components/reviews`, les composants de bibliotheque dans `src/components/library`, et les composants livres dans `src/components/books`.
+
+## Architecture API
+
+Les routes API sont dans `src/app/api`. Elles renvoient du JSON avec `NextResponse`.
+
+### API web principale
+
+- `POST /api/auth/signup` : creation de compte.
+- `/api/auth/[...nextauth]` : routes NextAuth.
+- `GET /api/books/search` : recherche Google Books et Open Library.
+- `POST /api/books` : creation ou import de livre.
+- `GET /api/books/:bookId` : detail livre.
+- `GET/POST/DELETE /api/library` : bibliotheque utilisateur.
+- `POST /api/reviews` : creation de review.
+- `PATCH/DELETE /api/reviews/:reviewId` : edition ou suppression de review.
+- `POST /api/reviews/:reviewId/reactions` : like de review.
+- `POST /api/reviews/:reviewId/comments` : commentaire de review.
+- `PATCH/DELETE /api/comments/:commentId` : edition ou suppression de commentaire.
+- `POST /api/comments/:commentId/reactions` : like de commentaire.
+- `POST/DELETE /api/follows` : follow et unfollow.
+- `GET /api/feed` : activite sociale.
+- `GET /api/trending` : livres tendances.
+- `GET /api/users/search` : recherche lecteurs.
+
+### API mobile
+
+Les routes mobiles sont regroupees sous `src/app/api/mobile`.
+
+- `POST /api/mobile/auth/login`
+- `POST /api/mobile/auth/logout`
+- `GET /api/mobile/auth/me`
+- `GET /api/mobile/home`
+- `GET /api/mobile/books/:bookId`
+- `GET /api/mobile/authors/:authorSlug`
+- `GET /api/mobile/profile`
+- `PATCH /api/mobile/profile`
+- `GET /api/mobile/profiles/:userId`
+- `GET /api/mobile/community`
+- `GET /api/mobile/lists`
+- `POST /api/mobile/lists`
+- `GET /api/mobile/lists/:listId`
+- `PATCH /api/mobile/lists/:listId`
+- `DELETE /api/mobile/lists/:listId`
+- `POST /api/mobile/lists/:listId/books`
+- `DELETE /api/mobile/lists/:listId/books?bookId=...`
+- `POST /api/mobile/lists/:listId/reorder`
+- `POST /api/mobile/favorites/:bookId`
+
+Certaines routes web acceptent aussi le token mobile via `Authorization: Bearer <token>`, notamment la recherche de livres, l'ajout a la bibliotheque, les reviews et les follows.
+
+## Services serveur
+
+La logique metier est separee des routes API dans `src/server/services`.
+
+- `books.ts` : creation manuelle, import et upsert de livres externes.
+- `googleBooks.ts` : appels a Google Books.
+- `openLibrary.ts` : appels a Open Library.
+- `externalBooks.ts` : normalisation des resultats externes.
+- `feed.ts` : activite sociale et top reviews.
+- `trending.ts` : calcul des tendances.
+
+Les validations d'entree sont dans `src/server/validation` avec Zod :
+
+- `books.ts`
+- `library.ts`
+- `lists.ts`
+- `reviews.ts`
+
+Les erreurs API communes sont centralisees dans `src/server/http/errors.ts`.
+
+## Authentification
+
+### Web
+
+L'authentification web utilise NextAuth avec un provider Credentials.
+
+Fichiers principaux :
+
+- `src/server/auth/options.ts`
+- `src/server/auth/password.ts`
+- `src/server/auth/session.ts`
+- `src/app/api/auth/[...nextauth]/route.ts`
+- `src/app/api/auth/signup/route.ts`
+
+Les mots de passe sont hashes avec `bcryptjs`. Les sessions web utilisent la strategie JWT de NextAuth.
+
+### Mobile
+
+Le mobile utilise une authentification par token.
+
+Fichiers principaux :
+
+- `src/server/auth/mobile.ts`
+- `src/app/api/mobile/auth/login/route.ts`
+- `src/app/api/mobile/auth/me/route.ts`
+- `mobile/src/auth/AuthContext.tsx`
+- `mobile/src/api/client.ts`
+
+Au login mobile, le backend verifie les identifiants et renvoie un token. L'application mobile le stocke avec Expo Secure Store et l'envoie ensuite dans l'en-tete :
+
+```text
+Authorization: Bearer <token>
 ```
 
-Puis configuration `modules`, imports CSS (`tailwindcss` + `@nuxt/ui`), et enveloppe `<UApp>` dans `app.vue` selon [Nuxt UI — Installation](https://ui3.nuxt.com/getting-started/installation/nuxt).
+Le secret utilise est `MOBILE_JWT_SECRET`. Si cette variable est absente, le code reutilise `NEXTAUTH_SECRET`. En developpement, un secret de fallback existe, mais il ne doit pas etre utilise en production.
 
-### Décisions déjà posées par ce socle
+## Base de donnees
 
-**Langage & runtime**
+La base est PostgreSQL. Le schema est gere par Prisma dans `prisma/schema.prisma`.
 
-- **TypeScript** (recommandé avec le starter Nuxt moderne ; à activer si le prompt du CLI le propose).
+### Modeles principaux
 
-**Styles**
+- `User` : compte, profil, email, image, bio.
+- `Account`, `Session`, `VerificationToken` : tables compatibles NextAuth.
+- `Book` : livre interne, lie a Google Books ou Open Library si disponible.
+- `UserBook` : lien utilisateur-livre, statut de lecture et favori.
+- `Review` : note, texte, spoiler, auteur et livre.
+- `ReviewReaction` : reaction sur une review.
+- `ReviewComment` : commentaire de review, avec support de reponses.
+- `ReviewCommentReaction` : like de commentaire.
+- `Follow` : relation follower / following.
+- `BookList` : liste de livres creee par un utilisateur.
+- `BookListEntry` : entree d'une liste, avec ordre et note optionnelle.
 
-- **Tailwind CSS** via l’écosystème Nuxt UI v3 (Tailwind v4 côté UI selon doc Nuxt UI).
+### Contraintes importantes
 
-**Build & outillage**
+- Un email utilisateur est unique.
+- Un username est unique.
+- Un couple `userId` / `bookId` est unique dans `UserBook`.
+- Une review est unique par couple `userId` / `bookId`.
+- Une reaction est unique par review, utilisateur et type.
+- Une relation follow est unique par follower et following.
+- Une liste ne peut contenir qu'une seule fois le meme livre.
 
-- **Vite** (sous-jacent à Nuxt), HMR, build optimisé pour prod.
+### Migrations
 
-**Tests**
+Les migrations sont versionnees dans `prisma/migrations`.
 
-- Selon modules choisis à l’init (**Vitest** souvent utilisé avec Nuxt ; à confirmer au moment du `create`).
+Pour initialiser la base sur une nouvelle machine :
 
-**Organisation du code**
+```bash
+npm run prisma:migrate
+npm run prisma:generate
+```
 
-- Arborescence Nuxt standard (`pages/`, `components/`, `server/`, etc.) — **détail des dossiers métier** à figer à l’**étape structure** du workflow architecture.
+## Application mobile
 
-**Expérience de développement**
+L'application mobile est une application Expo React Native situee dans `mobile/`.
 
-- `nuxt dev`, TypeScript, ESLint selon preset.
+Le client HTTP mobile lit l'URL du backend depuis :
 
-**Note :** La première story d’implémentation peut être : exécuter la commande ci-dessus, commit initial, puis ajouter Nuxt UI + thème sombre de base.
+```text
+EXPO_PUBLIC_API_URL
+```
 
-### Préférences encore ouvertes (à trancher — étape « décisions cœur »)
+Fichiers importants :
 
-**Authentification — pas encore choisie.** Pistes à comparer en étape 4 :
+- `mobile/App.tsx` : navigation principale.
+- `mobile/src/api/client.ts` : client HTTP et gestion des erreurs API.
+- `mobile/src/auth/AuthContext.tsx` : session mobile.
+- `mobile/src/screens` : ecrans de l'application.
+- `mobile/src/components` : composants UI mobiles.
+- `mobile/src/theme.ts` : couleurs et styles partages.
 
-- **Nuxt Auth Utils** (intégration Nuxt, sessions côté serveur selon config).
-- **Lucia** (flexible, à brancher sur ta DB).
-- **Sidebase Nuxt Auth** (wrapper Auth.js pour Nuxt).
-- **Supabase Auth** (si tu héberges auth + DB chez Supabase).
-- **OAuth pur** (GitHub/Google) + session maison (plus de travail custom).
+Le mobile depend du backend web. Il faut donc lancer Next.js avant Expo.
 
-**Base de données — pas explicitement validée par toi**, mais **recommandation provisoire** pour coller au modèle relationnel V1 : **PostgreSQL** + migrations (Drizzle / Prisma / SQL brut — à décider étape 4).
-
----
-
-## Décisions d’architecture cœur
-
-### Analyse des priorités
-
-**Décisions critiques (bloquent l’implémentation si absentes)**
-
-- Persistance relationnelle + stratégie d’identité des **livres** (interne vs Google).
-- Forme de l’**API applicative** (contrat client ↔ serveur).
-- Règles **sécurité** minimales (secrets, pas de clé Google Books côté client).
-
-**Décisions importantes (facilitent la cohérence)**
-
-- Choix **ORM / migrations**.
-- Format des **erreurs API** et pagination.
-
-**Décisions reportées (explicitement non figées ici)**
-
-- **Fournisseur / module d’authentification** (tu n’as pas encore tranché).
-- **Hébergeur** et pipeline CI/CD détaillé.
-- **Offline avancé** (file d’attente + sync) : hors périmètre technique détaillé dans cette passe ; à traiter après V1 online-first si besoin.
-
-### Architecture des données
-
-- **SGBD** : **PostgreSQL** (relationnel, adapté au modèle V1 : users, books, user_books, reviews, social).
-- **ORM & migrations** : **Prisma** (schéma déclaratif, migrations, client typé). *Installer les versions `latest` publiées sur npm au moment du projet (`prisma`, `@prisma/client`).*
-- **Source de vérité des livres** :
-  - Toute fiche référencée par un utilisateur est **persistée en base** (`books`) avec **ID interne UUID**.
-  - Champs d’alignement externe : ex. `google_books_volume_id` (nullable, unique quand présent) pour les volumes Google Books ; livres **manuel** sans ID externe.
-  - Recherche UI : appel **Google Books côté serveur** → proposition de résultats → à la sélection ou à l’ajout, **upsert** dans `books` pour stabilité des FK (reviews, user_books).
-- **Validation** : validation des entrées **côté serveur** (schémas Zod ou équivalent dans les handlers Nitro) ; mirroring optionnel côté client pour l’UX.
-
-### Authentification et sécurité
-
-- **Authentification** : **non choisie** à ce stade — **aucune intégration imposée** dans ce document. Avant d’implémenter l’inscription / la connexion, trancher entre par ex. **Lucia + Postgres**, **@sidebase/nuxt-auth**, **Supabase Auth**, ou **OAuth + sessions maison**.
-- **Exigences transverses** (quel que soit le choix) :
-  - Mots de passe : hachage robuste (Argon2/bcrypt selon la lib).
-  - Sessions : cookies **httpOnly**, **Secure** en prod, **SameSite** adapté ; pas de stockage du JWT localStorage pour du web classique si évitable.
-  - **Clé API Google Books** : uniquement variables d’environnement **serveur** ; jamais exposée au bundle client.
-  - **UGC** (reviews, commentaires) : contrôle d’autorisation sur chaque route (propriétaire ou lecture publique selon règle produit).
-
-### API et communication
-
-- **Style** : **REST JSON** via routes **Nitro** (`server/api/**`), préfixe recommandé `/api` (ou `/api/v1` si tu anticipes le versioning).
-- **Lecture / écriture** : préférer **GET** pour lecture paginée ; **POST/PATCH/DELETE** pour mutations ; codes HTTP explicites (400 validation, 401/403 auth, 404, 409 conflit métier ex. review déjà existante si règle stricte).
-- **Erreurs** : enveloppe stable, par ex. `{ "error": { "code": "STRING_MACHINE", "message": "humain" } }` (ou **Problem Details** `application/problem+json` si tu standardises ainsi partout).
-- **Pagination** : curseur ou `limit`+`offset` pour feed et listes ; tailles par défaut raisonnables côté serveur.
-- **Google Books** : un **module serveur** dédié (service) appelé par les routes de recherche ; **caching court** ou **throttling** simple pour respecter les quotas (voir **Patterns d’implémentation** ci-dessous).
-
-### Architecture frontend (Nuxt)
-
-- **Rendu** : **SSR/SSG hybride** selon pages (Nuxt par défaut) ; pages très interactives (feed) en SSR + hydration.
-- **État** : privilégier **`useAsyncData` / `useFetch`** et données issues du serveur pour le premier rendu ; **Pinia** seulement si état client complexe (non obligatoire V1).
-- **UI** : **Nuxt UI** + **Tailwind** (spec UX) ; thème **sombre** par défaut V1.
-- **Composants métier** : encapsuler `BookCard`, `ReviewComposer`, `ActivityRow`, etc., pour limiter la divergence entre agents.
-
-### Infrastructure et déploiement
-
-- **Cible d’exécution** : **Node.js** (runtime Nitro standard) sur hébergeur compatible (ex. Railway, Render, Fly.io, VPS) — **choix précis reporté**.
-- **Variables d’environnement** : `DATABASE_URL`, secrets auth, `GOOGLE_BOOKS_API_KEY` (serveur), origines CORS si API séparée (sinon même origine en full Nuxt).
-- **CI/CD** : **reporté** (lint, test, migrate, build au minimum quand le repo existera).
-
-### Analyse d’impact et ordre d’implémentation suggéré
-
-1. Repo Nuxt + Prisma + PostgreSQL (schéma aligné sur le brouillon métier).
-2. Module **books** (upsert depuis Google + création manuelle).
-3. **Auth** (dès que le choix de module est fait).
-4. Bibliothèque utilisateur + reviews + social + tendance.
-5. Durcissement (rate limit, modération minimale).
-
-**Dépendances croisées** : les routes protégées et le modèle `users` dépendent du choix d’auth ; le feed et la tendance dépendent des tables sociales et d’index SQL adaptés.
-
----
-
-## Patterns d’implémentation (version courte)
-
-_Objectif : éviter les divergences entre agents / devs, sans livre de règles._
-
-### API (`server/api`)
-
-- **Nommage fichiers** : `*.get.ts`, `*.post.ts`, etc. ; chemins URL en **kebab-case** (`/api/books/search`).
-- **Réponses succès** : JSON direct (pas d’enveloppe `{ data: ... }` obligatoire sauf besoin pagination — alors `{ items, nextCursor? }` ou `{ items, total? }`).
-- **Erreurs** : toujours `{ "error": { "code": "SNAKE_UPPER", "message": "…" } }` + statut HTTP adapté.
-- **Validation** : schéma **Zod** (ou équivalent) en entrée de handler ; jamais faire confiance au corps brut.
-
-### Prisma & données
-
-- **Tables / colonnes** : `snake_case` en base si tu restes aligné SQL ; noms Prisma en **`camelCase` modèle** + `@map` si besoin — **choisir une convention et la tenir**.
-- **Accès DB** : passer par de petits modules **`server/utils/db.ts`** ou services (`server/services/*`) plutôt que d’éparpiller `prisma` dans les handlers.
-
-### Nuxt / Vue
-
-- **Composants** : préfixe **`Book`**, **`Review`**, **`Activity`** pour le métier ; un composant par fichier, nom **PascalCase**.
-- **Données page** : `useAsyncData` avec clé stable ; pas de double fetch client/serveur sans raison.
-
-### Tests (minimal V1)
-
-- **Vitest** pour logique pure et utilitaires ; tests d’intégration légers sur les handlers critiques si temps.
+## APIs externes
 
 ### Google Books
 
-- **Un seul module** `server/services/googleBooks.ts` (nom indicatif) ; timeouts + gestion d’erreur réseau ; ne jamais logger la clé API.
+Google Books est appele cote serveur dans `src/server/services/googleBooks.ts`.
 
----
+La cle `GOOGLE_BOOKS_API_KEY` est optionnelle en local. Si elle est renseignee, elle est ajoutee aux appels serveur. Elle ne doit jamais etre exposee cote client.
 
-## Suite du workflow (optionnel)
+### Open Library
 
-**Étape 6 — Structure projet** : détailler l’arborescence des dossiers (`components/`, `server/services/`, etc.) — utile si plusieurs personnes codent ; sinon tu peux **t’arrêter ici** et faire évoluer ce document au fil du code.
+Open Library est appele cote serveur dans `src/server/services/openLibrary.ts`.
+
+L'usage actuel ne necessite pas de cle API.
+
+## Variables d'environnement
+
+### Racine du projet
+
+Le fichier `.env` doit etre cree depuis `.env.example`.
+
+```text
+DATABASE_URL
+NEXTAUTH_URL
+NEXTAUTH_SECRET
+GOOGLE_BOOKS_API_KEY
+MOBILE_JWT_SECRET
+```
+
+### Mobile
+
+Le fichier `mobile/.env.local` doit etre cree depuis `mobile/.env.example`.
+
+```text
+EXPO_PUBLIC_API_URL
+```
+
+## Flux principaux
+
+### Inscription et connexion web
+
+1. L'utilisateur cree un compte via `/api/auth/signup`.
+2. Le mot de passe est hashe avec `bcryptjs`.
+3. La connexion passe par NextAuth Credentials.
+4. Les pages web recuperent l'utilisateur courant via la session NextAuth.
+
+### Connexion mobile
+
+1. Le mobile appelle `POST /api/mobile/auth/login`.
+2. Le backend verifie l'email et le mot de passe.
+3. Le backend renvoie un token mobile.
+4. Le mobile stocke le token dans Expo Secure Store.
+5. Les appels suivants ajoutent `Authorization: Bearer <token>`.
+
+### Recherche et import de livre
+
+1. Le client appelle `/api/books/search`.
+2. Le serveur interroge Google Books et Open Library.
+3. Les resultats sont normalises.
+4. Lors de l'ajout, le livre est cree ou mis a jour dans `Book`.
+5. L'utilisateur peut l'ajouter a sa bibliotheque via `UserBook`.
+
+### Review et interactions sociales
+
+1. Un utilisateur ajoute une review sur un livre.
+2. Les autres utilisateurs peuvent liker ou commenter.
+3. Le feed social utilise les follows pour afficher l'activite des personnes suivies.
+4. Les tendances sont calculees cote serveur a partir des donnees d'activite.
+
+### Listes
+
+1. Un utilisateur cree une liste.
+2. Il ajoute des livres via `BookListEntry`.
+3. L'ordre des livres peut etre modifie.
+4. Les listes sont reutilisees sur le web et le mobile.
+
+## Securite
+
+- Les mots de passe sont hashes, jamais stockes en clair.
+- Les secrets sont lus depuis les variables d'environnement.
+- Les cles d'API externes restent cote serveur.
+- Les routes protegees verifient l'utilisateur courant via NextAuth ou token mobile.
+- Les donnees entrantes sont validees avec Zod sur les routes critiques.
+- Les suppressions et editions verifient que l'utilisateur est proprietaire de la ressource.
+
+## Tests et qualite
+
+- `npm run lint` verifie le code avec ESLint.
+- `npm test` lance les tests Vitest.
+- `npm run build` valide la generation Prisma et le build Next.js.
+- `npm run typecheck` dans `mobile/` verifie TypeScript cote mobile.
+
+Un test unitaire existe notamment pour la logique de tendances dans `src/server/services/trending.test.ts`.
+
+## Decisions d'architecture
+
+- Backend unique dans Next.js pour eviter de maintenir une API separee.
+- Prisma comme couche d'acces aux donnees pour garder un schema type et des migrations versionnees.
+- PostgreSQL pour un modele relationnel adapte aux livres, utilisateurs, reviews, follows et listes.
+- Routes mobiles dediees quand le format attendu par l'application Expo differe du web.
+- Services serveur partages pour eviter de dupliquer la logique entre routes web et routes mobiles.
+- Appels Google Books et Open Library uniquement cote serveur pour proteger les cles et controler les erreurs.
+- Expo Secure Store pour conserver le token mobile cote telephone.
+
+## Points d'attention
+
+- `architecture.md` remplace l'ancien document de conception et correspond au code actuel.
+- Le mobile ne fonctionne que si le backend est accessible depuis le telephone.
+- En local, Docker doit etre lance avant Prisma et Next.js.
+- La base est vide au premier lancement : il faut creer un compte pour tester.
+- Si le port PostgreSQL `5432` est deja utilise, adapter Docker et `DATABASE_URL`.

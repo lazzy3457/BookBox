@@ -24,7 +24,9 @@ export default async function HomePage() {
       ? {
           id: item.id,
           type: "review" as const,
+          userId: item.review.userId,
           userName: item.review.user.name ?? "Un lecteur",
+          userImage: item.review.user.image,
           bookId: item.review.bookId,
           bookTitle: item.review.book.title,
           detail: `a publie une review ${item.review.rating}/5`
@@ -32,7 +34,9 @@ export default async function HomePage() {
       : {
           id: item.id,
           type: "library" as const,
+          userId: item.entry.userId,
           userName: item.entry.user.name ?? "Un lecteur",
+          userImage: item.entry.user.image,
           bookId: item.entry.bookId,
           bookTitle: item.entry.book.title,
           detail: `a marque ce livre en ${item.entry.status}`
