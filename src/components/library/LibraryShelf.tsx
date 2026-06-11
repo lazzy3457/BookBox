@@ -95,12 +95,12 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-center gap-3 rounded border border-line bg-panel/75 p-4">
+      <div className="mb-5 grid gap-3 rounded border border-line bg-panel/75 p-4 sm:flex sm:flex-wrap sm:items-center">
         <div className="text-xs font-black uppercase tracking-[0.18em] text-muted">Filtrer</div>
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-          className="h-10 rounded border border-line bg-ink px-3 text-sm font-bold text-paper outline-none focus:border-mint"
+          className="h-10 w-full rounded border border-line bg-ink px-3 text-sm font-bold text-paper outline-none focus:border-mint sm:w-auto"
         >
           <option value="ALL">Tous les statuts</option>
           {Object.entries(statusLabels).map(([status, label]) => (
@@ -110,11 +110,11 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
           ))}
         </select>
 
-        <div className="ml-3 text-xs font-black uppercase tracking-[0.18em] text-muted">Trier</div>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-muted sm:ml-3">Trier</div>
         <select
           value={sortKey}
           onChange={(event) => setSortKey(event.target.value as SortKey)}
-          className="h-10 rounded border border-line bg-ink px-3 text-sm font-bold text-paper outline-none focus:border-mint"
+          className="h-10 w-full rounded border border-line bg-ink px-3 text-sm font-bold text-paper outline-none focus:border-mint sm:w-auto"
         >
           {Object.entries(sortLabels).map(([key, label]) => (
             <option key={key} value={key}>
@@ -124,7 +124,7 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+      <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-8">
         {visibleItems.map((item) => (
           <div key={item.id} className="group relative">
             <Link href={`/books/${item.book.id}`}>

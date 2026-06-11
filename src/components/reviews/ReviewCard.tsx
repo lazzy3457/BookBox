@@ -228,8 +228,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
   }
 
   return (
-    <article className="rounded border border-line bg-panel/82 p-5 shadow-poster">
-      <div className="flex items-start justify-between gap-4">
+    <article className="w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/82 p-4 shadow-poster sm:p-5">
+      <div className="grid min-w-0 gap-3 sm:flex sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-start gap-3">
           {review.userId ? (
             <Link href={`/profile/${review.userId}`} className="transition hover:opacity-85">
@@ -251,7 +251,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {spoiler ? (
             <div className="inline-flex items-center gap-1 rounded bg-coral/15 px-2 py-1 text-xs font-bold text-coral">
               <TriangleAlert size={13} />
@@ -322,7 +322,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </div>
       ) : null}
 
-      <div className="mt-5 flex gap-4 border-b border-line pb-4 text-xs font-bold text-muted">
+      <div className="mt-5 flex min-w-0 flex-wrap gap-4 border-b border-line pb-4 text-xs font-bold text-muted">
         <button type="button" onClick={toggleReviewLike} className="inline-flex items-center gap-1 transition hover:text-mint">
           <ThumbsUp size={14} /> {likesCount}
         </button>
@@ -333,8 +333,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
       <div className="mt-4 space-y-3">
         {comments.map((comment) => (
-          <div key={comment.id} className="rounded border border-line bg-ink/55 px-3 py-2">
-            <div className="flex items-start justify-between gap-3">
+          <div key={comment.id} className="min-w-0 overflow-hidden rounded border border-line bg-ink/55 px-3 py-2">
+            <div className="grid min-w-0 gap-2 sm:flex sm:items-start sm:justify-between sm:gap-3">
               <div className="text-xs font-black text-paper">{comment.userName}</div>
               {comment.canManage ? (
                 <div className="flex gap-1">
@@ -396,16 +396,16 @@ export function ReviewCard({ review }: ReviewCardProps) {
         ))}
       </div>
 
-      <form onSubmit={submitComment} className="mt-4 flex gap-2">
+      <form onSubmit={submitComment} className="mt-4 grid gap-2 sm:flex">
         <input
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          className="h-10 flex-1 rounded border border-line bg-ink px-3 text-sm text-white outline-none placeholder:text-muted/45 focus:border-mint"
+          className="h-10 min-w-0 flex-1 rounded border border-line bg-ink px-3 text-sm text-white outline-none placeholder:text-muted/45 focus:border-mint"
           placeholder="Ajouter un commentaire..."
         />
         <button
           disabled={isSaving}
-          className="inline-flex h-10 items-center gap-2 rounded bg-mint px-3 text-xs font-black text-ink disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded bg-mint px-3 text-xs font-black text-ink disabled:opacity-60"
         >
           <Send size={14} />
           {isSaving ? "Envoi..." : "Commenter"}

@@ -79,7 +79,7 @@ export function AuthorBookshelf({ books }: AuthorBookshelfProps) {
 
   return (
     <div ref={sectionRef} className="scroll-mt-24">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 xl:grid-cols-5">
         {pageBooks.map((book) => (
           <BookCard key={book.id} book={book} href={`/books/${book.id}`} variant="poster" showScore={false} />
         ))}

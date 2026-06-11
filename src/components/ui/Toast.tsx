@@ -42,7 +42,7 @@ export function Toast({ message, tone = "info", durationMs = 5000, onClose }: To
     <div
       role="status"
       aria-live="polite"
-      className={`fixed bottom-5 right-5 z-50 max-w-sm overflow-hidden rounded border text-sm shadow-2xl shadow-black/40 ${toneStyles[tone]}`}
+      className={`fixed inset-x-3 bottom-24 z-50 max-w-sm overflow-hidden rounded border text-sm shadow-2xl shadow-black/40 sm:bottom-5 sm:left-auto sm:right-5 ${toneStyles[tone]}`}
     >
       <div className="flex items-start gap-3 px-4 py-3">
         <p className="leading-6">{message}</p>

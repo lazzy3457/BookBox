@@ -524,7 +524,7 @@ export function SearchWorkspace() {
 
   function renderBookCover(book: Candidate) {
     return (
-      <div className="cover-sheen grid h-36 w-24 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
+      <div className="cover-sheen grid h-28 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster min-[360px]:h-32 min-[360px]:w-20 sm:h-36 sm:w-24">
         {book.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
@@ -542,8 +542,8 @@ export function SearchWorkspace() {
     const isOpening = openingId === key;
 
     return (
-      <article className={`rounded border border-line bg-panel/85 p-4 shadow-poster ${compact ? "bg-ink/45" : ""}`}>
-        <div className="flex flex-col gap-4 sm:flex-row">
+      <article className={`w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/85 p-4 shadow-poster ${compact ? "bg-ink/45" : ""}`}>
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
           {renderBookCover(book)}
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -558,18 +558,18 @@ export function SearchWorkspace() {
             </div>
             <h3 className="text-lg font-black leading-tight text-paper">{book.title}</h3>
             <p className="mt-1 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-muted">
+            <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-xs font-bold text-muted">
               {formatEdition(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatEdition(book)}</span> : null}
               {formatIsbn(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatIsbn(book)}</span> : null}
             </div>
             {book.description ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/65">{book.description}</p> : null}
           </div>
-          <div className="flex shrink-0 flex-row gap-2 sm:w-36 sm:flex-col">
+          <div className="grid min-w-0 gap-2 sm:w-36 sm:shrink-0">
             <button
               type="button"
               onClick={() => openBookPage(book)}
               disabled={isOpening}
-              className="inline-flex h-10 flex-1 items-center justify-center rounded bg-paper px-3 text-xs font-black text-ink transition hover:bg-white disabled:cursor-wait disabled:opacity-60 sm:flex-none"
+              className="inline-flex h-10 items-center justify-center rounded bg-paper px-3 text-xs font-black text-ink transition hover:bg-white disabled:cursor-wait disabled:opacity-60"
             >
               {isOpening ? "Ouverture..." : "Voir la fiche"}
             </button>
@@ -577,7 +577,7 @@ export function SearchWorkspace() {
               type="button"
               onClick={() => persistBook(book)}
               disabled={isSaving || isSaved}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-default disabled:bg-panelSoft disabled:text-muted sm:flex-none"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-default disabled:bg-panelSoft disabled:text-muted"
             >
               <Plus size={14} />
               {isSaved ? "Deja ajoute" : isSaving ? "Ajout..." : "Ajouter"}
@@ -589,10 +589,10 @@ export function SearchWorkspace() {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={search} className="rounded border border-line bg-panel/85 p-4 shadow-poster">
+    <div className="w-full min-w-0 max-w-full space-y-6 overflow-hidden">
+      <form onSubmit={search} className="w-full min-w-0 overflow-hidden rounded border border-line bg-panel/85 p-4 shadow-poster">
         <div className="flex flex-col gap-3 lg:flex-row">
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             <input
               ref={searchInputRef}
               name="q"
@@ -605,12 +605,12 @@ export function SearchWorkspace() {
             {showSuggestions ? (
               <div className="absolute left-0 right-0 top-14 z-30 max-h-80 overflow-y-auto rounded border border-line bg-ink shadow-2xl shadow-black/40">
                 {suggestions.map((book) => (
-                  <button
+                <button
                     key={bookKey(book)}
                     type="button"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => selectSuggestion(book)}
-                    className="flex w-full items-center gap-3 border-b border-line px-3 py-2 text-left transition last:border-b-0 hover:bg-panel"
+                    className="flex w-full min-w-0 items-center gap-3 border-b border-line px-3 py-2 text-left transition last:border-b-0 hover:bg-panel"
                   >
                     <div className="grid h-14 w-10 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft">
                       {book.thumbnailUrl ? (
@@ -620,7 +620,7 @@ export function SearchWorkspace() {
                         <Search size={15} className="text-muted" />
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="line-clamp-1 text-sm font-black text-paper">{book.title}</div>
                       <div className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</div>
                       <div className="mt-1 line-clamp-1 text-[11px] text-muted/70">
@@ -736,7 +736,7 @@ export function SearchWorkspace() {
           ))}
         </div>
       ) : groups.length ? (
-        <section ref={resultsRef} className="space-y-4 scroll-mt-24">
+        <section ref={resultsRef} className="min-w-0 space-y-4 overflow-hidden scroll-mt-24">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black text-paper">Resultats</h2>
@@ -760,7 +760,7 @@ export function SearchWorkspace() {
             const editions = group.editions.filter((book) => bookKey(book) !== bookKey(group.main));
 
             return (
-              <div key={group.key} className="space-y-2">
+              <div key={group.key} className="min-w-0 space-y-2 overflow-hidden">
                 <div className="relative">
                   {renderEdition(group.main)}
                   {group.editions.length > 1 ? (
@@ -785,7 +785,7 @@ export function SearchWorkspace() {
                   ) : null}
                 </div>
                 {isExpanded && editions.length ? (
-                  <div className="space-y-2 border-l border-line pl-3">
+                  <div className="min-w-0 space-y-2 border-l border-line pl-3">
                     {editions.map((book) => (
                       <div key={bookKey(book)}>{renderEdition(book, true)}</div>
                     ))}
@@ -858,7 +858,7 @@ export function SearchWorkspace() {
       ) : null}
 
       {manualOpen ? (
-        <form onSubmit={createManual} className="rounded border border-line bg-panel/90 p-5 shadow-poster">
+        <form onSubmit={createManual} className="w-full min-w-0 overflow-hidden rounded border border-line bg-panel/90 p-5 shadow-poster">
           <h2 className="text-lg font-black text-paper">Ajout manuel</h2>
           <p className="mt-2 text-sm leading-6 text-muted">Pour les livres introuvables ou les metadonnees trop faibles.</p>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -956,7 +956,7 @@ export function SearchWorkspace() {
           {recentBooks.length ? (
             <section className="rounded border border-line bg-panel/75 p-4">
               <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-muted">Derniers livres ajoutes</div>
-              <div className="grid grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 gap-3 min-[360px]:grid-cols-3 sm:grid-cols-5">
                 {recentBooks.map((book) => (
                   <Link key={book.id} href={`/books/${book.id}`} className="group">
                     <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panelSoft shadow-poster transition group-hover:border-mint">

@@ -247,9 +247,9 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
     const isSaving = savingId === key;
 
     return (
-      <article className={`rounded border border-line bg-panel/85 p-4 shadow-poster ${compact ? "bg-ink/45" : ""}`}>
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="cover-sheen grid h-36 w-24 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
+      <article className={`w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/85 p-4 shadow-poster ${compact ? "bg-ink/45" : ""}`}>
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
+          <div className="cover-sheen grid h-28 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster min-[360px]:h-32 min-[360px]:w-20 sm:h-36 sm:w-24">
             {book.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
@@ -270,7 +270,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
             </div>
             <h3 className="text-lg font-black leading-tight text-paper">{book.title}</h3>
             <p className="mt-1 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-muted">
+            <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-xs font-bold text-muted">
               {formatEdition(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatEdition(book)}</span> : null}
               {formatIsbn(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatIsbn(book)}</span> : null}
             </div>
@@ -279,7 +279,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
             type="button"
             onClick={() => openBook(book)}
             disabled={isSaving}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60 sm:w-36"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60 sm:w-36 sm:shrink-0"
           >
             <Plus size={14} />
             {isSaving ? "Ouverture..." : "Voir la fiche"}
@@ -290,7 +290,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
   }
 
   return (
-    <div ref={sectionRef} className="scroll-mt-24">
+    <div ref={sectionRef} className="min-w-0 overflow-hidden scroll-mt-24">
       {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <button
@@ -359,13 +359,13 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
           ))}
         </div>
       ) : groups.length ? (
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4 overflow-hidden">
           {groups.map((group) => {
             const isExpanded = expandedGroups.has(group.key);
             const editions = group.editions.filter((book) => bookKey(book) !== bookKey(group.main));
 
             return (
-              <div key={group.key} className="space-y-2">
+              <div key={group.key} className="min-w-0 space-y-2 overflow-hidden">
                 {renderEdition(group.main)}
                 {group.editions.length > 1 ? (
                   <button
@@ -388,7 +388,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
                   </button>
                 ) : null}
                 {isExpanded && editions.length ? (
-                  <div className="space-y-2 border-l border-line pl-3">
+                  <div className="min-w-0 space-y-2 border-l border-line pl-3">
                     {editions.map((book) => (
                       <div key={bookKey(book)}>{renderEdition(book, true)}</div>
                     ))}

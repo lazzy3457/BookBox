@@ -3,7 +3,7 @@ import { SearchWorkspace } from "@/components/search/SearchWorkspace";
 
 export default function SearchPage() {
   return (
-    <div>
+    <div className="min-w-0 overflow-hidden">
       <SectionHeader
         eyebrow="Catalogue"
         title="Recherche et ajout de livres"

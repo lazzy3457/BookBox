@@ -13,7 +13,7 @@ const sampleCovers = [
 
 export function CoverShelf() {
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {sampleCovers.map(([accent, base, label], index) => (
         <div
           key={label}

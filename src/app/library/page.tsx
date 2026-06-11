@@ -12,7 +12,7 @@ export default async function LibraryPage() {
 
   if (!session?.user?.id) {
     return (
-      <div className="rounded border border-line bg-panel p-8">
+      <div className="min-w-0 overflow-hidden rounded border border-line bg-panel p-5 sm:p-8">
         <h1 className="text-2xl font-black text-paper">Bibliothèque privée</h1>
         <p className="mt-3 text-muted">Connecte-toi pour gérer tes lectures.</p>
         <Link href="/login" className="mt-5 inline-block rounded bg-mint px-5 py-3 font-black text-ink">
@@ -29,7 +29,7 @@ export default async function LibraryPage() {
   });
 
   return (
-    <div>
+    <div className="min-w-0 overflow-hidden">
       <SectionHeader
         eyebrow="Personnel"
         title="Bibliothèque"
@@ -55,7 +55,7 @@ export default async function LibraryPage() {
           }))}
         />
       ) : (
-        <div className="rounded border border-line bg-panel/65 p-8 text-sm text-muted">
+        <div className="rounded border border-line bg-panel/65 p-5 text-sm text-muted sm:p-8">
           Ta bibliotheque est vide. Lance une recherche pour ajouter ton premier livre.
         </div>
       )}

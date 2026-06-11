@@ -118,11 +118,11 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
   ];
 
   return (
-    <div>
-      <section className="relative mb-8 overflow-hidden rounded border border-line bg-gradient-to-br from-panel via-night to-ink p-7 shadow-poster">
+    <div className="min-w-0 overflow-hidden">
+      <section className="relative mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-panel via-night to-ink p-5 shadow-poster sm:p-7">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-mint via-amber to-coral" />
-        <div className="grid gap-6 md:grid-cols-[160px_1fr]">
-          <div className="grid aspect-square place-items-center overflow-hidden rounded border border-line bg-ink/55 shadow-poster">
+        <div className="grid min-w-0 gap-6 md:grid-cols-[160px_minmax(0,1fr)]">
+          <div className="grid aspect-square w-32 place-items-center overflow-hidden rounded border border-line bg-ink/55 shadow-poster md:w-auto">
             {authorSummary.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={authorSummary.image} alt="" className="h-full w-full object-cover" />
@@ -133,9 +133,9 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
             )}
           </div>
 
-          <div className="max-w-4xl self-end">
+          <div className="min-w-0 max-w-4xl self-end">
             <div className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-mint">Auteur</div>
-            <h1 className="text-5xl font-black leading-none text-paper">{authorName}</h1>
+            <h1 className="text-3xl font-black leading-tight text-paper sm:text-4xl xl:text-5xl">{authorName}</h1>
             <ExpandableDescription
               text={
                 authorSummary.bio ??
@@ -145,7 +145,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           </div>
         </div>
 
-        <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mt-7 grid min-w-0 grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4">
           {stats.map((stat) => (
             <div key={stat.label} className="rounded border border-line bg-ink/45 px-4 py-3">
               <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted">
@@ -167,8 +167,8 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         ) : null}
       </section>
 
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <section>
+      <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+        <section className="min-w-0 overflow-hidden">
           <SectionHeader
             eyebrow="BooksBox"
             title="Livres dans le catalogue"
@@ -186,15 +186,15 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           </div>
         </section>
 
-        <section>
+        <section className="min-w-0 overflow-hidden">
           <SectionHeader eyebrow="Communaute" title="Reviews recentes" />
           <div className="space-y-4">
             {recentReviews.map((review) => (
-              <article key={review.id} className="rounded border border-line bg-panel/82 p-4 shadow-poster">
+              <article key={review.id} className="min-w-0 overflow-hidden rounded border border-line bg-panel/82 p-4 shadow-poster">
                 <Link href={`/books/${review.book.id}`} className="mb-3 block text-xs font-black uppercase tracking-[0.16em] text-mint transition hover:text-lime">
                   {review.book.title}
                 </Link>
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 items-start gap-3">
                   <Link
                     href={`/profile/${review.userId}`}
                     className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded bg-mint text-xs font-black text-ink"

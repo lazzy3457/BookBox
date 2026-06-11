@@ -35,16 +35,16 @@ export function ListReviews({ reviews }: { reviews: Review[] }) {
   const remaining = reviews.length - visible;
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4 overflow-hidden">
       {shown.map((review) => (
-        <div key={review.id}>
+        <div key={review.id} className="min-w-0 overflow-hidden">
           {/* Lien vers le livre au-dessus de chaque review */}
           <Link
             href={`/books/${review.bookId}`}
-            className="mb-2 inline-flex items-center gap-1.5 text-xs font-black text-muted transition hover:text-mint"
+            className="mb-2 inline-flex max-w-full items-center gap-1.5 overflow-hidden text-xs font-black text-muted transition hover:text-mint"
           >
             <span className="text-muted/50">↳</span>
-            {review.bookTitle}
+            <span className="truncate">{review.bookTitle}</span>
           </Link>
           <ReviewCard
             review={{
