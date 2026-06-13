@@ -20,6 +20,7 @@ Ce README est prevu pour une installation propre sur une autre machine, par exem
 - npm, installe avec Node.js.
 - Docker Desktop lance avant de demarrer PostgreSQL.
 - Expo Go sur le telephone pour tester l'application mobile.
+- Une development build Android/iOS est necessaire pour tester proprement les notifications push systeme. Expo Go affiche des avertissements et ne supporte plus completement les remote push Android depuis Expo SDK 53.
 - Git est optionnel si le projet est fourni en archive ou via Drive.
 
 ## Installation web
@@ -136,6 +137,32 @@ npx expo start --lan -c
 
 Scanner le QR code avec Expo Go. Le PC et le telephone doivent etre sur le meme reseau Wi-Fi.
 
+### Notifications push mobile
+
+Le mobile supporte deux niveaux de notifications :
+
+- une inbox dans l'application, accessible depuis le profil ;
+- des notifications push systeme via Expo Notifications.
+
+Les notifications push demandent les dependances mobiles suivantes :
+
+```bash
+cd mobile
+npx expo install expo-notifications expo-constants
+```
+
+Le plugin `expo-notifications` doit rester declare dans `mobile/app.json`.
+
+Avec Expo Go, les push Android affichent un avertissement et le rendu systeme reste limite. Pour tester le comportement reel sur telephone, utiliser une development build :
+
+```bash
+cd mobile
+npx eas build --profile development --platform android
+npx expo start --dev-client
+```
+
+Apres installation de la development build, se connecter une fois dans l'app pour enregistrer le token push du telephone. Les notifications creees ensuite par les likes, commentaires et reviews d'amis peuvent apparaitre dans la barre de notifications. Le clic sur une notification ouvre l'app et navigue vers la fiche livre cible quand la notification contient un lien livre.
+
 ## Variables d'environnement
 
 Le fichier `.env` n'est pas versionne. Il doit etre cree a partir de `.env.example`.
@@ -186,6 +213,7 @@ BooksBox/
       api/                Client API mobile
       auth/               Contexte d'authentification mobile
       components/         Composants React Native
+      notifications/      Enregistrement push et clic sur notifications
       screens/            Ecrans mobiles
       lib/                Helpers mobiles
   prisma/
@@ -218,6 +246,9 @@ Le schema principal est dans `prisma/schema.prisma`. Les tables principales sont
 - `ReviewReaction` et `ReviewCommentReaction` : likes et reactions.
 - `Follow` : abonnements entre utilisateurs.
 - `BookList` et `BookListEntry` : listes de livres.
+- `Notification` : inbox sociale persistante.
+- `NotificationPreference` : preferences utilisateur pour activer/desactiver les notifications.
+- `PushToken` : tokens Expo Push enregistres par appareil.
 
 ## Scripts utiles
 
@@ -269,6 +300,7 @@ npm run typecheck
 - Systeme de follow/unfollow.
 - Feed social et tendances.
 - Listes de livres personnalisables.
+- Notifications sociales : likes, commentaires/reponses et nouvelles reviews d'amis, avec inbox mobile et push systeme.
 - Interface web responsive avec navigation mobile.
 - Application mobile Expo : accueil, recherche, bibliotheque, communaute, profils, listes, favoris et fiches livres.
 
@@ -290,6 +322,12 @@ npm run typecheck
 - `DELETE /api/mobile/lists/:listId`
 - `POST /api/mobile/lists/:listId/books`
 - `DELETE /api/mobile/lists/:listId/books?bookId=...`
+- `GET /api/mobile/notifications`
+- `PATCH /api/mobile/notifications/:notificationId/read`
+- `GET /api/mobile/notification-preferences`
+- `PATCH /api/mobile/notification-preferences`
+- `POST /api/mobile/push-tokens`
+- `DELETE /api/mobile/push-tokens`
 
 Le mobile reutilise aussi certaines routes web compatibles avec le token mobile : `/api/auth/signup`, `/api/books/search`, `/api/books`, `/api/library`, `/api/reviews` et `/api/follows`.
 
@@ -306,6 +344,14 @@ Si le mobile ne se connecte pas au backend :
 - verifier que `mobile/.env.local` contient la meme IP ;
 - relancer Expo avec `npx expo start --lan -c` ;
 - autoriser Node.js dans le pare-feu Windows si une alerte apparait.
+
+Si les notifications push ne s'affichent pas dans la barre du telephone :
+
+- verifier que `expo-notifications` et `expo-constants` sont installes dans `mobile/node_modules` ;
+- verifier que le plugin `expo-notifications` est present dans `mobile/app.json` ;
+- se reconnecter dans l'app mobile pour enregistrer le token push ;
+- verifier que les preferences de notifications sont activees dans les parametres ;
+- utiliser une development build pour un test fiable, car Expo Go limite les remote push Android depuis SDK 53.
 
 ## Remarque sur la documentation d'architecture
 

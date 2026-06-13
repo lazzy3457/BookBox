@@ -1,6 +1,6 @@
 # Architecture BooksBox
 
-Date de mise a jour : 2026-06-11
+Date de mise a jour : 2026-06-13
 
 BooksBox est une application full-stack composee d'un site web Next.js, d'une application mobile Expo React Native et d'un backend partage expose via les routes API Next.js. Les deux clients utilisent la meme base PostgreSQL via Prisma.
 
@@ -73,6 +73,9 @@ BooksBox/
         comments/         Edition, suppression et likes des commentaires
         follows/          Follow / unfollow
         feed/             Activite sociale
+        notifications/    Inbox mobile et lecture de notifications
+        notification-preferences/ Preferences de notifications
+        push-tokens/      Enregistrement des tokens Expo Push
         trending/         Tendances
         users/            Recherche utilisateurs
       authors/            Pages auteurs web
@@ -115,6 +118,7 @@ BooksBox/
       api/                Client HTTP mobile
       auth/               Contexte d'auth mobile
       components/         Composants React Native
+      notifications/      Expo Push, permissions et clic notification
       screens/            Ecrans mobiles
       lib/                Helpers mobiles
       theme.ts            Theme mobile
@@ -184,6 +188,10 @@ Les routes mobiles sont regroupees sous `src/app/api/mobile`.
 - `DELETE /api/mobile/lists/:listId/books?bookId=...`
 - `POST /api/mobile/lists/:listId/reorder`
 - `POST /api/mobile/favorites/:bookId`
+- `GET /api/mobile/notifications`
+- `PATCH /api/mobile/notifications/:notificationId/read`
+- `GET/PATCH /api/mobile/notification-preferences`
+- `POST/DELETE /api/mobile/push-tokens`
 
 Certaines routes web acceptent aussi le token mobile via `Authorization: Bearer <token>`, notamment la recherche de livres, l'ajout a la bibliotheque, les reviews et les follows.
 
@@ -196,6 +204,7 @@ La logique metier est separee des routes API dans `src/server/services`.
 - `openLibrary.ts` : appels a Open Library.
 - `externalBooks.ts` : normalisation des resultats externes.
 - `feed.ts` : activite sociale et top reviews.
+- `notifications.ts` : creation d'inbox sociale et envoi best-effort via Expo Push Service.
 - `trending.ts` : calcul des tendances.
 
 Les validations d'entree sont dans `src/server/validation` avec Zod :
@@ -204,6 +213,7 @@ Les validations d'entree sont dans `src/server/validation` avec Zod :
 - `library.ts`
 - `lists.ts`
 - `reviews.ts`
+- `notifications.ts`
 
 Les erreurs API communes sont centralisees dans `src/server/http/errors.ts`.
 
@@ -260,6 +270,9 @@ La base est PostgreSQL. Le schema est gere par Prisma dans `prisma/schema.prisma
 - `Follow` : relation follower / following.
 - `BookList` : liste de livres creee par un utilisateur.
 - `BookListEntry` : entree d'une liste, avec ordre et note optionnelle.
+- `Notification` : notification sociale persistante pour l'inbox mobile.
+- `NotificationPreference` : toggles utilisateur pour likes, commentaires et reviews d'amis.
+- `PushToken` : token Expo Push actif ou desactive, associe a un utilisateur.
 
 ### Contraintes importantes
 
@@ -270,6 +283,8 @@ La base est PostgreSQL. Le schema est gere par Prisma dans `prisma/schema.prisma
 - Une reaction est unique par review, utilisateur et type.
 - Une relation follow est unique par follower et following.
 - Une liste ne peut contenir qu'une seule fois le meme livre.
+- Un token push Expo est unique.
+- Un utilisateur possede au plus un jeu de preferences de notifications.
 
 ### Migrations
 
@@ -297,11 +312,37 @@ Fichiers importants :
 - `mobile/App.tsx` : navigation principale.
 - `mobile/src/api/client.ts` : client HTTP et gestion des erreurs API.
 - `mobile/src/auth/AuthContext.tsx` : session mobile.
+- `mobile/src/notifications/push.ts` : permission, enregistrement ExpoPushToken et clic sur notification.
 - `mobile/src/screens` : ecrans de l'application.
 - `mobile/src/components` : composants UI mobiles.
 - `mobile/src/theme.ts` : couleurs et styles partages.
 
 Le mobile depend du backend web. Il faut donc lancer Next.js avant Expo.
+
+### Notifications mobiles
+
+Le systeme de notifications combine une inbox en base et un push systeme best-effort.
+
+Evenements couverts :
+
+- like sur une review de l'utilisateur ;
+- like sur un commentaire de l'utilisateur ;
+- commentaire sur une review de l'utilisateur ;
+- reponse a un commentaire de l'utilisateur ;
+- nouvelle review publiee par un utilisateur suivi.
+
+Flux :
+
+1. Une route sociale cree la reaction, le commentaire ou la review.
+2. Le service `src/server/services/notifications.ts` verifie le destinataire, evite les auto-notifications et lit les preferences.
+3. Une ligne `Notification` est creee en base.
+4. Si le destinataire possede un `PushToken` actif, le serveur envoie un message a l'Expo Push Service avec `targetUrl`, `notificationId`, `type`, `priority: high` et le channel Android `bookbox-social`.
+5. Le mobile affiche l'inbox via `/api/mobile/notifications`.
+6. Quand l'utilisateur touche une notification push, `mobile/src/notifications/push.ts` lit `targetUrl` et `mobile/App.tsx` navigue vers le livre cible si l'utilisateur est connecte.
+
+Les preferences sont persistantes et modifiables depuis le mobile, avec un switch general et des switches likes, commentaires/reponses et reviews d'amis. Le panneau web des parametres reutilise aussi le switch general.
+
+Expo SDK 54 est utilise. Expo Go ne supporte plus completement les remote push Android depuis SDK 53 ; pour valider le rendu systeme, les channels et le clic a froid, il faut une development build lancee avec `npx expo start --dev-client`.
 
 ## APIs externes
 
@@ -369,7 +410,8 @@ EXPO_PUBLIC_API_URL
 1. Un utilisateur ajoute une review sur un livre.
 2. Les autres utilisateurs peuvent liker ou commenter.
 3. Le feed social utilise les follows pour afficher l'activite des personnes suivies.
-4. Les tendances sont calculees cote serveur a partir des donnees d'activite.
+4. Les interactions creent aussi des notifications selon les preferences du destinataire.
+5. Les tendances sont calculees cote serveur a partir des donnees d'activite.
 
 ### Listes
 
@@ -405,11 +447,13 @@ Un test unitaire existe notamment pour la logique de tendances dans `src/server/
 - Services serveur partages pour eviter de dupliquer la logique entre routes web et routes mobiles.
 - Appels Google Books et Open Library uniquement cote serveur pour proteger les cles et controler les erreurs.
 - Expo Secure Store pour conserver le token mobile cote telephone.
+- Expo Notifications et Expo Push Service pour les notifications systeme mobiles, avec inbox persistante en base pour garder une source fiable meme si l'envoi push echoue.
 
 ## Points d'attention
 
 - `architecture.md` remplace l'ancien document de conception et correspond au code actuel.
 - Le mobile ne fonctionne que si le backend est accessible depuis le telephone.
+- Les notifications push systeme ne doivent pas etre validees dans Expo Go : utiliser une development build pour les tests fiables.
 - En local, Docker doit etre lance avant Prisma et Next.js.
 - La base est vide au premier lancement : il faut creer un compte pour tester.
 - Si le port PostgreSQL `5432` est deja utilise, adapter Docker et `DATABASE_URL`.

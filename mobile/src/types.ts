@@ -1,5 +1,6 @@
 export type ReadingStatus = "TO_READ" | "READING" | "READ" | "ABANDONED";
 export type ReactionKind = "LIKE" | "TO_READ";
+export type NotificationType = "REVIEW_LIKE" | "COMMENT_LIKE" | "REVIEW_COMMENT" | "COMMENT_REPLY" | "FRIEND_REVIEW";
 
 export type User = {
   id: string;
@@ -69,6 +70,28 @@ export type ReviewComment = {
   likes?: unknown[];
 };
 
+export type NotificationPreference = {
+  id: string;
+  userId: string;
+  enabled: boolean;
+  likesEnabled: boolean;
+  commentsEnabled: boolean;
+  friendReviewsEnabled: boolean;
+};
+
+export type BookBoxNotification = {
+  id: string;
+  recipientId: string;
+  actorId?: string | null;
+  type: NotificationType;
+  title: string;
+  message: string;
+  targetUrl?: string | null;
+  readAt?: string | null;
+  createdAt: string;
+  actor?: User | null;
+};
+
 export type BookList = {
   id: string;
   title: string;
@@ -98,6 +121,7 @@ export type RootStackParamList = {
   AuthorDetails: { authorSlug: string; authorName?: string };
   ListDetails: { listId: string };
   PublicProfile: { userId: string };
+  Notifications: undefined;
   Settings: undefined;
 };
 

@@ -152,6 +152,7 @@ export function ProfileScreen() {
         </View>
         <View style={styles.rowActions}>
           <PrimaryButton compact label={isEditing ? "Annuler l'edition" : "Modifier le profil"} onPress={() => setIsEditing((current) => !current)} tone="ghost" />
+          <PrimaryButton compact label="Notifications" onPress={() => navigation.navigate("Notifications")} tone="ghost" />
           <PrimaryButton compact label="Parametres" onPress={() => navigation.navigate("Settings")} tone="ghost" />
         </View>
       </View>

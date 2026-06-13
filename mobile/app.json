@@ -12,6 +12,14 @@
     },
     "android": {
       "edgeToEdgeEnabled": true
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#7AF7C4"
+        }
+      ]
+    ]
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, EyeOff, Moon, Shield, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const preferenceItems = [
   {
@@ -21,12 +21,58 @@ const preferenceItems = [
   }
 ];
 
+type NotificationPreference = {
+  enabled: boolean;
+  likesEnabled: boolean;
+  commentsEnabled: boolean;
+  friendReviewsEnabled: boolean;
+};
+
 export function SettingsPanel() {
   const [enabled, setEnabled] = useState<Record<string, boolean>>({
     "Theme sombre": true,
     "Notifications sociales": true,
     "Masquer les spoilers": true
   });
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference | null>(null);
+
+  useEffect(() => {
+    fetch("/api/mobile/notification-preferences")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (payload?.preferences) {
+          setNotificationPreferences(payload.preferences);
+          setEnabled((current) => ({ ...current, "Notifications sociales": payload.preferences.enabled }));
+        }
+      })
+      .catch(() => null);
+  }, []);
+
+  async function togglePreference(title: string) {
+    if (title !== "Notifications sociales") {
+      setEnabled((current) => ({ ...current, [title]: !current[title] }));
+      return;
+    }
+
+    const nextEnabled = !(notificationPreferences?.enabled ?? enabled[title]);
+    setEnabled((current) => ({ ...current, [title]: nextEnabled }));
+    setNotificationPreferences((current) => (current ? { ...current, enabled: nextEnabled } : current));
+
+    const response = await fetch("/api/mobile/notification-preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: nextEnabled })
+    });
+
+    if (!response.ok) {
+      setEnabled((current) => ({ ...current, [title]: !nextEnabled }));
+      setNotificationPreferences((current) => (current ? { ...current, enabled: !nextEnabled } : current));
+      return;
+    }
+
+    const payload = await response.json();
+    setNotificationPreferences(payload.preferences);
+  }
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -44,7 +90,7 @@ export function SettingsPanel() {
             </div>
             <button
               type="button"
-              onClick={() => setEnabled((current) => ({ ...current, [item.title]: !current[item.title] }))}
+              onClick={() => togglePreference(item.title)}
               className={`h-7 w-12 rounded-full border p-1 transition ${
                 enabled[item.title] ? "border-mint bg-mint" : "border-line bg-ink"
               }`}

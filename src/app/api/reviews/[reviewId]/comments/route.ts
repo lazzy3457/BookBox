@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError } from "@/server/http/errors";
+import { notifyReviewComment } from "@/server/services/notifications";
 import { commentMutationSchema } from "@/server/validation/reviews";
 
 export async function POST(request: Request, { params }: { params: Promise<{ reviewId: string }> }) {
@@ -18,6 +19,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ rev
       },
       include: { user: true }
     });
+
+    await notifyReviewComment({ actorId: userId, commentId: comment.id });
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
