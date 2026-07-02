@@ -8,16 +8,18 @@ import { BookCard } from "@/components/books/BookCard";
 import { CommunityReaderSearch } from "@/components/community/CommunityReaderSearch";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StarRating } from "@/components/reviews/StarRating";
+import { getBlockedUserIds } from "@/server/services/blocks";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions);
   const currentUserId = session?.user?.id;
+  const blockedUserIds = currentUserId ? await getBlockedUserIds(currentUserId) : [];
 
   const [readers, recentReviews, trendingBooks, following] = await Promise.all([
     prisma.user.findMany({
-      where: currentUserId ? { id: { not: currentUserId } } : {},
+      where: { suspendedAt: null, ...(currentUserId ? { id: { notIn: [currentUserId, ...blockedUserIds] } } : {}) },
       orderBy: { createdAt: "desc" },
       take: 8,
       include: {
@@ -31,13 +33,14 @@ export default async function CommunityPage() {
       }
     }),
     prisma.review.findMany({
+      where: { hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) },
       orderBy: { createdAt: "desc" },
       take: 8,
       include: {
         user: true,
         book: true,
-        reactions: true,
-        comments: true
+        reactions: blockedUserIds.length ? { where: { userId: { notIn: blockedUserIds } } } : true,
+        comments: { where: { hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) } }
       }
     }),
     getTrendingBooks(),
@@ -54,7 +57,6 @@ export default async function CommunityPage() {
     id: reader.id,
     name: reader.name,
     username: reader.username,
-    email: reader.email,
     isFollowing: followingIds.has(reader.id),
     counts: {
       library: reader._count.library,

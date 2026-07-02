@@ -5,6 +5,7 @@ import { dedupeExternalBooks } from "@/server/services/externalBooks";
 import type { ExternalBookCandidate } from "@/server/services/externalBooks";
 import { searchOpenLibrary } from "@/server/services/openLibrary";
 import { searchBooksSchema } from "@/server/validation/books";
+import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
 
 const MAX_SEARCH_RESULTS = 200;
 
@@ -26,6 +27,12 @@ function interleaveResults(first: ExternalBookCandidate[], second: ExternalBookC
 
 export async function GET(request: Request) {
   try {
+    await enforceRateLimit({
+      scope: "book-search",
+      identifier: getClientIdentifier(request),
+      limit: 60,
+      windowMs: 60_000
+    });
     const { searchParams } = new URL(request.url);
     const { q, startIndex, pageSize, mode, language, source } = searchBooksSchema.parse({
       q: searchParams.get("q") ?? "",

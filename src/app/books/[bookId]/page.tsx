@@ -17,6 +17,8 @@ import { StarRating } from "@/components/reviews/StarRating";
 import { BookCard } from "@/components/books/BookCard";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
 import { ReadingJournal } from "@/components/library/ReadingJournal";
+import { getBlockedUserIds } from "@/server/services/blocks";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,36 @@ const sourceLabels: Record<string, string> = {
   google_books: "Google Books",
   manual: "Ajout manuel"
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ bookId: string }> }): Promise<Metadata> {
+  const { bookId } = await params;
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { title: true, authors: true, description: true, thumbnailUrl: true }
+  });
+  if (!book) return { title: "Livre introuvable", robots: { index: false, follow: false } };
+
+  const authors = book.authors.join(", ") || "Auteur inconnu";
+  const description = book.description?.slice(0, 155) ?? `Découvre ${book.title} de ${authors} sur BooksBox.`;
+  return {
+    title: book.title,
+    description,
+    alternates: { canonical: `/books/${bookId}` },
+    openGraph: {
+      type: "book",
+      title: book.title,
+      description,
+      url: `/books/${bookId}`,
+      images: book.thumbnailUrl ? [{ url: book.thumbnailUrl, alt: `Couverture de ${book.title}` }] : undefined
+    },
+    twitter: {
+      card: book.thumbnailUrl ? "summary" : "summary_large_image",
+      title: book.title,
+      description,
+      images: book.thumbnailUrl ? [book.thumbnailUrl] : undefined
+    }
+  };
+}
 
 function formatValue(value: string | number | null | undefined, fallback = "Inconnu") {
   return value ?? fallback;
@@ -38,6 +70,9 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   ]);
 
   if (!book) notFound();
+  const blockedUserIds = session?.user?.id ? await getBlockedUserIds(session.user.id) : [];
+  const blockedUserIdSet = new Set(blockedUserIds);
+  const visibleReviews = book.reviews.filter((review) => !blockedUserIdSet.has(review.userId));
 
   const userBook = session?.user?.id
     ? await prisma.userBook.findUnique({
@@ -47,11 +82,11 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
     : null;
 
   const currentUserReview = session?.user?.id
-    ? book.reviews.find((review) => review.userId === session.user?.id)
+    ? visibleReviews.find((review) => review.userId === session.user?.id)
     : null;
 
-  const averageRating = book.reviews.length
-    ? book.reviews.reduce((total, review) => total + review.rating, 0) / book.reviews.length
+  const averageRating = visibleReviews.length
+    ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length
     : null;
   const readCount = book.libraries.filter((entry) => entry.status === ReadingStatus.READ).length;
   const readingCount = book.libraries.filter((entry) => entry.status === ReadingStatus.READING).length;
@@ -65,7 +100,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           authors: { hasSome: book.authors }
         },
         include: {
-          reviews: true
+          reviews: { where: { hiddenAt: null, user: { suspendedAt: null } } }
         },
         take: 6
       })
@@ -78,7 +113,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   }));
   const followingActivity = session?.user?.id
     ? await prisma.follow.findMany({
-        where: { followerId: session.user.id },
+        where: { followerId: session.user.id, following: { suspendedAt: null } },
         select: {
           following: {
             select: {
@@ -86,7 +121,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
               name: true,
               image: true,
               reviews: {
-                where: { bookId: book.id },
+                where: { bookId: book.id, hiddenAt: null },
                 orderBy: { createdAt: "desc" },
                 take: 1
               },
@@ -106,7 +141,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
   const stats = [
     { label: "Moyenne", value: averageRating ? averageRating.toFixed(1) : "-", icon: Star },
-    { label: "Reviews", value: book.reviews.length, icon: MessageSquareText },
+    { label: "Reviews", value: visibleReviews.length, icon: MessageSquareText },
     { label: "Lecteurs", value: book.libraries.length, icon: UsersRound },
     { label: "Favoris", value: favoriteCount, icon: Heart }
   ];
@@ -318,7 +353,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           <div>
             <h2 className="mb-4 text-xl font-black text-paper">Reviews</h2>
             <div className="min-w-0 space-y-4 overflow-hidden">
-              {book.reviews.map((review) => (
+              {visibleReviews.map((review) => (
                 <ReviewCard
                   key={review.id}
                   review={{
@@ -330,8 +365,9 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     userName: review.user.name ?? "Lecteur BooksBox",
                     userImage: review.user.image,
                     canManage: review.userId === session?.user?.id,
+                    canReport: Boolean(session?.user?.id && review.userId !== session.user.id),
                     reactionsCount: review.reactions.length,
-                    comments: review.comments.map((comment) => ({
+                    comments: review.comments.filter((comment) => !blockedUserIdSet.has(comment.userId)).map((comment) => ({
                       id: comment.id,
                       body: comment.body,
                       userName: comment.user.name ?? "Lecteur BooksBox",
@@ -342,7 +378,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                   }}
                 />
               ))}
-              {!book.reviews.length ? (
+              {!visibleReviews.length ? (
                 <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
                   Aucune review pour ce livre. La premiere review donnera le ton.
                 </div>

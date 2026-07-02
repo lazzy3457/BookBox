@@ -1,460 +1,122 @@
 # Architecture BooksBox
 
-Date de mise a jour : 2026-06-13
+Dernière mise à jour : 2 juillet 2026
 
-BooksBox est une application full-stack composee d'un site web Next.js, d'une application mobile Expo React Native et d'un backend partage expose via les routes API Next.js. Les deux clients utilisent la meme base PostgreSQL via Prisma.
+Ce document décrit l’architecture réellement utilisée. Les anciens documents produit et UX restent des archives de conception.
 
-## Vue d'ensemble
-
-```text
-Navigateur web
-  -> Next.js App Router
-  -> Pages React + Server Components
-  -> Routes API Next.js
-  -> Services serveur
-  -> Prisma
-  -> PostgreSQL Docker
-
-Application mobile Expo
-  -> Client API mobile
-  -> Routes /api/mobile/*
-  -> Services serveur partages
-  -> Prisma
-  -> PostgreSQL Docker
-
-APIs externes
-  -> Google Books
-  -> Open Library
-```
-
-Le backend est volontairement centralise dans l'application Next.js. Le mobile ne possede pas de backend separe : il appelle les routes API du projet web avec `EXPO_PUBLIC_API_URL`.
-
-## Stack technique
-
-### Web et backend
-
-- Next.js App Router.
-- React.
-- TypeScript.
-- Tailwind CSS.
-- NextAuth avec provider Credentials.
-- Prisma ORM.
-- PostgreSQL.
-- Zod pour la validation.
-- Vitest pour les tests unitaires.
-- ESLint pour la qualite de code.
-
-### Mobile
-
-- Expo SDK 54.
-- React Native.
-- TypeScript.
-- React Navigation.
-- Expo Secure Store pour stocker le token mobile.
-
-### Infrastructure locale
-
-- Docker Compose lance uniquement PostgreSQL.
-- Le serveur Next.js tourne en local avec `npm run dev`.
-- Le mode mobile necessite d'exposer Next.js sur le reseau local avec `npm run dev -- -H 0.0.0.0`.
-
-## Structure des dossiers
+## Vue d’ensemble
 
 ```text
-BooksBox/
-  src/
-    app/
-      api/
-        auth/             Auth web et inscription
-        mobile/           API dediee a l'application mobile
-        books/            Recherche, import et detail des livres
-        library/          Bibliotheque utilisateur
-        reviews/          Reviews, reactions et commentaires
-        comments/         Edition, suppression et likes des commentaires
-        follows/          Follow / unfollow
-        feed/             Activite sociale
-        notifications/    Inbox mobile et lecture de notifications
-        notification-preferences/ Preferences de notifications
-        push-tokens/      Enregistrement des tokens Expo Push
-        trending/         Tendances
-        users/            Recherche utilisateurs
-      authors/            Pages auteurs web
-      books/              Pages livres web
-      commu/              Page communaute
-      library/            Page bibliotheque
-      lists/              Pages listes
-      login/              Connexion web
-      profile/            Profil prive et profils publics
-      search/             Recherche web
-      settings/           Parametres
-      signup/             Inscription web
-      trending/           Page tendances
-    components/
-      activity/           Feed et lignes d'activite
-      auth/               Formulaires et boutons auth
-      authors/            Sections auteurs
-      books/              Cartes, couvertures et fiche livre
-      community/          Recherche lecteurs et follow
-      layout/             Shell de navigation
-      library/            Bibliotheque et actions livre
-      lists/              Creation, edition et affichage listes
-      profile/            Edition profil
-      reviews/            Reviews, etoiles, commentaires
-      search/             Workspace de recherche
-      settings/           Panneau de parametres
-      ui/                 Composants UI generiques
-    server/
-      actions/            Actions serveur appelees par le web
-      auth/               NextAuth, session, mot de passe, token mobile
-      db/                 Client Prisma singleton
-      http/               Helpers d'erreurs API
-      services/           Logique metier et APIs externes
-      validation/         Schemas Zod
-    lib/                  Helpers partages
-    types/                Augmentations TypeScript
-  mobile/
-    App.tsx               Entree Expo
-    src/
-      api/                Client HTTP mobile
-      auth/               Contexte d'auth mobile
-      components/         Composants React Native
-      notifications/      Expo Push, permissions et clic notification
-      screens/            Ecrans mobiles
-      lib/                Helpers mobiles
-      theme.ts            Theme mobile
-      types.ts            Types mobiles
-  prisma/
-    schema.prisma         Schema relationnel
-    migrations/           Historique des migrations
-  scripts/
-    next-with-system-ca.mjs
-  docker-compose.yml
+Navigateur web ─┐
+                ├─> Next.js App Router et routes API
+Mobile Expo ────┘        │
+                         ├─> services métier et sécurité
+                         ├─> Prisma 6.19.3
+                         └─> PostgreSQL
+
+Services externes :
+Google Books · Open Library · Wikimedia · Expo Push · SMTP
 ```
 
-## Architecture web
+Le web est le client principal. Le mobile Expo consomme le même backend avec un jeton Bearer et ne possède pas de serveur séparé.
 
-Le site web utilise le dossier `src/app` de Next.js.
+## Stack
 
-- Les pages sont organisees par route : `books`, `authors`, `library`, `profile`, `search`, `commu`, `trending`, `settings`, `lists`.
-- Le layout global est dans `src/app/layout.tsx`.
-- Le shell de navigation est dans `src/components/layout/AppShell.tsx`.
-- Les interactions utilisateur passent soit par des routes API, soit par des actions serveur dans `src/server/actions`.
+- Next.js 16, React, TypeScript et Tailwind CSS.
+- NextAuth Credentials avec sessions JWT.
+- Prisma et PostgreSQL.
+- Zod pour les entrées API.
+- Nodemailer avec SMTP générique pour les e-mails transactionnels.
+- Vitest et ESLint.
+- Expo SDK 54 pour le mobile.
 
-Les composants sont regroupes par domaine fonctionnel. Par exemple, les composants de reviews sont dans `src/components/reviews`, les composants de bibliotheque dans `src/components/library`, et les composants livres dans `src/components/books`.
-
-## Architecture API
-
-Les routes API sont dans `src/app/api`. Elles renvoient du JSON avec `NextResponse`.
-
-### API web principale
-
-- `POST /api/auth/signup` : creation de compte.
-- `/api/auth/[...nextauth]` : routes NextAuth.
-- `GET /api/books/search` : recherche Google Books et Open Library.
-- `POST /api/books` : creation ou import de livre.
-- `GET /api/books/:bookId` : detail livre.
-- `GET/POST/DELETE /api/library` : bibliotheque utilisateur.
-- `POST /api/reviews` : creation de review.
-- `PATCH/DELETE /api/reviews/:reviewId` : edition ou suppression de review.
-- `POST /api/reviews/:reviewId/reactions` : like de review.
-- `POST /api/reviews/:reviewId/comments` : commentaire de review.
-- `PATCH/DELETE /api/comments/:commentId` : edition ou suppression de commentaire.
-- `POST /api/comments/:commentId/reactions` : like de commentaire.
-- `POST/DELETE /api/follows` : follow et unfollow.
-- `GET /api/feed` : activite sociale.
-- `GET /api/trending` : livres tendances.
-- `GET /api/users/search` : recherche lecteurs.
-
-### API mobile
-
-Les routes mobiles sont regroupees sous `src/app/api/mobile`.
-
-- `POST /api/mobile/auth/login`
-- `POST /api/mobile/auth/logout`
-- `GET /api/mobile/auth/me`
-- `GET /api/mobile/home`
-- `GET /api/mobile/books/:bookId`
-- `GET /api/mobile/authors/:authorSlug`
-- `GET /api/mobile/profile`
-- `PATCH /api/mobile/profile`
-- `GET /api/mobile/profiles/:userId`
-- `GET /api/mobile/community`
-- `GET /api/mobile/lists`
-- `POST /api/mobile/lists`
-- `GET /api/mobile/lists/:listId`
-- `PATCH /api/mobile/lists/:listId`
-- `DELETE /api/mobile/lists/:listId`
-- `POST /api/mobile/lists/:listId/books`
-- `DELETE /api/mobile/lists/:listId/books?bookId=...`
-- `POST /api/mobile/lists/:listId/reorder`
-- `POST /api/mobile/favorites/:bookId`
-- `GET /api/mobile/notifications`
-- `PATCH /api/mobile/notifications/:notificationId/read`
-- `GET/PATCH /api/mobile/notification-preferences`
-- `POST/DELETE /api/mobile/push-tokens`
-
-Certaines routes web acceptent aussi le token mobile via `Authorization: Bearer <token>`, notamment la recherche de livres, l'ajout a la bibliotheque, les reviews et les follows.
-
-## Services serveur
-
-La logique metier est separee des routes API dans `src/server/services`.
-
-- `books.ts` : creation manuelle, import et upsert de livres externes.
-- `googleBooks.ts` : appels a Google Books.
-- `openLibrary.ts` : appels a Open Library.
-- `externalBooks.ts` : normalisation des resultats externes.
-- `feed.ts` : activite sociale et top reviews.
-- `notifications.ts` : creation d'inbox sociale et envoi best-effort via Expo Push Service.
-- `trending.ts` : calcul des tendances.
-
-Les validations d'entree sont dans `src/server/validation` avec Zod :
-
-- `books.ts`
-- `library.ts`
-- `lists.ts`
-- `reviews.ts`
-- `notifications.ts`
-
-Les erreurs API communes sont centralisees dans `src/server/http/errors.ts`.
-
-## Authentification
-
-### Web
-
-L'authentification web utilise NextAuth avec un provider Credentials.
-
-Fichiers principaux :
-
-- `src/server/auth/options.ts`
-- `src/server/auth/password.ts`
-- `src/server/auth/session.ts`
-- `src/app/api/auth/[...nextauth]/route.ts`
-- `src/app/api/auth/signup/route.ts`
-
-Les mots de passe sont hashes avec `bcryptjs`. Les sessions web utilisent la strategie JWT de NextAuth.
-
-### Mobile
-
-Le mobile utilise une authentification par token.
-
-Fichiers principaux :
-
-- `src/server/auth/mobile.ts`
-- `src/app/api/mobile/auth/login/route.ts`
-- `src/app/api/mobile/auth/me/route.ts`
-- `mobile/src/auth/AuthContext.tsx`
-- `mobile/src/api/client.ts`
-
-Au login mobile, le backend verifie les identifiants et renvoie un token. L'application mobile le stocke avec Expo Secure Store et l'envoie ensuite dans l'en-tete :
+## Organisation
 
 ```text
-Authorization: Bearer <token>
+src/app/                 pages web, métadonnées et routes API
+src/components/          composants React par domaine
+src/lib/                 configuration publique et helpers partagés
+src/server/auth/         sessions web/mobile et rôles
+src/server/email/        transport SMTP
+src/server/security/     limitation des requêtes
+src/server/services/     logique métier et intégrations
+src/server/validation/   schémas Zod
+prisma/                  schéma et migrations PostgreSQL
+scripts/                 préflight, administration et lancement
+docs/                    exploitation, conformité et sécurité
+mobile/                  application Expo
 ```
 
-Le secret utilise est `MOBILE_JWT_SECRET`. Si cette variable est absente, le code reutilise `NEXTAUTH_SECRET`. En developpement, un secret de fallback existe, mais il ne doit pas etre utilise en production.
+## Authentification et autorisation
 
-## Base de donnees
+- Une inscription web exige l’attestation d’un âge minimum de 15 ans et l’acceptation des versions juridiques courantes.
+- Les acceptations sont enregistrées dans `LegalAcceptance`.
+- Un nouveau compte doit vérifier son e-mail avec un jeton haché valable 24 heures.
+- Un lien de réinitialisation de mot de passe est valable 30 minutes et utilisable une seule fois.
+- Les réponses de vérification et récupération ne révèlent pas l’existence d’un compte.
+- Les comptes existant avant la migration du lot 8 ont été considérés comme vérifiés.
+- Les routes protégées passent par `requireCurrentUserId`; une ancienne session ne permet pas à un compte suspendu d’agir.
+- Les administrateurs possèdent le rôle `ADMIN` en base. Le rôle est accordé avec `npm run admin:grant -- adresse@email.fr`.
+- Les requêtes web mutantes vérifient leur origine. Les clients mobiles utilisent `Authorization: Bearer`.
 
-La base est PostgreSQL. Le schema est gere par Prisma dans `prisma/schema.prisma`.
+L’ancien mécanisme `ADMIN_EMAILS` n’est plus utilisé.
 
-### Modeles principaux
+## Domaines métier
 
-- `User` : compte, profil, email, image, bio.
-- `Account`, `Session`, `VerificationToken` : tables compatibles NextAuth.
-- `Book` : livre interne, lie a Google Books ou Open Library si disponible.
-- `UserBook` : lien utilisateur-livre, statut de lecture et favori.
-- `Review` : note, texte, spoiler, auteur et livre.
-- `ReviewReaction` : reaction sur une review.
-- `ReviewComment` : commentaire de review, avec support de reponses.
-- `ReviewCommentReaction` : like de commentaire.
-- `Follow` : relation follower / following.
-- `BookList` : liste de livres creee par un utilisateur.
-- `BookListEntry` : entree d'une liste, avec ordre et note optionnelle.
-- `Notification` : notification sociale persistante pour l'inbox mobile.
-- `NotificationPreference` : toggles utilisateur pour likes, commentaires et reviews d'amis.
-- `PushToken` : token Expo Push actif ou desactive, associe a un utilisateur.
+### Lecture
 
-### Contraintes importantes
+- `UserBook` représente la présence du livre dans la bibliothèque.
+- `ReadingPeriod` représente une lecture ou une relecture avec début et fin.
+- `ReadingEntry` représente une progression datée en page, pourcentage ou chapitre.
+- Une entrée de journal est privée par défaut et peut être rendue publique individuellement.
 
-- Un email utilisateur est unique.
-- Un username est unique.
-- Un couple `userId` / `bookId` est unique dans `UserBook`.
-- Une review est unique par couple `userId` / `bookId`.
-- Une reaction est unique par review, utilisateur et type.
-- Une relation follow est unique par follower et following.
-- Une liste ne peut contenir qu'une seule fois le meme livre.
-- Un token push Expo est unique.
-- Un utilisateur possede au plus un jeu de preferences de notifications.
+### Recommandations
 
-### Migrations
+Le score combine notes, favoris, statuts, auteurs appréciés et proximité avec d’autres lecteurs. Les livres lus ou abandonnés et les exclusions explicites sont retirés. Aucune IA payante n’est utilisée.
 
-Les migrations sont versionnees dans `prisma/migrations`.
+### Import
 
-Pour initialiser la base sur une nouvelle machine :
+L’import Goodreads/BookBox fonctionne en deux phases : prévisualisation sans écriture, puis confirmation transactionnelle. La correspondance utilise ISBN, identifiant externe, puis titre/auteur normalisés.
 
-```bash
-npm run prisma:migrate
-npm run prisma:generate
-```
+### Social et confidentialité
 
-## Application mobile
+- Reviews, commentaires, réactions, follows, listes et notifications sont persistés.
+- Le blocage supprime les follows mutuels, empêche les interactions et masque réciproquement profils et contenus.
+- Les contenus masqués et comptes suspendus sont exclus des pages et API publiques.
 
-L'application mobile est une application Expo React Native situee dans `mobile/`.
+### Modération
 
-Le client HTTP mobile lit l'URL du backend depuis :
+- `ModerationReport` couvre les signalements communautaires authentifiés.
+- `LegalNotice` couvre les notifications publiques de contenus potentiellement illicites.
+- `ModerationAction` constitue le journal d’audit des masquages, restaurations et suspensions.
+- `ModerationAppeal` conserve les contestations.
+- Une clôture exige une motivation et peut notifier les parties par e-mail.
 
-```text
-EXPO_PUBLIC_API_URL
-```
+## Sécurité
 
-Fichiers importants :
+- Mots de passe hachés avec bcrypt.
+- Jetons de compte stockés uniquement sous forme SHA-256.
+- Limitation persistante des requêtes avec identifiants HMAC.
+- Validation stricte des entrées et taille maximale des imports.
+- En-têtes CSP, HSTS en production, anti-framing et politiques de permissions.
+- Export et suppression de compte disponibles depuis les paramètres.
+- Secrets et jetons push exclus des logs.
+- `npm run preflight` bloque une configuration de production incomplète.
 
-- `mobile/App.tsx` : navigation principale.
-- `mobile/src/api/client.ts` : client HTTP et gestion des erreurs API.
-- `mobile/src/auth/AuthContext.tsx` : session mobile.
-- `mobile/src/notifications/push.ts` : permission, enregistrement ExpoPushToken et clic sur notification.
-- `mobile/src/screens` : ecrans de l'application.
-- `mobile/src/components` : composants UI mobiles.
-- `mobile/src/theme.ts` : couleurs et styles partages.
+## Données principales
 
-Le mobile depend du backend web. Il faut donc lancer Next.js avant Expo.
+`User`, `LegalAcceptance`, `AccountToken`, `Book`, `UserBook`, `ReadingPeriod`, `ReadingEntry`, `Review`, `ReviewComment`, `Follow`, `UserBlock`, `BookList`, `Notification`, `PushToken`, `RecommendationDismissal`, `ModerationReport`, `LegalNotice`, `ModerationAction` et `ModerationAppeal`.
 
-### Notifications mobiles
+Les relations utilisateur utilisent en majorité `onDelete: Cascade`. Le journal d’audit de modération anonymise le modérateur supprimé avec `SetNull`.
 
-Le systeme de notifications combine une inbox en base et un push systeme best-effort.
+## Déploiement
 
-Evenements couverts :
+1. Renseigner toutes les variables décrites dans `.env.example`.
+2. Choisir et confirmer la politique des comptes inactifs.
+3. Exécuter `npm run preflight`.
+4. Appliquer `npx prisma migrate deploy`.
+5. Exécuter tests, lint et build.
+6. Accorder au moins un rôle administrateur.
+7. Vérifier SMTP, sauvegardes et restauration.
 
-- like sur une review de l'utilisateur ;
-- like sur un commentaire de l'utilisateur ;
-- commentaire sur une review de l'utilisateur ;
-- reponse a un commentaire de l'utilisateur ;
-- nouveau follower ;
-- nouvelle review publiee par un utilisateur suivi.
-
-Flux :
-
-1. Une route sociale cree la reaction, le commentaire ou la review.
-2. Le service `src/server/services/notifications.ts` verifie le destinataire, evite les auto-notifications et lit les preferences.
-3. Une ligne `Notification` est creee en base.
-4. Si le destinataire possede un `PushToken` actif, le serveur envoie un message a l'Expo Push Service avec `targetUrl`, `notificationId`, `type`, `priority: high` et le channel Android `bookbox-social`.
-5. Le mobile affiche l'inbox via `/api/mobile/notifications`.
-6. Quand l'utilisateur touche une notification push, `mobile/src/notifications/push.ts` lit `targetUrl` et `mobile/App.tsx` navigue vers le livre ou le profil cible si l'utilisateur est connecte.
-
-Les preferences sont persistantes et modifiables depuis le mobile, avec un switch general et des switches likes, commentaires/reponses, reviews d'amis et nouveaux followers. Le panneau web des parametres reutilise aussi le switch general.
-
-Expo SDK 54 est utilise. Expo Go ne supporte plus completement les remote push Android depuis SDK 53 ; pour valider le rendu systeme, les channels et le clic a froid, il faut une development build lancee avec `npx expo start --dev-client`.
-
-## APIs externes
-
-### Google Books
-
-Google Books est appele cote serveur dans `src/server/services/googleBooks.ts`.
-
-La cle `GOOGLE_BOOKS_API_KEY` est optionnelle en local. Si elle est renseignee, elle est ajoutee aux appels serveur. Elle ne doit jamais etre exposee cote client.
-
-### Open Library
-
-Open Library est appele cote serveur dans `src/server/services/openLibrary.ts`.
-
-L'usage actuel ne necessite pas de cle API.
-
-## Variables d'environnement
-
-### Racine du projet
-
-Le fichier `.env` doit etre cree depuis `.env.example`.
-
-```text
-DATABASE_URL
-NEXTAUTH_URL
-NEXTAUTH_SECRET
-GOOGLE_BOOKS_API_KEY
-MOBILE_JWT_SECRET
-```
-
-### Mobile
-
-Le fichier `mobile/.env.local` doit etre cree depuis `mobile/.env.example`.
-
-```text
-EXPO_PUBLIC_API_URL
-```
-
-## Flux principaux
-
-### Inscription et connexion web
-
-1. L'utilisateur cree un compte via `/api/auth/signup`.
-2. Le mot de passe est hashe avec `bcryptjs`.
-3. La connexion passe par NextAuth Credentials.
-4. Les pages web recuperent l'utilisateur courant via la session NextAuth.
-
-### Connexion mobile
-
-1. Le mobile appelle `POST /api/mobile/auth/login`.
-2. Le backend verifie l'email et le mot de passe.
-3. Le backend renvoie un token mobile.
-4. Le mobile stocke le token dans Expo Secure Store.
-5. Les appels suivants ajoutent `Authorization: Bearer <token>`.
-
-### Recherche et import de livre
-
-1. Le client appelle `/api/books/search`.
-2. Le serveur interroge Google Books et Open Library.
-3. Les resultats sont normalises.
-4. Lors de l'ajout, le livre est cree ou mis a jour dans `Book`.
-5. L'utilisateur peut l'ajouter a sa bibliotheque via `UserBook`.
-
-### Review et interactions sociales
-
-1. Un utilisateur ajoute une review sur un livre.
-2. Les autres utilisateurs peuvent liker ou commenter.
-3. Le feed social utilise les follows pour afficher l'activite des personnes suivies.
-4. Les interactions creent aussi des notifications selon les preferences du destinataire.
-5. Les tendances sont calculees cote serveur a partir des donnees d'activite.
-
-### Listes
-
-1. Un utilisateur cree une liste.
-2. Il ajoute des livres via `BookListEntry`.
-3. L'ordre des livres peut etre modifie.
-4. Les listes sont reutilisees sur le web et le mobile.
-
-## Securite
-
-- Les mots de passe sont hashes, jamais stockes en clair.
-- Les secrets sont lus depuis les variables d'environnement.
-- Les cles d'API externes restent cote serveur.
-- Les routes protegees verifient l'utilisateur courant via NextAuth ou token mobile.
-- Les donnees entrantes sont validees avec Zod sur les routes critiques.
-- Les suppressions et editions verifient que l'utilisateur est proprietaire de la ressource.
-
-## Tests et qualite
-
-- `npm run lint` verifie le code avec ESLint.
-- `npm test` lance les tests Vitest.
-- `npm run build` valide la generation Prisma et le build Next.js.
-- `npm run typecheck` dans `mobile/` verifie TypeScript cote mobile.
-
-Un test unitaire existe notamment pour la logique de tendances dans `src/server/services/trending.test.ts`.
-
-## Decisions d'architecture
-
-- Backend unique dans Next.js pour eviter de maintenir une API separee.
-- Prisma comme couche d'acces aux donnees pour garder un schema type et des migrations versionnees.
-- PostgreSQL pour un modele relationnel adapte aux livres, utilisateurs, reviews, follows et listes.
-- Routes mobiles dediees quand le format attendu par l'application Expo differe du web.
-- Services serveur partages pour eviter de dupliquer la logique entre routes web et routes mobiles.
-- Appels Google Books et Open Library uniquement cote serveur pour proteger les cles et controler les erreurs.
-- Expo Secure Store pour conserver le token mobile cote telephone.
-- Expo Notifications et Expo Push Service pour les notifications systeme mobiles, avec inbox persistante en base pour garder une source fiable meme si l'envoi push echoue.
-
-## Points d'attention
-
-- `architecture.md` remplace l'ancien document de conception et correspond au code actuel.
-- Le mobile ne fonctionne que si le backend est accessible depuis le telephone.
-- Les notifications push systeme ne doivent pas etre validees dans Expo Go : utiliser une development build pour les tests fiables.
-- En local, Docker doit etre lance avant Prisma et Next.js.
-- La base est vide au premier lancement : il faut creer un compte pour tester.
-- Si le port PostgreSQL `5432` est deja utilise, adapter Docker et `DATABASE_URL`.
+Voir [docs/launch-checklist.md](docs/launch-checklist.md) et [docs/production-operations.md](docs/production-operations.md).

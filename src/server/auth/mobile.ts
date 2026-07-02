@@ -124,10 +124,13 @@ export async function authenticateMobileCredentials(input: { email: string; pass
       image: true,
       bio: true,
       passwordHash: true
+      ,
+      emailVerified: true,
+      suspendedAt: true
     }
   });
 
-  if (!user?.passwordHash) {
+  if (!user?.passwordHash || !user.emailVerified || user.suspendedAt) {
     return null;
   }
 
@@ -137,7 +140,7 @@ export async function authenticateMobileCredentials(input: { email: string; pass
     return null;
   }
 
-  const { passwordHash: _passwordHash, ...safeUser } = user;
+  const { passwordHash: _passwordHash, emailVerified: _emailVerified, suspendedAt: _suspendedAt, ...safeUser } = user;
 
   return {
     token: createMobileToken(user),

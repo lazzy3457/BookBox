@@ -2,6 +2,8 @@
 
 Application Expo React Native pour BooksBox.
 
+Le mobile n’est pas inclus dans la première mise en ligne publique du web. Son formulaire d’inscription historique ne transmet pas encore l’attestation d’âge et les versions juridiques désormais exigées par `/api/auth/signup`. Les connexions de comptes existants restent supportées ; les nouvelles inscriptions mobiles doivent rester désactivées jusqu’à cet alignement.
+
 ## Lancement
 
 ```bash
@@ -128,3 +130,5 @@ Si les notifications ne s'affichent pas :
 - `DELETE /api/mobile/push-tokens`
 
 Les routes web existantes comme `/api/books/search`, `/api/books`, `/api/library`, `/api/reviews` et `/api/follows` acceptent aussi le token mobile via `Authorization: Bearer <token>`.
+
+Les comptes non vérifiés ou suspendus sont refusés à la connexion. Les contenus masqués et profils suspendus sont exclus des réponses publiques mobiles.

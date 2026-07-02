@@ -19,7 +19,7 @@ export default async function HomePage() {
   const [trending, activity, topReviews, recommendations] = await Promise.all([
     getTrendingBooks(),
     session?.user?.id ? getFriendActivity(session.user.id) : Promise.resolve([]),
-    getTopReviewsLast24Hours(),
+    getTopReviewsLast24Hours(session?.user?.id),
     session?.user?.id ? getRecommendations(session.user.id, 8) : Promise.resolve([])
   ]);
   const activityItems = activity.map((item) =>

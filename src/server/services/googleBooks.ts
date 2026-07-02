@@ -1,5 +1,6 @@
 import { googleBookUpsertSchema } from "@/server/validation/books";
 import type { ExternalBookCandidate } from "@/server/services/externalBooks";
+import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
 
 const GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -124,7 +125,7 @@ export async function searchGoogleBooks(query: string, startIndex = 0, options: 
     url.searchParams.set("key", process.env.GOOGLE_BOOKS_API_KEY);
   }
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     next: { revalidate: 300 }
   });
 

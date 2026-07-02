@@ -8,6 +8,10 @@ workflow_note: "Inventaire (étape 1) validé. Epics proposés (étape 2) — en
 epics_status: proposed
 ---
 
+# Archive — Découpage initial des epics
+
+> Ce document est conservé pour l’historique produit. Plusieurs epics sont désormais livrés et certaines hypothèses techniques sont obsolètes. L’implémentation actuelle est décrite dans `README.md` et `architecture.md`.
+
 # BooksBox — Découpage en epics et stories
 
 Ce document regroupe l’inventaire des exigences (PRD, architecture, UX) puis, une fois complété, la **liste des epics** et les **user stories** prêtes pour le développement.

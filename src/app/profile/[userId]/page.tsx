@@ -8,23 +8,27 @@ import { BookCard } from "@/components/books/BookCard";
 import { StarRating } from "@/components/reviews/StarRating";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
+import { ReportButton } from "@/components/moderation/ReportButton";
+import { BlockButton } from "@/components/community/BlockButton";
+import { areUsersBlocked } from "@/server/services/blocks";
 
 export const dynamic = "force-dynamic";
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const session = await getServerSession(authOptions);
   const { userId } = await params;
+  if (session?.user?.id && await areUsersBlocked(session.user.id, userId)) notFound();
 
   const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, isFollowing, publicEntries] = await Promise.all([
     prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId, suspendedAt: null }
     }),
     prisma.userBook.count({ where: { userId } }),
-    prisma.review.count({ where: { userId } }),
+    prisma.review.count({ where: { userId, hiddenAt: null } }),
     prisma.follow.count({ where: { followingId: userId } }),
     prisma.follow.count({ where: { followerId: userId } }),
     prisma.userBook.findMany({
-      where: { userId },
+      where: { userId, hiddenAt: null },
       orderBy: { updatedAt: "desc" },
       take: 10,
       include: { book: true }
@@ -33,7 +37,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       where: { userId },
       orderBy: { updatedAt: "desc" },
       take: 8,
-      include: { book: true, reactions: true, comments: true }
+      include: { book: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
     }),
     session?.user?.id
       ? prisma.follow.findUnique({
@@ -79,8 +83,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             </div>
           </div>
           {!isOwnProfile && session?.user?.id ? (
-            <div className="pb-1">
+            <div className="flex flex-wrap gap-2 pb-1">
               <FollowButton userId={user.id} initiallyFollowing={Boolean(isFollowing)} />
+              <ReportButton targetType="USER" targetId={user.id} label="Signaler le profil" />
+              <BlockButton userId={user.id} userName={user.name ?? user.username ?? "Ce lecteur"} />
             </div>
           ) : null}
         </div>

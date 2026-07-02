@@ -46,7 +46,7 @@ export async function GET(request: Request) {
         include: { book: true }
       }),
       prisma.review.findMany({
-        where: { userId },
+        where: { userId, hiddenAt: null },
         orderBy: { updatedAt: "desc" },
         take: 8,
         include: { book: true, reactions: true, comments: true }

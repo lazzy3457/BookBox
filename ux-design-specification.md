@@ -4,6 +4,10 @@ inputDocuments:
   - c:/Users/maeld/GIT/app/_bmad-output/planning-artifacts/prd-booksbox-v1.md
 ---
 
+# Archive — Spécification UX initiale
+
+> Cette spécification reste une référence d’intention visuelle, mais ne décrit pas toutes les interfaces actuelles. Les pages journal, recommandations, import, blocage, modération et conformité ont évolué depuis sa rédaction.
+
 # Spécification UX BooksBox
 
 **Auteur :** Maeld

@@ -1,8 +1,10 @@
 import { prisma } from "@/server/db/prisma";
+import { getBlockedUserIds } from "@/server/services/blocks";
 
 export async function getFriendActivity(userId: string) {
+  const blockedUserIds = await getBlockedUserIds(userId);
   const follows = await prisma.follow.findMany({
-    where: { followerId: userId },
+    where: { followerId: userId, followingId: { notIn: blockedUserIds } },
     select: { followingId: true }
   });
 
@@ -14,13 +16,13 @@ export async function getFriendActivity(userId: string) {
 
   const [reviews, libraryUpdates] = await Promise.all([
     prisma.review.findMany({
-      where: { userId: { in: followingIds } },
+      where: { userId: { in: followingIds }, hiddenAt: null, user: { suspendedAt: null } },
       orderBy: { createdAt: "desc" },
       take: 20,
-      include: { book: true, user: true, reactions: true, comments: true }
+      include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
     }),
     prisma.userBook.findMany({
-      where: { userId: { in: followingIds } },
+      where: { userId: { in: followingIds }, user: { suspendedAt: null } },
       orderBy: { updatedAt: "desc" },
       take: 20,
       include: { book: true, user: true }
@@ -45,15 +47,22 @@ export async function getFriendActivity(userId: string) {
     .slice(0, 30);
 }
 
-export async function getTopReviewsLast24Hours() {
+export async function getTopReviewsLast24Hours(userId?: string) {
   const since = new Date();
   since.setDate(since.getDate() - 1);
+  const blockedUserIds = userId ? await getBlockedUserIds(userId) : [];
 
   const reviews = await prisma.review.findMany({
-    where: { createdAt: { gte: since } },
+    where: {
+      createdAt: { gte: since },
+      ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {})
+      ,
+      hiddenAt: null,
+      user: { suspendedAt: null }
+    },
     orderBy: { createdAt: "desc" },
     take: 30,
-    include: { book: true, user: true, reactions: true, comments: true }
+    include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
   });
 
   return reviews

@@ -1,6 +1,6 @@
 # BooksBox
 
-BooksBox est une application de lecture sociale pour lecteurs francophones. Elle permet de rechercher des livres, gerer sa bibliotheque, publier des reviews, suivre d'autres utilisateurs, consulter les tendances et utiliser une application mobile Expo connectee au meme backend.
+BooksBox est une application de lecture sociale pour lecteurs francophones. Elle réunit bibliothèque, journal de lecture, reviews, recommandations personnalisées, import Goodreads/CSV, listes et communauté. Le web Next.js est le client principal ; une application mobile Expo consomme le même backend.
 
 Ce README est prevu pour une installation propre sur une autre machine, par exemple depuis un dossier Drive sans `node_modules`, sans `.next` et sans base de donnees locale.
 
@@ -12,6 +12,7 @@ Ce README est prevu pour une installation propre sur une autre machine, par exem
 - Architecture du projet
 - Scripts utiles
 - Fonctionnalites principales
+- Documentation complémentaire
 - Depannage
 
 ## Prerequis
@@ -45,7 +46,9 @@ cp .env.example .env
 
 Le `DATABASE_URL` fourni dans `.env.example` correspond deja au PostgreSQL du fichier `docker-compose.yml`.
 
-Remplacer au minimum `NEXTAUTH_SECRET` par une valeur longue et aleatoire. `GOOGLE_BOOKS_API_KEY` peut rester vide en local, mais une cle Google Books peut etre ajoutee pour fiabiliser les appels a l'API Google.
+Remplacer au minimum `NEXTAUTH_SECRET` par une valeur longue et aleatoire. En production, renseigner `NEXTAUTH_URL` et `NEXT_PUBLIC_APP_URL` avec l'URL publique en HTTPS afin de générer correctement les liens d’e-mail, le sitemap et les aperçus de partage. `GOOGLE_BOOKS_API_KEY` reste optionnelle en local.
+
+Avant l'ouverture publique, renseigner également les variables de contact, juridiques, d’hébergement et SMTP. La liste complète figure dans `.env.example` et [docs/launch-checklist.md](docs/launch-checklist.md).
 
 Lancer PostgreSQL avec Docker :
 
@@ -68,7 +71,7 @@ npm run dev
 
 Le site est disponible sur `http://localhost:3000`.
 
-La base de donnees est vide au premier lancement. Creer un compte depuis la page d'inscription pour commencer les tests.
+La base de données est vide au premier lancement. Une nouvelle inscription doit recevoir un e-mail de vérification : configure les variables `SMTP_*` pour tester ce parcours. Sans SMTP en développement, le compte est créé mais aucun e-mail n’est envoyé.
 
 ## Lancement mobile
 
@@ -183,9 +186,18 @@ Variables cote web :
 
 - `DATABASE_URL` : URL PostgreSQL utilisee par Prisma.
 - `NEXTAUTH_URL` : URL du site, par exemple `http://localhost:3000`.
+- `NEXT_PUBLIC_APP_URL` : URL publique canonique du site.
 - `NEXTAUTH_SECRET` : secret utilise par NextAuth.
 - `GOOGLE_BOOKS_API_KEY` : optionnel en local, utilise cote serveur pour Google Books.
 - `MOBILE_JWT_SECRET` : secret pour les tokens mobiles. Si absent, le code reutilise `NEXTAUTH_SECRET`.
+- `RATE_LIMIT_SECRET` : secret utilise pour hacher les identifiants du limiteur de requetes.
+- `CONTACT_EMAIL` et `DSA_CONTACT_EMAIL` : points de contact public et moderation legale.
+- `LEGAL_*` et `HOST_*` : identification de l'editeur particulier et de l'hebergeur.
+- `SMTP_*` : serveur d'envoi des verifications, recuperations et decisions de moderation.
+- `TRUST_PROXY_HEADERS` : active uniquement derriere un proxy connu qui reecrit les en-tetes d'adresse client.
+- `INACTIVE_ACCOUNT_POLICY_CONFIRMED` : doit valoir `confirmed` apres validation de la politique d'inactivite.
+
+Les droits de moderation sont stockes en base et accordes avec `npm run admin:grant -- adresse@email.fr`.
 
 Variable cote mobile, dans `mobile/.env.local` :
 
@@ -259,8 +271,15 @@ Le schema principal est dans `prisma/schema.prisma`. Les tables principales sont
 - `Follow` : abonnements entre utilisateurs.
 - `BookList` et `BookListEntry` : listes de livres.
 - `Notification` : inbox sociale persistante.
-- `NotificationPreference` : preferences utilisateur pour activer/desactiver les notifications.
+- `NotificationPreference` : préférences détaillées pour les likes, commentaires, reviews d’amis et nouveaux followers.
+- `UserPreference` : préférences privées de lecture, dont le masquage persistant des spoilers.
+- `User.sessionVersion` : invalide les anciennes sessions après un changement de mot de passe.
 - `PushToken` : tokens Expo Push enregistres par appareil.
+- `ReadingPeriod` et `ReadingEntry` : lectures, relectures et journal de progression.
+- `LegalAcceptance` et `AccountToken` : acceptations versionnées et jetons de compte hachés.
+- `RecommendationDismissal` : exclusions des recommandations.
+- `UserBlock` : blocages réciproques.
+- `ModerationReport`, `LegalNotice`, `ModerationAction` et `ModerationAppeal` : modération, décisions et recours.
 
 ## Scripts utiles
 
@@ -271,6 +290,8 @@ Depuis la racine :
 - `npm run start` : lance le build de production.
 - `npm run lint` : lance ESLint.
 - `npm test` : lance les tests Vitest.
+- `npm run preflight` : contrôle les variables indispensables avant une mise en ligne.
+- `npm run admin:grant -- adresse@email.fr` : accorde manuellement le rôle administrateur à un compte vérifié.
 - `npm run prisma:generate` : genere le client Prisma.
 - `npm run prisma:migrate` : applique les migrations en developpement.
 - `npm run prisma:studio` : ouvre Prisma Studio.
@@ -293,6 +314,8 @@ npm test
 npm run build
 ```
 
+Le contrôle `npm run preflight` est réservé à une simulation de mise en ligne : il échoue volontairement en local tant que les coordonnées, l’hébergeur, le SMTP et la politique d’inactivité ne sont pas confirmés.
+
 Depuis `mobile/` :
 
 ```bash
@@ -305,15 +328,24 @@ npm run typecheck
 - Recherche par titre, auteur ou ISBN.
 - Import d'un livre externe ou ajout manuel.
 - Bibliotheque personnelle avec statuts de lecture et favoris.
+- Journal de lecture daté, relectures et progression par page, pourcentage ou chapitre.
+- Recommandations personnalisées explicables avec actions « Pas intéressé » et « Déjà lu ».
+- Import Goodreads et CSV BookBox avec prévisualisation et résolution des conflits.
 - Fiches livres avec statistiques, reviews, commentaires et activite sociale.
 - Pages auteurs avec biographie, livres connus et editions externes.
 - Reviews avec note, spoiler, edition, suppression, likes et commentaires.
 - Profils publics et page communaute.
+- Blocage réciproque, export des données et suppression du compte.
+- Vérification d’e-mail et récupération du mot de passe.
+- Signalements communautaires et notifications légales avec suivi et contestation.
+- Page Paramètres complète : profil, pseudo unique, préférences, notifications, blocages, import/export et sécurité du compte.
+- Administration par rôle, masquage de contenu et suspension de compte.
 - Systeme de follow/unfollow.
 - Feed social et tendances.
 - Listes de livres personnalisables.
 - Notifications sociales : likes, commentaires/reponses, nouveaux followers et nouvelles reviews d'amis, avec inbox mobile et push systeme.
 - Interface web responsive avec navigation mobile.
+- SEO, sitemap, manifeste, footer et pages légales.
 - Application mobile Expo : accueil, recherche, bibliotheque, communaute, profils, listes, favoris et fiches livres.
 
 ## Routes API mobiles principales
@@ -338,10 +370,41 @@ npm run typecheck
 - `PATCH /api/mobile/notifications/:notificationId/read`
 - `GET /api/mobile/notification-preferences`
 - `PATCH /api/mobile/notification-preferences`
+- `GET|PATCH /api/settings/profile`
+- `GET|PATCH /api/settings/preferences`
+- `PATCH /api/settings/password`
 - `POST /api/mobile/push-tokens`
 - `DELETE /api/mobile/push-tokens`
 
 Le mobile reutilise aussi certaines routes web compatibles avec le token mobile : `/api/auth/signup`, `/api/books/search`, `/api/books`, `/api/library`, `/api/reviews` et `/api/follows`.
+
+Attention : `/api/auth/signup` exige désormais l’âge minimum et les versions juridiques courantes. Le formulaire mobile historique doit être aligné avant de permettre de nouvelles inscriptions depuis le mobile. Les comptes déjà créés continuent à fonctionner.
+
+## Routes web de conformité principales
+
+- `POST /api/auth/verify-email`
+- `POST /api/auth/resend-verification`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
+- `GET /api/account/export`
+- `DELETE /api/account`
+- `POST /api/reports`
+- `POST /api/legal-notices`
+- `POST /api/legal-notices/status`
+- `POST /api/legal-notices/appeal`
+- `GET/POST/DELETE /api/blocks`
+
+## Documentation complémentaire
+
+- [Architecture actuelle](architecture.md)
+- [Checklist de mise en ligne](docs/launch-checklist.md)
+- [Conformité web](docs/legal-compliance.md)
+- [Référence API](docs/api-reference.md)
+- [Exploitation de production](docs/production-operations.md)
+- [Registre synthétique des traitements](docs/processing-register.md)
+- [Suivi des dépendances](docs/dependency-security.md)
+
+Les fichiers `prd-booksbox-v1.md`, `epics.md` et `ux-design-specification.md` sont des archives de conception.
 
 ## Depannage
 
@@ -365,7 +428,3 @@ Si les notifications push ne s'affichent pas dans la barre du telephone :
 - se reconnecter dans l'app mobile pour enregistrer le token push ;
 - verifier que les preferences de notifications sont activees dans les parametres ;
 - utiliser une development build pour un test fiable, car Expo Go limite les remote push Android depuis SDK 53.
-
-## Remarque sur la documentation d'architecture
-
-Le fichier `architecture.md` vient d'une phase de conception anterieure. Le projet actuel fait foi dans ce README : il utilise Next.js, Prisma, PostgreSQL et Expo.

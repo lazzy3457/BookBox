@@ -8,6 +8,7 @@ import { ExpandableDescription } from "@/components/books/ExpandableDescription"
 import { AuthorBookshelf } from "@/components/authors/AuthorBookshelf";
 import { AuthorExternalEditions } from "@/components/authors/AuthorExternalEditions";
 import { StarRating } from "@/components/reviews/StarRating";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,29 @@ type AuthorSummary = {
     source?: string;
   };
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ authorSlug: string }> }): Promise<Metadata> {
+  const { authorSlug } = await params;
+  const books = await prisma.book.findMany({
+    where: { authors: { isEmpty: false } },
+    select: { authors: true },
+    take: 5000
+  });
+  const authorName = books.flatMap((book) => book.authors).find((author) => slugifyAuthor(author) === authorSlug);
+  if (!authorName) return { title: "Auteur introuvable", robots: { index: false, follow: false } };
+
+  const description = `Découvre les livres, éditions et avis autour de ${authorName} sur BooksBox.`;
+  return {
+    title: authorName,
+    description,
+    alternates: { canonical: `/authors/${authorSlug}` },
+    openGraph: {
+      title: authorName,
+      description,
+      url: `/authors/${authorSlug}`
+    }
+  };
+}
 
 async function getAuthorSummary(authorName: string) {
   const candidates = [
@@ -60,10 +84,12 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
     include: {
       libraries: true,
       reviews: {
+        where: { hiddenAt: null, user: { suspendedAt: null } },
         include: {
           user: true,
           reactions: true,
           comments: {
+            where: { hiddenAt: null, user: { suspendedAt: null } },
             include: { user: true, likes: true },
             orderBy: { createdAt: "asc" }
           }

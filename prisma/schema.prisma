@@ -28,33 +28,122 @@ enum NotificationType {
   NEW_FOLLOWER
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  username      String?   @unique
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  bio           String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+enum ReportTargetType {
+  USER
+  REVIEW
+  COMMENT
+}
 
-  accounts       Account[]
-  sessions       Session[]
-  library        UserBook[]
-  reviews        Review[]
-  reactions      ReviewReaction[]
-  comments       ReviewComment[]
-  commentLikes   ReviewCommentReaction[]
-  following      Follow[]         @relation("following")
-  followers      Follow[]         @relation("followers")
-  lists          BookList[]
-  notifications  Notification[]   @relation("notification_recipient")
-  actions        Notification[]   @relation("notification_actor")
-  notificationPreference NotificationPreference?
-  pushTokens     PushToken[]
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  SPOILER
+  INAPPROPRIATE_CONTENT
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AccountTokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+enum ModerationActionType {
+  NONE
+  HIDE
+  RESTORE
+  SUSPEND
+  UNSUSPEND
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  username         String?   @unique
+  email            String?   @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  sessionVersion   Int       @default(0)
+  bio              String?
+  role             UserRole  @default(USER)
+  suspendedAt      DateTime?
+  suspensionReason String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  accounts                 Account[]
+  sessions                 Session[]
+  library                  UserBook[]
+  reviews                  Review[]
+  reactions                ReviewReaction[]
+  comments                 ReviewComment[]
+  commentLikes             ReviewCommentReaction[]
+  following                Follow[]                  @relation("following")
+  followers                Follow[]                  @relation("followers")
+  lists                    BookList[]
+  notifications            Notification[]            @relation("notification_recipient")
+  actions                  Notification[]            @relation("notification_actor")
+  notificationPreference   NotificationPreference?
+  preference               UserPreference?
+  pushTokens               PushToken[]
   recommendationDismissals RecommendationDismissal[]
+  moderationReports        ModerationReport[]
+  blockedUsers             UserBlock[]               @relation("blocker")
+  blockedBy                UserBlock[]               @relation("blocked")
+  legalAcceptances         LegalAcceptance[]
+  accountTokens            AccountToken[]
+  moderationActions        ModerationAction[]        @relation("moderator")
+}
+
+model UserPreference {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  hideSpoilers Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LegalAcceptance {
+  id             String    @id @default(cuid())
+  userId         String
+  termsVersion   String
+  privacyVersion String
+  acceptedAt     DateTime  @default(now())
+  ageConfirmedAt DateTime?
+  source         String    @default("WEB")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, acceptedAt])
+}
+
+model AccountToken {
+  id        String           @id @default(cuid())
+  userId    String
+  type      AccountTokenType
+  tokenHash String           @unique
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
 }
 
 model Account {
@@ -110,9 +199,9 @@ model Book {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  libraries   UserBook[]
-  reviews     Review[]
-  listEntries BookListEntry[]
+  libraries                UserBook[]
+  reviews                  Review[]
+  listEntries              BookListEntry[]
   recommendationDismissals RecommendationDismissal[]
 }
 
@@ -125,8 +214,8 @@ model UserBook {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book           Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
   readingPeriods ReadingPeriod[]
 
   @@unique([userId, bookId])
@@ -134,14 +223,16 @@ model UserBook {
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  bookId    String
-  rating    Int
-  body      String?
-  spoiler   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  userId       String
+  bookId       String
+  rating       Int
+  body         String?
+  spoiler      Boolean   @default(false)
+  hiddenAt     DateTime?
+  hiddenReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   book      Book             @relation(fields: [bookId], references: [id], onDelete: Cascade)
@@ -166,18 +257,20 @@ model ReviewReaction {
 }
 
 model ReviewComment {
-  id        String   @id @default(cuid())
-  reviewId  String
-  userId    String
-  parentId  String?
-  body      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  reviewId     String
+  userId       String
+  parentId     String?
+  body         String
+  hiddenAt     DateTime?
+  hiddenReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  review  Review                 @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  user    User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent  ReviewComment?         @relation("comment_thread", fields: [parentId], references: [id], onDelete: Cascade)
-  replies ReviewComment[]        @relation("comment_thread")
+  review  Review                  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  ReviewComment?          @relation("comment_thread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies ReviewComment[]         @relation("comment_thread")
   likes   ReviewCommentReaction[]
 
   @@index([reviewId])
@@ -251,6 +344,103 @@ model RecommendationDismissal {
 
   @@unique([userId, bookId])
   @@index([userId])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
+
+model ModerationReport {
+  id             String               @id @default(cuid())
+  reporterId     String
+  targetType     ReportTargetType
+  targetId       String
+  reason         ReportReason
+  details        String?
+  status         ReportStatus         @default(OPEN)
+  moderatorNote  String?
+  decisionReason String?
+  action         ModerationActionType @default(NONE)
+  resolvedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+}
+
+model LegalNotice {
+  id             String               @id @default(cuid())
+  trackingCode   String               @unique
+  reporterEmail  String
+  targetUrl      String
+  legalGround    String
+  explanation    String
+  goodFaith      Boolean
+  status         ReportStatus         @default(OPEN)
+  decisionReason String?
+  action         ModerationActionType @default(NONE)
+  resolvedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  appeals ModerationAppeal[]
+
+  @@index([status, createdAt])
+}
+
+model ModerationAction {
+  id            String               @id @default(cuid())
+  moderatorId   String?
+  reportId      String?
+  legalNoticeId String?
+  targetType    ReportTargetType
+  targetId      String
+  action        ModerationActionType
+  reason        String
+  createdAt     DateTime             @default(now())
+
+  moderator User? @relation("moderator", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  @@index([targetType, targetId, createdAt])
+  @@index([moderatorId, createdAt])
+}
+
+model ModerationAppeal {
+  id            String       @id @default(cuid())
+  legalNoticeId String
+  email         String
+  reason        String
+  status        ReportStatus @default(OPEN)
+  response      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  legalNotice LegalNotice @relation(fields: [legalNoticeId], references: [id], onDelete: Cascade)
+
+  @@index([legalNoticeId, createdAt])
+  @@index([status, createdAt])
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
 }
 
 model Notification {

@@ -10,7 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "test": "vitest run --configLoader runner"
+    "test": "vitest run --configLoader runner",
+    "admin:grant": "node scripts/grant-admin.mjs",
+    "preflight": "node --env-file=.env scripts/preflight.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -22,12 +24,14 @@
     "lucide-react": "latest",
     "next": "latest",
     "next-auth": "latest",
+    "nodemailer": "^7.0.13",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "autoprefixer": "^10.4.20",

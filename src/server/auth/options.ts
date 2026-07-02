@@ -3,6 +3,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/server/db/prisma";
 import { verifyPassword } from "@/server/auth/password";
+import { enforceRateLimit } from "@/server/security/rateLimit";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -27,9 +28,16 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        await enforceRateLimit({
+          scope: "login-email",
+          identifier: email,
+          limit: 10,
+          windowMs: 15 * 60_000
+        });
+
         const user = await prisma.user.findUnique({ where: { email } });
 
-        if (!user?.passwordHash) {
+        if (!user?.passwordHash || !user.emailVerified || user.suspendedAt) {
           return null;
         }
 
@@ -43,12 +51,17 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image
+          image: user.image,
+          sessionVersion: user.sessionVersion
         };
       }
     })
   ],
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.sessionVersion = user.sessionVersion ?? 0;
+      return token;
+    },
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
@@ -59,13 +72,24 @@ export const authOptions: NextAuthOptions = {
             email: true,
             image: true,
             name: true
+            ,
+            role: true,
+            sessionVersion: true
           }
         });
 
-        if (user) {
+        const hasVersionInformation =
+          typeof user?.sessionVersion === "number" && typeof token.sessionVersion === "number";
+        const isCurrentSession =
+          !hasVersionInformation || user.sessionVersion === token.sessionVersion;
+
+        if (user && isCurrentSession) {
           session.user.email = user.email;
           session.user.image = user.image;
           session.user.name = user.name;
+          session.user.role = user.role;
+        } else {
+          session.user = undefined;
         }
       }
 

@@ -53,10 +53,12 @@ export async function GET(_: Request, { params }: { params: Promise<{ authorSlug
       include: {
         libraries: true,
         reviews: {
+          where: { hiddenAt: null, user: { suspendedAt: null } },
           include: {
             user: true,
             reactions: true,
             comments: {
+              where: { hiddenAt: null, user: { suspendedAt: null } },
               include: { user: true, likes: true },
               orderBy: { createdAt: "asc" }
             }

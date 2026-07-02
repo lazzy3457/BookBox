@@ -113,8 +113,7 @@ export function SettingsPanel() {
           </div>
           <h2 className="mt-4 text-lg font-black text-paper">Confidentialite</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Les reviews, commentaires et statuts de lecture restent publics dans la V1 sociale. Les reglages fins arriveront
-            avec les profils publics.
+            Les entrées du journal sont privées par défaut. Tu peux bloquer des comptes, exporter tes données et supprimer ton compte à tout moment.
           </p>
         </div>
 
@@ -124,7 +123,7 @@ export function SettingsPanel() {
           </div>
           <h2 className="mt-4 text-lg font-black text-paper">Compte</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            La prochaine etape naturelle ici sera l'edition du pseudo, de la bio, de l'avatar et l'export des donnees.
+            Ton pseudo, ta bio et ton avatar peuvent être modifiés depuis ton profil. Les contrôles d’export et de suppression sont disponibles plus bas.
           </p>
         </div>
       </aside>

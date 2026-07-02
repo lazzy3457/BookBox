@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-type ErrorWithStatus = Error & { status?: number; code?: string };
+type ErrorWithStatus = Error & { status?: number; code?: string; retryAfter?: number };
 
 export function apiError(error: unknown) {
   if (error instanceof ZodError) {
@@ -29,7 +29,10 @@ export function apiError(error: unknown) {
             : typed.message
       }
     },
-    { status }
+    {
+      status,
+      headers: typed.retryAfter ? { "Retry-After": String(typed.retryAfter) } : undefined
+    }
   );
 }
 

@@ -8,6 +8,10 @@ date: "2026-04-03"
 language: "fr"
 ---
 
+# Archive — PRD initial BooksBox
+
+> Ce document décrit la phase de conception initiale et contient des choix abandonnés, notamment Nuxt. Il ne doit pas servir de référence technique. Consulter `README.md`, `architecture.md` et `docs/launch-checklist.md` pour l’état actuel.
+
 # PRD — BooksBox (V1 Web)
 
 **Auteur :** Maeld  

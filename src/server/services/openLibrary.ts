@@ -1,4 +1,5 @@
 import type { ExternalBookCandidate, ExternalBookSearchResult } from "@/server/services/externalBooks";
+import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
 
 const OPEN_LIBRARY_SEARCH_URL = "https://openlibrary.org/search.json";
 const OPEN_LIBRARY_COVER_URL = "https://covers.openlibrary.org/b";
@@ -118,7 +119,7 @@ export async function searchOpenLibrary(query: string, startIndex = 0, options: 
     url.searchParams.set("language", languageCode);
   }
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     next: { revalidate: 300 }
   });
 
