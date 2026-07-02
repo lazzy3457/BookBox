@@ -329,6 +329,7 @@ Evenements couverts :
 - like sur un commentaire de l'utilisateur ;
 - commentaire sur une review de l'utilisateur ;
 - reponse a un commentaire de l'utilisateur ;
+- nouveau follower ;
 - nouvelle review publiee par un utilisateur suivi.
 
 Flux :
@@ -338,9 +339,9 @@ Flux :
 3. Une ligne `Notification` est creee en base.
 4. Si le destinataire possede un `PushToken` actif, le serveur envoie un message a l'Expo Push Service avec `targetUrl`, `notificationId`, `type`, `priority: high` et le channel Android `bookbox-social`.
 5. Le mobile affiche l'inbox via `/api/mobile/notifications`.
-6. Quand l'utilisateur touche une notification push, `mobile/src/notifications/push.ts` lit `targetUrl` et `mobile/App.tsx` navigue vers le livre cible si l'utilisateur est connecte.
+6. Quand l'utilisateur touche une notification push, `mobile/src/notifications/push.ts` lit `targetUrl` et `mobile/App.tsx` navigue vers le livre ou le profil cible si l'utilisateur est connecte.
 
-Les preferences sont persistantes et modifiables depuis le mobile, avec un switch general et des switches likes, commentaires/reponses et reviews d'amis. Le panneau web des parametres reutilise aussi le switch general.
+Les preferences sont persistantes et modifiables depuis le mobile, avec un switch general et des switches likes, commentaires/reponses, reviews d'amis et nouveaux followers. Le panneau web des parametres reutilise aussi le switch general.
 
 Expo SDK 54 est utilise. Expo Go ne supporte plus completement les remote push Android depuis SDK 53 ; pour valider le rendu systeme, les channels et le clic a froid, il faut une development build lancee avec `npx expo start --dev-client`.
 

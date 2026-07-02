@@ -1,6 +1,12 @@
 export type ReadingStatus = "TO_READ" | "READING" | "READ" | "ABANDONED";
 export type ReactionKind = "LIKE" | "TO_READ";
-export type NotificationType = "REVIEW_LIKE" | "COMMENT_LIKE" | "REVIEW_COMMENT" | "COMMENT_REPLY" | "FRIEND_REVIEW";
+export type NotificationType =
+  | "REVIEW_LIKE"
+  | "COMMENT_LIKE"
+  | "REVIEW_COMMENT"
+  | "COMMENT_REPLY"
+  | "FRIEND_REVIEW"
+  | "NEW_FOLLOWER";
 
 export type User = {
   id: string;
@@ -77,6 +83,7 @@ export type NotificationPreference = {
   likesEnabled: boolean;
   commentsEnabled: boolean;
   friendReviewsEnabled: boolean;
+  followersEnabled: boolean;
 };
 
 export type BookBoxNotification = {

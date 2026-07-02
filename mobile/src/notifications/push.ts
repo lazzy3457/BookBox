@@ -5,8 +5,9 @@ import { apiRequest } from "../api/client";
 import type { NotificationPreference } from "../types";
 
 type RegistrationResult = {
-  status: "registered" | "disabled" | "denied" | "unavailable" | "missing-project";
+  status: "registered" | "disabled" | "denied" | "unavailable" | "missing-project" | "setup-error";
   token?: string;
+  message?: string;
 };
 
 Notifications.setNotificationHandler({
@@ -28,7 +29,11 @@ export async function getPushPermissionStatus() {
 }
 
 export async function registerForPushNotifications(token: string, preferences?: NotificationPreference | null): Promise<RegistrationResult> {
-  if (preferences && (!preferences.enabled || (!preferences.likesEnabled && !preferences.commentsEnabled && !preferences.friendReviewsEnabled))) {
+  if (
+    preferences &&
+    (!preferences.enabled ||
+      (!preferences.likesEnabled && !preferences.commentsEnabled && !preferences.friendReviewsEnabled && !preferences.followersEnabled))
+  ) {
     return { status: "disabled" };
   }
 
@@ -64,7 +69,16 @@ export async function registerForPushNotifications(token: string, preferences?: 
     return { status: "missing-project" };
   }
 
-  const expoPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  let expoPushToken: string;
+
+  try {
+    expoPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  } catch (error) {
+    return {
+      status: "setup-error",
+      message: error instanceof Error ? error.message : "Configuration push Android incomplete."
+    };
+  }
 
   await apiRequest("/api/mobile/push-tokens", {
     method: "POST",

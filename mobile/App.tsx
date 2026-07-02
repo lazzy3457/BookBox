@@ -43,6 +43,13 @@ function navigateToTargetUrl(targetUrl: string) {
     return;
   }
 
+  const profileMatch = targetUrl.match(/^\/profile\/([^/]+)$/);
+
+  if (profileMatch?.[1]) {
+    navigationRef.navigate("PublicProfile", { userId: profileMatch[1] });
+    return;
+  }
+
   navigationRef.navigate("Notifications");
 }
 

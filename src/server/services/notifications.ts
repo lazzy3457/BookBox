@@ -1,7 +1,9 @@
 import { NotificationType, type NotificationPreference } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 
-type PreferenceInput = Partial<Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled">>;
+type PreferenceInput = Partial<
+  Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled">
+>;
 
 type PushMessage = {
   to: string;
@@ -19,11 +21,14 @@ export const defaultNotificationPreferences = {
   enabled: true,
   likesEnabled: true,
   commentsEnabled: true,
-  friendReviewsEnabled: true
+  friendReviewsEnabled: true,
+  followersEnabled: true
 };
 
 export function allowsNotification(
-  preferences: Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled"> | null,
+  preferences:
+    | Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled">
+    | null,
   type: NotificationType
 ) {
   const effective = preferences ?? defaultNotificationPreferences;
@@ -42,6 +47,10 @@ export function allowsNotification(
 
   if (type === NotificationType.FRIEND_REVIEW) {
     return effective.friendReviewsEnabled;
+  }
+
+  if (type === NotificationType.NEW_FOLLOWER) {
+    return effective.followersEnabled;
   }
 
   return true;
@@ -73,6 +82,7 @@ async function sendPushNotifications(
   });
 
   if (!tokens.length) {
+    console.warn(`[notifications] No active push token for user ${recipientId}.`);
     return;
   }
 
@@ -103,8 +113,18 @@ async function sendPushNotifications(
     const payload = (await response.json().catch(() => null)) as { data?: Array<{ status?: string; details?: { error?: string } }> } | null;
 
     if (!response.ok || !payload?.data) {
+      console.warn("[notifications] Expo push request failed.", { status: response.status, payload });
       return;
     }
+
+    payload.data.forEach((ticket, index) => {
+      if (ticket.status === "error") {
+        console.warn("[notifications] Expo push ticket error.", {
+          token: tokens[index]?.token.slice(0, 18),
+          error: ticket.details?.error
+        });
+      }
+    });
 
     const invalidTokens = payload.data
       .map((ticket, index) => (ticket.status === "error" && ticket.details?.error === "DeviceNotRegistered" ? tokens[index]?.token : null))
@@ -117,6 +137,7 @@ async function sendPushNotifications(
       });
     }
   } catch {
+    console.warn("[notifications] Expo push request threw before delivery.");
     // Push delivery is best effort; the inbox notification remains the source of truth.
   }
 }
@@ -254,4 +275,24 @@ export async function notifyFriendReview(input: { actorId: string; reviewId: str
       })
     )
   );
+}
+
+export async function notifyNewFollower(input: { followerId: string; followingId: string }) {
+  const follower = await prisma.user.findUnique({
+    where: { id: input.followerId },
+    select: { name: true, username: true }
+  });
+
+  if (!follower) {
+    return null;
+  }
+
+  return createNotification({
+    recipientId: input.followingId,
+    actorId: input.followerId,
+    type: NotificationType.NEW_FOLLOWER,
+    title: `${displayName(follower)} te suit`,
+    message: "Un nouveau lecteur suit ton profil.",
+    targetUrl: `/profile/${input.followerId}`
+  });
 }

@@ -16,7 +16,9 @@ export function SettingsScreen({ navigation }: Props) {
   const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<string>("inconnu");
   const [error, setError] = useState("");
+  const [pushSyncMessage, setPushSyncMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncingPush, setIsSyncingPush] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +50,12 @@ export function SettingsScreen({ navigation }: Props) {
     };
   }, [token]);
 
-  async function updatePreference(key: keyof Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled">) {
+  async function updatePreference(
+    key: keyof Pick<
+      NotificationPreference,
+      "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled"
+    >
+  ) {
     if (!token || !preferences) return;
 
     const nextPreferences = { ...preferences, [key]: !preferences[key] };
@@ -73,6 +80,42 @@ export function SettingsScreen({ navigation }: Props) {
       setError(saveError instanceof Error ? saveError.message : "Preference impossible a enregistrer.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function syncPushToken() {
+    if (!token || !preferences) return;
+
+    setIsSyncingPush(true);
+    setError("");
+    setPushSyncMessage("");
+
+    try {
+      const result = await registerForPushNotifications(token, preferences);
+
+      if (result.status === "registered") {
+        setPermissionStatus("granted");
+        setPushSyncMessage("Telephone connecte aux notifications push.");
+      } else if (result.status === "denied") {
+        setPermissionStatus("denied");
+        setPushSyncMessage("Permission refusee dans Android. Active les notifications pour BookBox.");
+      } else if (result.status === "missing-project") {
+        setPermissionStatus("missing-project");
+        setPushSyncMessage("ProjectId EAS introuvable. Relance la development build BookBox.");
+      } else if (result.status === "disabled") {
+        setPermissionStatus("disabled");
+        setPushSyncMessage("Les notifications sont desactivees dans tes preferences.");
+      } else if (result.status === "setup-error") {
+        setPermissionStatus("setup-error");
+        setPushSyncMessage(result.message ?? "Configuration push Android incomplete.");
+      } else {
+        setPermissionStatus("unavailable");
+        setPushSyncMessage("Notifications push indisponibles dans cette app.");
+      }
+    } catch (syncError) {
+      setError(syncError instanceof Error ? syncError.message : "Synchronisation push impossible.");
+    } finally {
+      setIsSyncingPush(false);
     }
   }
 
@@ -113,6 +156,7 @@ export function SettingsScreen({ navigation }: Props) {
         <SectionTitle eyebrow="Notifications" title="Alertes sociales" />
         {error ? <ErrorState detail={error} title="Notifications indisponibles" /> : null}
         <Text style={styles.detail}>Permission telephone: {permissionStatus}</Text>
+        {pushSyncMessage ? <Text style={styles.detail}>{pushSyncMessage}</Text> : null}
         <PreferenceRow
           disabled={!preferences || isSaving}
           label="Notifications"
@@ -136,6 +180,19 @@ export function SettingsScreen({ navigation }: Props) {
           label="Reviews d'amis"
           value={Boolean(preferences?.friendReviewsEnabled)}
           onChange={() => updatePreference("friendReviewsEnabled")}
+        />
+        <PreferenceRow
+          disabled={!preferences || isSaving || !preferences.enabled}
+          label="Nouveaux followers"
+          value={Boolean(preferences?.followersEnabled)}
+          onChange={() => updatePreference("followersEnabled")}
+        />
+        <PrimaryButton
+          disabled={!preferences || isSyncingPush || !preferences.enabled}
+          isLoading={isSyncingPush}
+          label="Connecter ce telephone"
+          onPress={syncPushToken}
+          tone="ghost"
         />
         <PrimaryButton label="Voir les notifications" onPress={() => navigation.navigate("Notifications")} tone="ghost" />
       </View>

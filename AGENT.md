@@ -129,6 +129,15 @@ Routes principales :
 - `GET/PATCH /api/mobile/notification-preferences`
 - `POST/DELETE /api/mobile/push-tokens`
 
+Types de notifications actuels :
+
+- `REVIEW_LIKE`
+- `COMMENT_LIKE`
+- `REVIEW_COMMENT`
+- `COMMENT_REPLY`
+- `FRIEND_REVIEW`
+- `NEW_FOLLOWER`
+
 Regles API :
 
 - validation serveur via Zod ;
@@ -203,6 +212,7 @@ Notifications push mobiles :
 ```bash
 cd mobile
 npx expo install expo-notifications expo-constants
+npm run check:notifications
 npx eas build --profile development --platform android
 npx expo start --dev-client
 ```
@@ -250,6 +260,7 @@ Mobile :
 - Conserver des composants metier reutilisables plutot que dupliquer les layouts.
 - Sur Windows, un serveur Next actif peut verrouiller le moteur Prisma. Si `prisma generate` echoue avec `EPERM rename query_engine`, arreter le serveur dev puis relancer.
 - Pour les push systeme Android/iOS, ne pas se fier a Expo Go : depuis Expo SDK 53, Expo Go ne supporte plus completement les remote push Android. Utiliser une development build.
+- Android a besoin de `mobile/google-services.json` pour FCM dans l'APK. Ce fichier vient de Firebase Console pour l'app Android `com.bookbox.mobile`; ce n'est pas le fichier service account `firebase-adminsdk-...json`.
 - Les notifications doivent toujours creer une inbox en base meme si l'envoi push echoue. Le push est best-effort.
 - Eviter les auto-notifications : un utilisateur ne doit pas recevoir de notification pour ses propres likes/commentaires.
 

@@ -7,6 +7,7 @@ describe("notification preferences", () => {
     expect(allowsNotification(null, NotificationType.REVIEW_LIKE)).toBe(true);
     expect(allowsNotification(null, NotificationType.REVIEW_COMMENT)).toBe(true);
     expect(allowsNotification(null, NotificationType.FRIEND_REVIEW)).toBe(true);
+    expect(allowsNotification(null, NotificationType.NEW_FOLLOWER)).toBe(true);
   });
 
   it("blocks all notification types when globally disabled", () => {
@@ -15,6 +16,7 @@ describe("notification preferences", () => {
     expect(allowsNotification(preferences, NotificationType.REVIEW_LIKE)).toBe(false);
     expect(allowsNotification(preferences, NotificationType.REVIEW_COMMENT)).toBe(false);
     expect(allowsNotification(preferences, NotificationType.FRIEND_REVIEW)).toBe(false);
+    expect(allowsNotification(preferences, NotificationType.NEW_FOLLOWER)).toBe(false);
   });
 
   it("maps granular switches to the right notification families", () => {
@@ -23,5 +25,6 @@ describe("notification preferences", () => {
     expect(allowsNotification({ ...defaultNotificationPreferences, commentsEnabled: false }, NotificationType.REVIEW_COMMENT)).toBe(false);
     expect(allowsNotification({ ...defaultNotificationPreferences, commentsEnabled: false }, NotificationType.COMMENT_REPLY)).toBe(false);
     expect(allowsNotification({ ...defaultNotificationPreferences, friendReviewsEnabled: false }, NotificationType.FRIEND_REVIEW)).toBe(false);
+    expect(allowsNotification({ ...defaultNotificationPreferences, followersEnabled: false }, NotificationType.NEW_FOLLOWER)).toBe(false);
   });
 });
