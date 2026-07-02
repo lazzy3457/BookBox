@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, conflict } from "@/server/http/errors";
+import { notifyFriendReview } from "@/server/services/notifications";
 import { reviewMutationSchema } from "@/server/validation/reviews";
 
 export async function POST(request: Request) {
@@ -28,6 +29,8 @@ export async function POST(request: Request) {
       },
       include: { book: true, user: true }
     });
+
+    await notifyFriendReview({ actorId: userId, reviewId: review.id });
 
     return NextResponse.json(review, { status: 201 });
   } catch (error) {

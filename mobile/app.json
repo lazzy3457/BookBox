@@ -8,10 +8,26 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bookbox.mobile"
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.bookbox.mobile",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#7AF7C4"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "87700c17-c56d-4a16-99df-9319406b77e7"
+      }
     }
   }
 }

@@ -14,7 +14,7 @@ L'objectif V1 est de permettre a un utilisateur de :
 - voir un feed social ;
 - decouvrir des livres tendance.
 
-La V1 est volontairement online-first et desktop-first. Le responsive mobile avance et l'offline sont repousses.
+La V1 est online-first. Le web reste le client principal, mais une application mobile Expo existe et consomme le meme backend.
 
 ## References Design
 
@@ -43,6 +43,8 @@ Direction BooksBox actuelle :
 - ORM : Prisma.
 - DB locale cible : Docker Compose, meme si Docker n'est pas installe sur la machine actuelle.
 - API livres : Google Books API, appelee uniquement cote serveur.
+- Mobile : Expo SDK 54, React Native, React Navigation, Expo Secure Store.
+- Notifications mobiles : Expo Notifications + Expo Push Service, avec inbox persistante en base.
 - Tests : Vitest.
 - Lint : ESLint flat config.
 
@@ -60,6 +62,8 @@ Versions importantes :
 - `src/server/db/prisma.ts` : client Prisma centralise.
 - `src/server/services` : Google Books, books, feed, trending.
 - `src/server/validation` : schemas Zod.
+- `mobile/` : application Expo React Native.
+- `mobile/src/notifications/push.ts` : permissions push, token Expo et clic notification.
 - `prisma/schema.prisma` : modele de donnees.
 - `prisma/migrations` : migration SQL initiale.
 - `docker-compose.yml` : PostgreSQL local.
@@ -74,7 +78,12 @@ Entites principales :
 - `Review`
 - `ReviewReaction`
 - `ReviewComment`
+- `ReviewCommentReaction`
 - `Follow`
+- `BookList`
+- `Notification`
+- `NotificationPreference`
+- `PushToken`
 
 Contraintes importantes :
 
@@ -83,6 +92,8 @@ Contraintes importantes :
 - `Review` unique sur `(userId, bookId)`.
 - `ReviewReaction` unique sur `(reviewId, userId, kind)`.
 - `Follow` unique sur `(followerId, followingId)`.
+- `PushToken.token` unique.
+- `NotificationPreference.userId` unique.
 
 Statuts de lecture :
 
@@ -109,9 +120,23 @@ Routes principales :
 - `POST /api/reviews`
 - `POST /api/reviews/[reviewId]/reactions`
 - `POST /api/reviews/[reviewId]/comments`
+- `POST /api/comments/[commentId]/reactions`
 - `POST /api/follows`
 - `GET /api/feed`
 - `GET /api/trending`
+- `GET /api/mobile/notifications`
+- `PATCH /api/mobile/notifications/[notificationId]/read`
+- `GET/PATCH /api/mobile/notification-preferences`
+- `POST/DELETE /api/mobile/push-tokens`
+
+Types de notifications actuels :
+
+- `REVIEW_LIKE`
+- `COMMENT_LIKE`
+- `REVIEW_COMMENT`
+- `COMMENT_REPLY`
+- `FRIEND_REVIEW`
+- `NEW_FOLLOWER`
 
 Regles API :
 
@@ -131,6 +156,13 @@ Pages principales :
 - `/books/[bookId]` : fiche livre media avec couverture, metadata, actions, reviews.
 - `/login` et `/signup` : authentification.
 - `/profile` : profil lecteur et stats.
+- `/settings` : parametres, dont switch general des notifications sociales.
+
+Mobile principal :
+
+- Accueil, recherche, bibliotheque, communaute, profil, listes et fiches livres.
+- Parametres avec preferences de notifications.
+- Inbox Notifications accessible depuis le profil.
 
 Composants importants :
 
@@ -167,6 +199,24 @@ npm test
 npm run build
 ```
 
+Mobile :
+
+```bash
+cd mobile
+npm run start
+npm run typecheck
+```
+
+Notifications push mobiles :
+
+```bash
+cd mobile
+npx expo install expo-notifications expo-constants
+npm run check:notifications
+npx eas build --profile development --platform android
+npx expo start --dev-client
+```
+
 Prisma :
 
 ```bash
@@ -194,16 +244,25 @@ Voir `.env.example`.
 
 Le fichier `.env` local existe pour le developpement. Ne pas y mettre de secret de production.
 
+Mobile :
+
+- `mobile/.env.local`
+- `EXPO_PUBLIC_API_URL` doit pointer vers l'URL du backend accessible depuis le telephone.
+
 ## Points d'Attention
 
 - Ne pas exposer `GOOGLE_BOOKS_API_KEY` au client.
 - Ne pas disperser les appels Prisma dans les composants client.
 - Garder les mutations protegees par session.
-- Ne pas ajouter de complexite mobile-first pour la V1.
+- Garder les ajouts mobiles cibles et coherents avec l'app Expo existante ; eviter les refontes mobile larges sans demande explicite.
 - Eviter une UI type dashboard SaaS generique ; privilegier un catalogue social de couvertures.
 - Les textes visibles sont en francais.
 - Conserver des composants metier reutilisables plutot que dupliquer les layouts.
 - Sur Windows, un serveur Next actif peut verrouiller le moteur Prisma. Si `prisma generate` echoue avec `EPERM rename query_engine`, arreter le serveur dev puis relancer.
+- Pour les push systeme Android/iOS, ne pas se fier a Expo Go : depuis Expo SDK 53, Expo Go ne supporte plus completement les remote push Android. Utiliser une development build.
+- Android a besoin de `mobile/google-services.json` pour FCM dans l'APK. Ce fichier vient de Firebase Console pour l'app Android `com.bookbox.mobile`; ce n'est pas le fichier service account `firebase-adminsdk-...json`.
+- Les notifications doivent toujours creer une inbox en base meme si l'envoi push echoue. Le push est best-effort.
+- Eviter les auto-notifications : un utilisateur ne doit pas recevoir de notification pour ses propres likes/commentaires.
 
 ## Etat de Validation Connu
 
@@ -219,6 +278,5 @@ Derniere validation effectuee apres la refonte design :
 - Ajouter des tests API pour auth, books, library et reviews.
 - Ajouter une seed Prisma avec quelques livres et utilisateurs demo.
 - Brancher une vraie base PostgreSQL locale ou cloud.
-- Ajouter des interactions client pour commenter/reagir depuis la fiche livre.
 - Ajouter filtres de bibliotheque par statut.
-- Ajouter pages publiques utilisateur et recherche d'utilisateurs.
+- Ajouter une icone monochrome dediee aux notifications Android pour ameliorer le rendu systeme en development build/production.

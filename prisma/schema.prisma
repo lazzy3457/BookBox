@@ -19,6 +19,15 @@ enum ReactionKind {
   TO_READ
 }
 
+enum NotificationType {
+  REVIEW_LIKE
+  COMMENT_LIKE
+  REVIEW_COMMENT
+  COMMENT_REPLY
+  FRIEND_REVIEW
+  NEW_FOLLOWER
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -41,6 +50,10 @@ model User {
   following      Follow[]         @relation("following")
   followers      Follow[]         @relation("followers")
   lists          BookList[]
+  notifications  Notification[]   @relation("notification_recipient")
+  actions        Notification[]   @relation("notification_actor")
+  notificationPreference NotificationPreference?
+  pushTokens     PushToken[]
 }
 
 model Account {
@@ -189,6 +202,52 @@ model Follow {
   following User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  actorId     String?
+  type        NotificationType
+  title       String
+  message     String
+  targetUrl   String?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  recipient User  @relation("notification_recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User? @relation("notification_actor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, readAt, createdAt])
+  @@index([actorId])
+}
+
+model NotificationPreference {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  enabled              Boolean  @default(true)
+  likesEnabled         Boolean  @default(true)
+  commentsEnabled      Boolean  @default(true)
+  friendReviewsEnabled Boolean  @default(true)
+  followersEnabled     Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
 }
 
 model BookList {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError } from "@/server/http/errors";
+import { notifyNewFollower } from "@/server/services/notifications";
 
 const followSchema = z.object({
   followingId: z.string().min(1)
@@ -20,19 +21,19 @@ export async function POST(request: Request) {
       });
     }
 
-    const follow = await prisma.follow.upsert({
+    const existing = await prisma.follow.findUnique({
       where: {
         followerId_followingId: {
           followerId,
           followingId
         }
-      },
-      update: {},
-      create: {
-        followerId,
-        followingId
       }
     });
+    const follow = existing ?? await prisma.follow.create({ data: { followerId, followingId } });
+
+    if (!existing) {
+      await notifyNewFollower({ followerId, followingId });
+    }
 
     return NextResponse.json(follow, { status: 201 });
   } catch (error) {
