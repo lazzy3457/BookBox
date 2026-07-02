@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/community/FollowButton";
 import { BookCard } from "@/components/books/BookCard";
 import { StarRating } from "@/components/reviews/StarRating";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const session = await getServerSession(authOptions);
   const { userId } = await params;
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, isFollowing] = await Promise.all([
+  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, isFollowing, publicEntries] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId }
     }),
@@ -44,6 +45,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           }
         })
       : Promise.resolve(null)
+    ,
+    prisma.readingEntry.findMany({
+      where: { isPublic: true, period: { userBook: { userId } } },
+      include: { period: { include: { userBook: { include: { book: true } } } } },
+      orderBy: { entryDate: "desc" },
+      take: 12
+    })
   ]);
 
   if (!user) {
@@ -77,6 +85,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           ) : null}
         </div>
       </section>
+
+      <PublicReadingEntries entries={publicEntries} />
 
       <SectionHeader eyebrow="Stats" title="Activite" />
       <div className="grid min-w-0 gap-4 xl:grid-cols-4">

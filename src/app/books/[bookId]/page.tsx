@@ -16,6 +16,7 @@ import { AddToListButton } from "@/components/lists/AddToListButton";
 import { StarRating } from "@/components/reviews/StarRating";
 import { BookCard } from "@/components/books/BookCard";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
+import { ReadingJournal } from "@/components/library/ReadingJournal";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,8 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
   const userBook = session?.user?.id
     ? await prisma.userBook.findUnique({
-        where: { userId_bookId: { userId: session.user.id, bookId: book.id } }
+        where: { userId_bookId: { userId: session.user.id, bookId: book.id } },
+        include: { readingPeriods: { include: { entries: { orderBy: { entryDate: "desc" } } }, orderBy: { createdAt: "desc" } } }
       })
     : null;
 
@@ -213,6 +215,26 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         title="Metadonnees et discussions"
         description="Une fiche media pour comprendre le livre, voir les notes de la communaute et publier ta review."
       />
+
+      {userBook ? (
+        <div className="mb-8">
+          <ReadingJournal
+            bookId={book.id}
+            periods={userBook.readingPeriods.map((period) => ({
+              id: period.id,
+              startedAt: period.startedAt?.toISOString() ?? null,
+              finishedAt: period.finishedAt?.toISOString() ?? null,
+              isReread: period.isReread,
+              entries: period.entries.map((entry) => ({
+                ...entry,
+                entryDate: entry.entryDate.toISOString(),
+                createdAt: undefined,
+                updatedAt: undefined
+              }))
+            }))}
+          />
+        </div>
+      ) : null}
 
       <div className="grid min-w-0 gap-8 xl:grid-cols-[340px_minmax(0,1fr)]">
         <aside className="min-w-0 space-y-4 overflow-hidden">

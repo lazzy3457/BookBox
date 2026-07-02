@@ -54,6 +54,7 @@ model User {
   actions        Notification[]   @relation("notification_actor")
   notificationPreference NotificationPreference?
   pushTokens     PushToken[]
+  recommendationDismissals RecommendationDismissal[]
 }
 
 model Account {
@@ -112,6 +113,7 @@ model Book {
   libraries   UserBook[]
   reviews     Review[]
   listEntries BookListEntry[]
+  recommendationDismissals RecommendationDismissal[]
 }
 
 model UserBook {
@@ -125,6 +127,7 @@ model UserBook {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  readingPeriods ReadingPeriod[]
 
   @@unique([userId, bookId])
   @@index([status])
@@ -202,6 +205,52 @@ model Follow {
   following User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
+}
+
+model ReadingPeriod {
+  id         String    @id @default(cuid())
+  userBookId String
+  startedAt  DateTime?
+  finishedAt DateTime?
+  isReread   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  userBook UserBook       @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  entries  ReadingEntry[]
+
+  @@index([userBookId, startedAt])
+}
+
+model ReadingEntry {
+  id         String   @id @default(cuid())
+  periodId   String
+  entryDate  DateTime @default(now())
+  page       Int?
+  percentage Int?
+  chapter    String?
+  note       String?
+  isPublic   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  period ReadingPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@index([periodId, entryDate])
+  @@index([isPublic, entryDate])
+}
+
+model RecommendationDismissal {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@index([userId])
 }
 
 model Notification {
