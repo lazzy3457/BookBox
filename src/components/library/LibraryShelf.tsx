@@ -10,6 +10,14 @@ type LibraryItem = {
   id: string;
   status: ReadingStatus;
   updatedAt: string;
+  latestReading: {
+    startedAt: string | null;
+    finishedAt: string | null;
+    isReread: boolean;
+    page: number | null;
+    percentage: number | null;
+    chapter: string | null;
+  } | null;
   book: {
     id: string;
     title: string;
@@ -168,6 +176,24 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
                 ) : null}
               </div>
               {item.book.publisher ? <p className="mt-1 line-clamp-1 text-[11px] text-muted/75">{item.book.publisher}</p> : null}
+              {item.latestReading ? (
+                <div className="mt-2 rounded border border-line bg-ink/45 p-2 text-[11px] text-muted">
+                  <div className="font-black text-mint">{item.latestReading.isReread ? "Relecture" : "Journal"}</div>
+                  <div className="mt-1">
+                    {[
+                      item.latestReading.page ? `p. ${item.latestReading.page}` : null,
+                      item.latestReading.percentage != null ? `${item.latestReading.percentage}%` : null,
+                      item.latestReading.chapter
+                    ].filter(Boolean).join(" · ") || (
+                      item.latestReading.finishedAt
+                        ? `Terminé le ${new Date(item.latestReading.finishedAt).toLocaleDateString("fr-FR")}`
+                        : item.latestReading.startedAt
+                          ? `Commencé le ${new Date(item.latestReading.startedAt).toLocaleDateString("fr-FR")}`
+                          : "Lecture enregistrée"
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         ))}

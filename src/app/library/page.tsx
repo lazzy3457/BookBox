@@ -24,7 +24,14 @@ export default async function LibraryPage() {
 
   const items = await prisma.userBook.findMany({
     where: { userId: session.user.id },
-    include: { book: true },
+    include: {
+      book: true,
+      readingPeriods: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: { entries: { orderBy: { entryDate: "desc" }, take: 1 } }
+      }
+    },
     orderBy: { updatedAt: "desc" }
   });
 
@@ -41,6 +48,14 @@ export default async function LibraryPage() {
             id: item.id,
             status: item.status,
             updatedAt: item.updatedAt.toISOString(),
+            latestReading: item.readingPeriods[0] ? {
+              startedAt: item.readingPeriods[0].startedAt?.toISOString() ?? null,
+              finishedAt: item.readingPeriods[0].finishedAt?.toISOString() ?? null,
+              isReread: item.readingPeriods[0].isReread,
+              page: item.readingPeriods[0].entries[0]?.page ?? null,
+              percentage: item.readingPeriods[0].entries[0]?.percentage ?? null,
+              chapter: item.readingPeriods[0].entries[0]?.chapter ?? null
+            } : null,
             book: {
               id: item.book.id,
               title: item.book.title,

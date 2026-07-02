@@ -7,6 +7,7 @@ import { BookCard } from "@/components/books/BookCard";
 import { ListCard } from "@/components/lists/ListCard";
 import { EditProfileButton } from "@/components/profile/EditProfileButton";
 import { StarRating } from "@/components/reviews/StarRating";
+import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function ProfilePage() {
     );
   }
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, favorites, lists] = await Promise.all([
+  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, favorites, lists, publicEntries] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.userBook.count({ where: { userId: session.user.id } }),
     prisma.review.count({ where: { userId: session.user.id } }),
@@ -60,6 +61,12 @@ export default async function ProfilePage() {
         _count: { select: { entries: true } },
       },
     }),
+    prisma.readingEntry.findMany({
+      where: { isPublic: true, period: { userBook: { userId: session.user.id } } },
+      include: { period: { include: { userBook: { include: { book: true } } } } },
+      orderBy: { entryDate: "desc" },
+      take: 12
+    })
   ]);
 
   return (
@@ -150,6 +157,8 @@ export default async function ProfilePage() {
           </div>
         )}
       </section>
+
+      <PublicReadingEntries entries={publicEntries} />
 
       {/* Historique */}
       <section className="mt-9 min-w-0 overflow-hidden">

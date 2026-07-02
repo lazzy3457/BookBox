@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Library, Search, Sparkles, UsersRound } from "lucide-react";
+import { BookOpen, CalendarDays, Library, Search, Sparkles, UsersRound } from "lucide-react";
 import { UserMenu } from "@/components/auth/UserMenu";
 
 type AppShellProps = {
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/", label: "Accueil", mobileLabel: "Accueil", icon: Sparkles },
   { href: "/search", label: "Recherche", mobileLabel: "Search", icon: Search },
   { href: "/library", label: "Bibliotheque", mobileLabel: "Biblio", icon: Library },
+  { href: "/diary", label: "Journal", mobileLabel: "Journal", icon: CalendarDays },
   { href: "/commu", label: "Commu", mobileLabel: "Commu", icon: UsersRound },
   { href: "/trending", label: "Tendance", mobileLabel: "Top", icon: BookOpen }
 ];
@@ -73,7 +74,7 @@ export function AppShell({ children, user }: AppShellProps) {
       <main className="mx-auto min-h-screen max-w-[1520px] px-3 py-4 sm:px-5 sm:py-7 xl:px-10">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl shadow-black/40 backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+        <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">
           {navItems.map((item) => (
             <Link
               key={item.href}

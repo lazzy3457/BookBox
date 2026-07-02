@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth/options";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { LibraryImport } from "@/components/settings/LibraryImport";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export default async function SettingsPage() {
       </section>
 
       <SettingsPanel />
+      <LibraryImport />
     </div>
   );
 }

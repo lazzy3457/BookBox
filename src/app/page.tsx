@@ -9,15 +9,18 @@ import { BookCard } from "@/components/books/BookCard";
 import { CoverShelf } from "@/components/books/CoverShelf";
 import { ActivityFeedPreview } from "@/components/activity/ActivityFeedPreview";
 import { StarRating } from "@/components/reviews/StarRating";
+import { getRecommendations } from "@/server/services/recommendations";
+import { RecommendationShelf } from "@/components/books/RecommendationShelf";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
-  const [trending, activity, topReviews] = await Promise.all([
+  const [trending, activity, topReviews, recommendations] = await Promise.all([
     getTrendingBooks(),
     session?.user?.id ? getFriendActivity(session.user.id) : Promise.resolve([]),
-    getTopReviewsLast24Hours()
+    getTopReviewsLast24Hours(),
+    session?.user?.id ? getRecommendations(session.user.id, 8) : Promise.resolve([])
   ]);
   const activityItems = activity.map((item) =>
     item.type === "review"
@@ -88,6 +91,13 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {session?.user?.id ? (
+        <section className="mt-8 min-w-0 overflow-hidden">
+          <SectionHeader eyebrow="Pour toi" title="Recommandations personnalisées" description="Des livres choisis à partir de tes goûts et de lecteurs proches." />
+          <RecommendationShelf initialItems={recommendations} />
+        </section>
+      ) : null}
 
       <section className="mt-8 min-w-0 overflow-hidden">
         <SectionHeader
