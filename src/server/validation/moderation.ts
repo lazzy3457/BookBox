@@ -28,7 +28,8 @@ export const reportUpdateSchema = z.object({
 
 export const legalNoticeSchema = z.object({
   email: z.string().trim().email().max(254),
-  targetUrl: z.string().trim().url().max(1000),
+  targetUrl: z.string().trim().url().max(1000)
+    .refine((value) => value.startsWith("https://") || value.startsWith("http://"), "L’URL doit utiliser HTTP ou HTTPS."),
   legalGround: z.string().trim().min(3).max(200),
   explanation: z.string().trim().min(20).max(4000),
   goodFaith: z.literal(true),

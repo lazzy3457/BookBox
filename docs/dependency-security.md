@@ -1,5 +1,7 @@
 # Suivi des dépendances
 
+Ré-audit du 7 juillet 2026 : six alertes de production inchangées (une haute et cinq modérées : `next`/PostCSS, `next-auth`/Nodemailer, `uuid`), toujours sans correctif compatible publié. Les dépendances déclarées en `latest` ont été épinglées dans `package.json` sur les versions effectivement installées afin de garantir des déploiements reproductibles ; toute montée de version redevient une décision explicite.
+
 Audit initial du 2 juillet 2026 : six alertes de production (une haute et cinq modérées) observées dans `next`/PostCSS et `next-auth`/Nodemailer/`uuid`, sans correctif direct compatible proposé au moment de l’audit. BooksBox n’expose aucune option avancée de Nodemailer (`raw`, `envelope`, en-têtes arbitraires ou nom EHLO) aux entrées utilisateur, ce qui réduit l’exposition aux avis recensés, sans les faire disparaître. Leur exploitabilité doit être réévaluée avant chaque déploiement.
 
 - Exécuter `npm audit --omit=dev` à chaque livraison.

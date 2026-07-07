@@ -16,12 +16,13 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  reactStrictMode: true,
+  compress: true,
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400,
     remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "books.google.com"
-      },
       {
         protocol: "https",
         hostname: "books.google.com"

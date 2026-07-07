@@ -3,6 +3,7 @@ import { z } from "zod";
 const optionalAvatar = z.union([
   z.literal(""),
   z.string().trim().url("L’avatar doit être une URL valide.").max(500)
+    .refine((value) => value.startsWith("https://"), "L’avatar doit être une URL https://.")
 ]);
 
 export const profileSettingsSchema = z.object({

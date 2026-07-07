@@ -7,7 +7,7 @@ import { apiError } from "@/server/http/errors";
 const profileMutationSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   bio: z.string().trim().max(500).optional(),
-  image: z.string().trim().url().optional().or(z.literal(""))
+  image: z.string().trim().url().refine((value) => value.startsWith("https://"), "L’avatar doit être une URL https://.").optional().or(z.literal(""))
 });
 
 function selectProfile(userId: string) {

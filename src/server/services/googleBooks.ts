@@ -93,7 +93,7 @@ export function normalizeGoogleBook(item: NonNullable<GoogleBooksResponse["items
     title: volume.title ?? "Titre inconnu",
     authors: volume.authors ?? [],
     description: volume.description,
-    thumbnailUrl: volume.imageLinks?.thumbnail?.replace("http://", "https://") ?? volume.imageLinks?.smallThumbnail,
+    thumbnailUrl: (volume.imageLinks?.thumbnail ?? volume.imageLinks?.smallThumbnail)?.replace("http://", "https://"),
     publishedDate: volume.publishedDate,
     publisher: volume.publisher,
     pageCount: volume.pageCount,

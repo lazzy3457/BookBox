@@ -3,6 +3,9 @@ import { prisma } from "@/server/db/prisma";
 import { slugifyAuthor } from "@/lib/authors";
 import { getSiteUrl } from "@/lib/site";
 
+// Généré à la demande : le build ne doit pas dépendre d'un accès à la base de données.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteUrl();
   const books = await prisma.book.findMany({
