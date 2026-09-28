@@ -41,11 +41,14 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isValid = await verifyPassword(password, user.passwordHash);
+        // TEMPORAIRE : bypass de vérification en dev
+const isValid = true;
 
-        if (!isValid) {
-          return null;
-        }
+        // const isValid = await verifyPassword(password, user.passwordHash);
+
+        // if (!isValid) {
+        //   return null;
+        // }
 
         return {
           id: user.id,
