@@ -1,5 +1,7 @@
 import { googleBookUpsertSchema } from "@/server/validation/books";
 import type { ExternalBookCandidate } from "@/server/services/externalBooks";
+import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
+import { genresFromCategories } from "@/lib/genres";
 
 const GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -18,30 +20,34 @@ export type GoogleBookCandidate = {
   publisher?: string;
   pageCount?: number;
   language?: string;
+  genres?: string[];
+};
+
+type GoogleVolume = {
+  id: string;
+  volumeInfo?: {
+    title?: string;
+    authors?: string[];
+    description?: string;
+    imageLinks?: {
+      thumbnail?: string;
+      smallThumbnail?: string;
+    };
+    publishedDate?: string;
+    publisher?: string;
+    pageCount?: number;
+    language?: string;
+    categories?: string[];
+    industryIdentifiers?: Array<{
+      type?: string;
+      identifier?: string;
+    }>;
+  };
 };
 
 type GoogleBooksResponse = {
   totalItems?: number;
-  items?: Array<{
-    id: string;
-    volumeInfo?: {
-      title?: string;
-      authors?: string[];
-      description?: string;
-      imageLinks?: {
-        thumbnail?: string;
-        smallThumbnail?: string;
-      };
-      publishedDate?: string;
-      publisher?: string;
-      pageCount?: number;
-      language?: string;
-      industryIdentifiers?: Array<{
-        type?: string;
-        identifier?: string;
-      }>;
-    };
-  }>;
+  items?: GoogleVolume[];
 };
 
 export const GOOGLE_BOOKS_PAGE_SIZE = 24;
@@ -85,7 +91,7 @@ function isbnByType(
     .filter(Boolean);
 }
 
-export function normalizeGoogleBook(item: NonNullable<GoogleBooksResponse["items"]>[number]) {
+export function normalizeGoogleBook(item: GoogleVolume) {
   const volume = item.volumeInfo ?? {};
   const parsedBook = googleBookUpsertSchema.parse({
     googleBooksVolumeId: item.id,
@@ -97,6 +103,7 @@ export function normalizeGoogleBook(item: NonNullable<GoogleBooksResponse["items
     publisher: volume.publisher,
     pageCount: volume.pageCount,
     language: volume.language,
+    genres: genresFromCategories(volume.categories),
     isbn10: isbnByType(volume.industryIdentifiers, "ISBN_10"),
     isbn13: isbnByType(volume.industryIdentifiers, "ISBN_13")
   });
@@ -124,7 +131,7 @@ export async function searchGoogleBooks(query: string, startIndex = 0, options: 
     url.searchParams.set("key", process.env.GOOGLE_BOOKS_API_KEY);
   }
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     next: { revalidate: 300 }
   });
 
@@ -144,4 +151,25 @@ export async function searchGoogleBooks(query: string, startIndex = 0, options: 
     nextStartIndex: startIndex + items.length,
     hasMore: startIndex + items.length < (payload.totalItems ?? 0)
   };
+}
+
+// Les résultats de recherche ne renvoient souvent qu'une catégorie générique
+// ("Fiction") ; la fiche du volume donne la catégorie complète
+// ("Fiction / Fantasy / Epic"). Renvoie [] si Google Books est indisponible.
+export async function fetchGoogleBookGenres(volumeId: string) {
+  const url = new URL(`${GOOGLE_BOOKS_URL}/${encodeURIComponent(volumeId)}`);
+  url.searchParams.set("fields", "volumeInfo/categories");
+
+  if (process.env.GOOGLE_BOOKS_API_KEY) {
+    url.searchParams.set("key", process.env.GOOGLE_BOOKS_API_KEY);
+  }
+
+  try {
+    const response = await fetchWithTimeout(url, { next: { revalidate: 86_400 } }, 4_000);
+    if (!response.ok) return [];
+    const payload = (await response.json()) as Pick<GoogleVolume, "volumeInfo">;
+    return genresFromCategories(payload.volumeInfo?.categories);
+  } catch {
+    return [];
+  }
 }

@@ -2,6 +2,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import type { GoogleBookCandidate } from "@/server/services/googleBooks";
 import type { ExternalBookCandidate } from "@/server/services/externalBooks";
+import { fetchGoogleBookGenres } from "@/server/services/googleBooks";
+import { normalizeGenres } from "@/lib/genres";
 
 const bookFields = new Set(Prisma.dmmf.datamodel.models.find((model) => model.name === "Book")?.fields.map((field) => field.name) ?? []);
 
@@ -24,6 +26,7 @@ function bookData(candidate: ExternalBookCandidate | GoogleBookCandidate) {
     publisher: candidate.publisher,
     pageCount: candidate.pageCount,
     language: candidate.language,
+    genres: normalizeGenres(candidate.genres),
     source: candidate.source ?? (candidate.googleBooksVolumeId ? "google_books" : "open_library")
   };
 
@@ -83,6 +86,11 @@ export async function upsertExternalBook(candidate: ExternalBookCandidate | Goog
   const existingBook = await findExistingExternalBook(candidate);
   const data = bookData(candidate);
 
+  if (data.googleBooksVolumeId && !existingBook?.genres.length) {
+    const detailedGenres = await fetchGoogleBookGenres(data.googleBooksVolumeId);
+    if (detailedGenres.length) data.genres = detailedGenres;
+  }
+
   if (existingBook) {
     const existingIdentifiers = existingBook as typeof existingBook & {
       openLibraryKey?: string | null;
@@ -92,6 +100,7 @@ export async function upsertExternalBook(candidate: ExternalBookCandidate | Goog
     const nextData = {
       ...data,
       googleBooksVolumeId: existingBook.googleBooksVolumeId ?? data.googleBooksVolumeId,
+      genres: existingBook.genres.length ? existingBook.genres : data.genres,
       ...(supportsBookField("openLibraryKey")
         ? { openLibraryKey: existingIdentifiers.openLibraryKey ?? data.openLibraryKey }
         : {}),
@@ -137,6 +146,7 @@ export async function createManualBook(input: {
   publisher?: string;
   pageCount?: number;
   language?: string;
+  genres?: string[];
 }) {
   return prisma.book.create({
     data: {
@@ -148,6 +158,7 @@ export async function createManualBook(input: {
       publisher: input.publisher,
       pageCount: input.pageCount,
       language: input.language,
+      genres: normalizeGenres(input.genres),
       source: "manual"
     }
   });
@@ -158,17 +169,19 @@ export async function getBookDetails(bookId: string) {
     where: { id: bookId },
     include: {
       reviews: {
+        where: { hiddenAt: null, user: { suspendedAt: null } },
         orderBy: { createdAt: "desc" },
         include: {
           user: true,
           reactions: true,
           comments: {
+            where: { hiddenAt: null, user: { suspendedAt: null } },
             include: { user: true, likes: true },
             orderBy: { createdAt: "asc" }
           }
         }
       },
-      libraries: true
+      libraries: { where: { user: { suspendedAt: null } } }
     }
   });
 }

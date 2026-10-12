@@ -2,13 +2,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/server/db/prisma";
 import { hashPassword } from "@/server/auth/password";
-import { apiError, conflict } from "@/server/http/errors";
+import { apiError } from "@/server/http/errors";
+import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
+import { legalConfig } from "@/lib/legal";
+import { sendVerificationEmail } from "@/server/services/accountTokens";
 
-const signupSchema = z.object({
+export const signupSchema = z.object({
   name: z.string().trim().min(2).max(80),
   username: z.string().trim().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/),
   email: z.string().trim().email(),
-  password: z.string().min(8).max(120)
+  password: z.string().min(8).max(120),
+  ageConfirmed: z.literal(true),
+  termsAccepted: z.literal(true),
+  termsVersion: z.literal(legalConfig.termsVersion),
+  privacyVersion: z.literal(legalConfig.privacyVersion)
 });
 
 export async function POST(request: Request) {
@@ -16,33 +23,32 @@ export async function POST(request: Request) {
     const input = signupSchema.parse(await request.json());
     const email = input.email.toLowerCase();
     const username = input.username.toLowerCase();
-
-    const existing = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { username }]
-      }
-    });
-
-    if (existing) {
-      throw conflict("Cet email ou pseudo est déjà utilisé.", "USER_ALREADY_EXISTS");
-    }
+    await Promise.all([
+      enforceRateLimit({ scope: "signup-ip", identifier: getClientIdentifier(request), limit: 5, windowMs: 60 * 60_000 }),
+      enforceRateLimit({ scope: "signup-email", identifier: email, limit: 3, windowMs: 60 * 60_000 })
+    ]);
+    const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
+    if (existing) return NextResponse.json({ ok: true, verificationRequired: true }, { status: 202 });
 
     const user = await prisma.user.create({
       data: {
         name: input.name,
         username,
         email,
-        passwordHash: await hashPassword(input.password)
+        passwordHash: await hashPassword(input.password),
+        legalAcceptances: {
+          create: {
+            termsVersion: input.termsVersion,
+            privacyVersion: input.privacyVersion,
+            ageConfirmedAt: new Date(),
+            source: "WEB"
+          }
+        }
       },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        email: true
-      }
+      select: { id: true, email: true }
     });
-
-    return NextResponse.json(user, { status: 201 });
+    await sendVerificationEmail({ id: user.id, email: user.email! });
+    return NextResponse.json({ ok: true, verificationRequired: true }, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

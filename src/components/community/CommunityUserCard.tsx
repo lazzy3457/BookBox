@@ -7,7 +7,6 @@ export type CommunityReader = {
   id: string;
   name: string | null;
   username: string | null;
-  email: string | null;
   isFollowing?: boolean;
   counts: {
     library: number;
@@ -32,7 +31,7 @@ export function CommunityUserCard({ reader, canFollow = false }: CommunityUserCa
           <div className="min-w-0">
             <h2 className="truncate font-black text-paper">{reader.name ?? reader.username ?? "Lecteur BooksBox"}</h2>
             <p className="mt-1 truncate text-xs text-muted">
-              {reader.username ? `@${reader.username}` : reader.email ?? "Lecteur BooksBox"}
+              {reader.username ? `@${reader.username}` : "Lecteur BooksBox"}
             </p>
           </div>
         </Link>

@@ -1,5 +1,7 @@
 import { NotificationType, type NotificationPreference } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
+import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
+import { areUsersBlocked } from "@/server/services/blocks";
 
 type PreferenceInput = Partial<
   Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled">
@@ -101,7 +103,7 @@ async function sendPushNotifications(
   }));
 
   try {
-    const response = await fetch(EXPO_PUSH_URL, {
+    const response = await fetchWithTimeout(EXPO_PUSH_URL, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -120,7 +122,6 @@ async function sendPushNotifications(
     payload.data.forEach((ticket, index) => {
       if (ticket.status === "error") {
         console.warn("[notifications] Expo push ticket error.", {
-          token: tokens[index]?.token.slice(0, 18),
           error: ticket.details?.error
         });
       }
@@ -151,6 +152,9 @@ async function createNotification(input: {
   targetUrl?: string | null;
 }) {
   if (input.actorId && input.actorId === input.recipientId) {
+    return null;
+  }
+  if (input.actorId && await areUsersBlocked(input.actorId, input.recipientId)) {
     return null;
   }
 

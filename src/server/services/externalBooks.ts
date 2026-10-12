@@ -15,6 +15,7 @@ export type ExternalBookCandidate = {
   publisher?: string;
   pageCount?: number;
   language?: string;
+  genres?: string[];
 };
 
 export type ExternalBookSearchResult = {

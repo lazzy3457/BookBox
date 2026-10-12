@@ -7,6 +7,7 @@ import { BookOpen, Globe, Lock, Star } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
 import { ListReviews } from "@/components/lists/ListReviews";
+import { areUsersBlocked, getBlockedUserIds } from "@/server/services/blocks";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,12 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
           book: {
             include: {
               reviews: {
+                where: { hiddenAt: null, user: { suspendedAt: null } },
                 include: {
                   user: true,
                   reactions: true,
                   comments: {
+                    where: { hiddenAt: null, user: { suspendedAt: null } },
                     include: { user: true },
                     orderBy: { createdAt: "asc" },
                   },
@@ -42,13 +45,18 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
   });
 
   if (!list) notFound();
+  if (list.user.suspendedAt) notFound();
   if (!list.isPublic && list.userId !== session?.user?.id) notFound();
+  if (session?.user?.id && await areUsersBlocked(session.user.id, list.userId)) notFound();
 
   const isOwner = session?.user?.id === list.userId;
+  const blockedUserIds = new Set(
+    session?.user?.id ? await getBlockedUserIds(session.user.id) : []
+  );
 
   // Flatten toutes les reviews des livres de la liste
   const reviews = list.entries.flatMap((entry) =>
-    entry.book.reviews.map((review) => ({
+    entry.book.reviews.filter((review) => !blockedUserIds.has(review.userId)).map((review) => ({
       id: review.id,
       rating: review.rating,
       body: review.body,
@@ -59,7 +67,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
       reactionsCount: review.reactions.length,
       bookTitle: entry.book.title,
       bookId: entry.bookId,
-      comments: review.comments.map((c) => ({
+      comments: review.comments.filter((comment) => !blockedUserIds.has(comment.userId)).map((c) => ({
         id: c.id,
         body: c.body,
         userName: c.user.name ?? "Lecteur BooksBox",

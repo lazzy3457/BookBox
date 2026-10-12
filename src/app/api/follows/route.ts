@@ -4,6 +4,8 @@ import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError } from "@/server/http/errors";
 import { notifyNewFollower } from "@/server/services/notifications";
+import { enforceRateLimit } from "@/server/security/rateLimit";
+import { assertUsersCanInteract } from "@/server/services/blocks";
 
 const followSchema = z.object({
   followingId: z.string().min(1)
@@ -12,7 +14,9 @@ const followSchema = z.object({
 export async function POST(request: Request) {
   try {
     const followerId = await requireCurrentUserId(request);
+    await enforceRateLimit({ scope: "follow-mutation", identifier: followerId, limit: 30, windowMs: 60_000 });
     const { followingId } = followSchema.parse(await request.json());
+    await assertUsersCanInteract(followerId, followingId);
 
     if (followerId === followingId) {
       throw Object.assign(new Error("Impossible de se suivre soi-même."), {

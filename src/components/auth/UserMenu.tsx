@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 type UserMenuProps = {
+  isAdmin?: boolean;
   user: {
     name?: string | null;
     email?: string | null;
@@ -13,7 +14,7 @@ type UserMenuProps = {
   };
 };
 
-export function UserMenu({ user }: UserMenuProps) {
+export function UserMenu({ user, isAdmin = false }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const displayName = user.name ?? "Lecteur";
@@ -83,6 +84,17 @@ export function UserMenu({ user }: UserMenuProps) {
             <Settings size={16} />
             Parametres
           </Link>
+          {isAdmin ? (
+            <Link
+              role="menuitem"
+              href="/moderation"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-muted transition hover:bg-panel hover:text-paper"
+            >
+              <ShieldCheck size={16} />
+              Modération
+            </Link>
+          ) : null}
           <button
             role="menuitem"
             type="button"

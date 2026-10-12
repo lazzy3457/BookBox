@@ -7,6 +7,8 @@ import { Edit3, Eye, MessageCircle, Send, ThumbsUp, Trash2, TriangleAlert } from
 import { RatingControl } from "@/components/reviews/RatingControl";
 import { StarRating } from "@/components/reviews/StarRating";
 import { Toast } from "@/components/ui/Toast";
+import { ReportButton } from "@/components/moderation/ReportButton";
+import { useUserPreferences } from "@/components/settings/UserPreferencesProvider";
 
 type CommentView = {
   id: string;
@@ -27,6 +29,7 @@ type ReviewCardProps = {
     userName: string;
     userImage?: string | null;
     canManage: boolean;
+    canReport?: boolean;
     reactionsCount: number;
     comments: CommentView[];
   };
@@ -34,8 +37,9 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review }: ReviewCardProps) {
   const router = useRouter();
+  const { hideSpoilers } = useUserPreferences();
   const [isDeleted, setIsDeleted] = useState(false);
-  const [isRevealed, setIsRevealed] = useState(!review.spoiler);
+  const [isRevealed, setIsRevealed] = useState(!review.spoiler || !hideSpoilers);
   const [isEditing, setIsEditing] = useState(false);
   const [rating, setRating] = useState(Math.max(1, Math.min(5, review.rating)));
   const [reviewBody, setReviewBody] = useState(review.body ?? "");
@@ -277,7 +281,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
                 <Trash2 size={14} />
               </button>
             </>
-          ) : null}
+          ) : review.canReport ? <ReportButton targetType="REVIEW" targetId={review.id} compact /> : null}
         </div>
       </div>
 
@@ -355,7 +359,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
                     <Trash2 size={12} />
                   </button>
                 </div>
-              ) : null}
+              ) : review.canReport ? <ReportButton targetType="COMMENT" targetId={comment.id} compact /> : null}
             </div>
             {editingCommentId === comment.id ? (
               <div className="mt-2">

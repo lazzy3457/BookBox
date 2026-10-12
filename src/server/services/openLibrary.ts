@@ -1,4 +1,6 @@
 import type { ExternalBookCandidate, ExternalBookSearchResult } from "@/server/services/externalBooks";
+import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
+import { genresFromCategories } from "@/lib/genres";
 
 const OPEN_LIBRARY_SEARCH_URL = "https://openlibrary.org/search.json";
 const OPEN_LIBRARY_COVER_URL = "https://covers.openlibrary.org/b";
@@ -15,6 +17,7 @@ type OpenLibraryDoc = {
   number_of_pages_median?: number;
   language?: string[];
   isbn?: string[];
+  subject?: string[];
 };
 
 type OpenLibraryResponse = {
@@ -93,7 +96,8 @@ function normalizeOpenLibraryBook(doc: OpenLibraryDoc): ExternalBookCandidate | 
     publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
     publisher: doc.publisher?.[0],
     pageCount: doc.number_of_pages_median,
-    language: normalizeLanguage(doc.language)
+    language: normalizeLanguage(doc.language),
+    genres: genresFromCategories(doc.subject)
   };
 }
 
@@ -109,7 +113,7 @@ export async function searchOpenLibrary(query: string, startIndex = 0, options: 
   url.searchParams.set("limit", String(pageSize));
   url.searchParams.set(
     "fields",
-    "key,title,author_name,cover_i,cover_edition_key,edition_key,first_publish_year,publisher,number_of_pages_median,language,isbn"
+    "key,title,author_name,cover_i,cover_edition_key,edition_key,first_publish_year,publisher,number_of_pages_median,language,isbn,subject"
   );
 
   if (options.language && options.language !== "all") {
@@ -118,7 +122,7 @@ export async function searchOpenLibrary(query: string, startIndex = 0, options: 
     url.searchParams.set("language", languageCode);
   }
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     next: { revalidate: 300 }
   });
 

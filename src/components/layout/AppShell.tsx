@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { BookOpen, CalendarDays, Library, Search, Sparkles, UsersRound } from "lucide-react";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 type AppShellProps = {
   children: React.ReactNode;
+  isAdmin?: boolean;
   user?: {
     name?: string | null;
     email?: string | null;
@@ -20,9 +22,10 @@ const navItems = [
   { href: "/trending", label: "Tendance", mobileLabel: "Top", icon: BookOpen }
 ];
 
-export function AppShell({ children, user }: AppShellProps) {
+export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
   return (
     <div className="min-h-screen pb-20 lg:pb-0">
+      <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-20 rounded bg-mint px-4 py-2 font-black text-ink transition focus:translate-y-0">Aller au contenu</a>
       <header className="sticky top-0 z-30 border-b border-line/80 bg-ink/90 backdrop-blur">
         <div className="mx-auto flex min-h-14 max-w-[1520px] items-center gap-2 px-3 py-2 sm:min-h-16 sm:gap-5 sm:px-5 sm:py-3 xl:px-10">
           <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -56,7 +59,7 @@ export function AppShell({ children, user }: AppShellProps) {
               Ajouter un livre
             </Link>
             {user ? (
-              <UserMenu user={user} />
+              <UserMenu user={user} isAdmin={isAdmin} />
             ) : (
               <div className="flex gap-2">
                 <Link className="rounded border border-line px-2.5 py-2 text-xs font-bold text-muted hover:text-paper sm:px-3" href="/login">
@@ -71,7 +74,8 @@ export function AppShell({ children, user }: AppShellProps) {
         </div>
       </header>
 
-      <main className="mx-auto min-h-screen max-w-[1520px] px-3 py-4 sm:px-5 sm:py-7 xl:px-10">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto min-h-screen max-w-[1520px] px-3 py-4 sm:px-5 sm:py-7 xl:px-10">{children}</main>
+      <SiteFooter />
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl shadow-black/40 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">

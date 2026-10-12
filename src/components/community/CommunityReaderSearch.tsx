@@ -71,7 +71,7 @@ export function CommunityReaderSearch({ initialReaders, canFollow }: CommunityRe
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             className="h-12 flex-1 rounded border border-line bg-ink px-4 text-white outline-none transition placeholder:text-muted/45 focus:border-mint"
-            placeholder="Pseudo, nom ou email"
+            placeholder="Pseudo ou nom"
           />
           <button
             type="submit"

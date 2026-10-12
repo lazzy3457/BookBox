@@ -2,15 +2,19 @@ import { NextResponse } from "next/server";
 import { getCurrentUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { apiError, notFound } from "@/server/http/errors";
+import { areUsersBlocked } from "@/server/services/blocks";
 
 export async function GET(request: Request, { params }: { params: Promise<{ userId: string }> }) {
   try {
     const currentUserId = await getCurrentUserId(request);
     const { userId } = await params;
+    if (currentUserId && await areUsersBlocked(currentUserId, userId)) {
+      throw notFound("Utilisateur introuvable.", "USER_NOT_FOUND");
+    }
     const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, isFollowing] =
       await Promise.all([
-        prisma.user.findUnique({
-          where: { id: userId },
+        prisma.user.findFirst({
+          where: { id: userId, suspendedAt: null },
           select: {
             id: true,
             name: true,
@@ -31,10 +35,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
           include: { book: true }
         }),
         prisma.review.findMany({
-          where: { userId },
+          where: { userId, hiddenAt: null },
           orderBy: { updatedAt: "desc" },
           take: 8,
-          include: { book: true, reactions: true, comments: true }
+          include: { book: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
         }),
         currentUserId
           ? prisma.follow.findUnique({

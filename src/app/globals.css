@@ -39,6 +39,22 @@ select {
   background: rgba(0, 212, 116, 0.35);
 }
 
+:focus-visible {
+  outline: 2px solid #65e6bd;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .cover-sheen {
   position: relative;
   overflow: hidden;

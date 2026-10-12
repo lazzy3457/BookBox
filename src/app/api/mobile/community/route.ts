@@ -3,13 +3,22 @@ import { getCurrentUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { getTrendingBooks } from "@/server/services/trending";
 import { apiError } from "@/server/http/errors";
+import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
+import { getBlockedUserIds } from "@/server/services/blocks";
 
 export async function GET(request: Request) {
   try {
+    await enforceRateLimit({
+      scope: "mobile-community",
+      identifier: getClientIdentifier(request),
+      limit: 60,
+      windowMs: 60_000
+    });
     const currentUserId = await getCurrentUserId(request);
+    const blockedUserIds = currentUserId ? await getBlockedUserIds(currentUserId) : [];
     const [readers, recentReviews, trendingBooks, following] = await Promise.all([
       prisma.user.findMany({
-        where: currentUserId ? { id: { not: currentUserId } } : {},
+        where: { suspendedAt: null, ...(currentUserId ? { id: { notIn: [currentUserId, ...blockedUserIds] } } : {}) },
         orderBy: { createdAt: "desc" },
         take: 8,
         include: {
@@ -23,13 +32,14 @@ export async function GET(request: Request) {
         }
       }),
       prisma.review.findMany({
+        where: { hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) },
         orderBy: { createdAt: "desc" },
         take: 8,
         include: {
           user: true,
           book: true,
-          reactions: true,
-          comments: true
+          reactions: blockedUserIds.length ? { where: { userId: { notIn: blockedUserIds } } } : true,
+          comments: { where: { hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) } }
         }
       }),
       getTrendingBooks(),
@@ -47,7 +57,6 @@ export async function GET(request: Request) {
         id: reader.id,
         name: reader.name,
         username: reader.username,
-        email: reader.email,
         image: reader.image,
         isFollowing: followingIds.has(reader.id),
         counts: {

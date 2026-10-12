@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { getCurrentUserId, requireCurrentUserId } from "@/server/auth/session";
 import { apiError, notFound } from "@/server/http/errors";
 import { listMutationSchema } from "@/server/validation/lists";
+import { areUsersBlocked, getBlockedUserIds } from "@/server/services/blocks";
 
 async function getList(listId: string) {
   return prisma.bookList.findUnique({
@@ -14,6 +15,8 @@ async function getList(listId: string) {
           name: true,
           username: true,
           image: true
+          ,
+          suspendedAt: true
         }
       },
       entries: {
@@ -22,10 +25,11 @@ async function getList(listId: string) {
           book: {
             include: {
               reviews: {
+                where: { hiddenAt: null, user: { suspendedAt: null } },
                 include: {
                   user: true,
                   reactions: true,
-                  comments: { include: { user: true, likes: true }, orderBy: { createdAt: "asc" } }
+                  comments: { where: { hiddenAt: null, user: { suspendedAt: null } }, include: { user: true, likes: true }, orderBy: { createdAt: "asc" } }
                 }
               }
             }
@@ -43,11 +47,31 @@ export async function GET(request: Request, { params }: { params: Promise<{ list
     const { listId } = await params;
     const list = await getList(listId);
 
-    if (!list || (!list.isPublic && list.userId !== currentUserId)) {
+    if (!list || list.user.suspendedAt || (!list.isPublic && list.userId !== currentUserId)) {
+      throw notFound("Liste introuvable.", "LIST_NOT_FOUND");
+    }
+    if (currentUserId && await areUsersBlocked(currentUserId, list.userId)) {
       throw notFound("Liste introuvable.", "LIST_NOT_FOUND");
     }
 
-    return NextResponse.json({ list, canManage: list.userId === currentUserId });
+    const blockedUserIds = new Set(currentUserId ? await getBlockedUserIds(currentUserId) : []);
+    const visibleList = {
+      ...list,
+      entries: list.entries.map((entry) => ({
+        ...entry,
+        book: {
+          ...entry.book,
+          reviews: entry.book.reviews
+            .filter((review) => !blockedUserIds.has(review.userId))
+            .map((review) => ({
+              ...review,
+              comments: review.comments.filter((comment) => !blockedUserIds.has(comment.userId))
+            }))
+        }
+      }))
+    };
+
+    return NextResponse.json({ list: visibleList, canManage: list.userId === currentUserId });
   } catch (error) {
     return apiError(error);
   }

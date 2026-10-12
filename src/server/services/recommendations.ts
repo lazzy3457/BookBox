@@ -1,5 +1,6 @@
 import { ReadingStatus } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
+import { getBlockedUserIds } from "@/server/services/blocks";
 
 export type Recommendation = {
   book: {
@@ -15,14 +16,21 @@ export type Recommendation = {
 };
 
 export async function getRecommendations(userId: string, limit = 8): Promise<Recommendation[]> {
+  const blockedUserIds = await getBlockedUserIds(userId);
   const [library, reviews, dismissed, books] = await Promise.all([
     prisma.userBook.findMany({ where: { userId }, include: { book: true } }),
-    prisma.review.findMany({ where: { userId } }),
+    prisma.review.findMany({ where: { userId, hiddenAt: null } }),
     prisma.recommendationDismissal.findMany({ where: { userId }, select: { bookId: true } }),
     prisma.book.findMany({
       include: {
-        libraries: { select: { userId: true, status: true, isFavorite: true } },
-        reviews: { select: { userId: true, rating: true } }
+        libraries: {
+          where: { ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}), user: { suspendedAt: null } },
+          select: { userId: true, status: true, isFavorite: true }
+        },
+        reviews: {
+          where: { ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}), hiddenAt: null, user: { suspendedAt: null } },
+          select: { userId: true, rating: true }
+        }
       },
       take: 300
     })

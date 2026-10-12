@@ -12,9 +12,12 @@ export async function getTrendingBooks() {
           where: {
             updatedAt: { gte: since },
             status: { in: [ReadingStatus.READ, ReadingStatus.TO_READ] }
+            ,
+            user: { suspendedAt: null }
           }
         },
         reviews: {
+          where: { hiddenAt: null, user: { suspendedAt: null } },
           include: { reactions: true }
         }
       },

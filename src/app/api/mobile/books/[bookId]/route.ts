@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { apiError, notFound } from "@/server/http/errors";
 import { getBookDetails } from "@/server/services/books";
+import { getBlockedUserIds } from "@/server/services/blocks";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bookId: string }> }) {
   try {
@@ -15,6 +16,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
       throw notFound("Livre introuvable.", "BOOK_NOT_FOUND");
     }
 
+    const blockedUserIds = currentUserId ? await getBlockedUserIds(currentUserId) : [];
+    const blockedSet = new Set(blockedUserIds);
+    const visibleReviews = book.reviews
+      .filter((review) => !blockedSet.has(review.userId))
+      .map((review) => ({ ...review, comments: review.comments.filter((comment) => !blockedSet.has(comment.userId)) }));
     const [userBook, authorBooks, followingActivity] = await Promise.all([
       currentUserId
         ? prisma.userBook.findUnique({
@@ -27,13 +33,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
               id: { not: book.id },
               authors: { hasSome: book.authors }
             },
-            include: { reviews: true },
+            include: { reviews: { where: { hiddenAt: null, user: { suspendedAt: null } } } },
             take: 6
           })
         : Promise.resolve([]),
       currentUserId
         ? prisma.follow.findMany({
-            where: { followerId: currentUserId },
+            where: { followerId: currentUserId, followingId: { notIn: blockedUserIds }, following: { suspendedAt: null } },
             select: {
               following: {
                 select: {
@@ -41,7 +47,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
                   name: true,
                   image: true,
                   reviews: {
-                    where: { bookId: book.id },
+                    where: { bookId: book.id, hiddenAt: null },
                     orderBy: { createdAt: "desc" },
                     take: 1
                   },
@@ -57,17 +63,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
         : Promise.resolve([])
     ]);
 
-    const averageRating = book.reviews.length
-      ? book.reviews.reduce((total, review) => total + review.rating, 0) / book.reviews.length
+    const averageRating = visibleReviews.length
+      ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length
       : null;
 
     return NextResponse.json({
-      book,
+      book: { ...book, reviews: visibleReviews },
       userBook,
-      currentUserReview: currentUserId ? book.reviews.find((review) => review.userId === currentUserId) ?? null : null,
+      currentUserReview: currentUserId ? visibleReviews.find((review) => review.userId === currentUserId) ?? null : null,
       stats: {
         averageRating,
-        reviews: book.reviews.length,
+        reviews: visibleReviews.length,
         readers: book.libraries.length,
         favorites: book.libraries.filter((entry) => entry.isFavorite).length,
         read: book.libraries.filter((entry) => entry.status === ReadingStatus.READ).length,
