@@ -1,6 +1,7 @@
 import type { ExternalBookCandidate, ExternalBookSearchResult } from "@/server/services/externalBooks";
 import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
 import { genresFromCategories } from "@/lib/genres";
+import { normalizeLooseDate } from "@/lib/releaseDates";
 
 const OPEN_LIBRARY_SEARCH_URL = "https://openlibrary.org/search.json";
 const OPEN_LIBRARY_COVER_URL = "https://covers.openlibrary.org/b";
@@ -13,6 +14,7 @@ type OpenLibraryDoc = {
   cover_edition_key?: string;
   edition_key?: string[];
   first_publish_year?: number;
+  publish_date?: string[];
   publisher?: string[];
   number_of_pages_median?: number;
   language?: string[];
@@ -32,6 +34,7 @@ type SearchOpenLibraryOptions = {
   mode?: "all" | "title" | "author" | "isbn";
   language?: string;
   pageSize?: number;
+  orderBy?: "relevance" | "newest";
 };
 
 function normalizeLanguage(language?: string[]) {
@@ -70,6 +73,18 @@ function splitIsbn(isbn?: string[]) {
   };
 }
 
+// La première édition datée précisément l'année de première publication
+// donne la date de sortie ; sinon on garde l'année seule.
+function firstPublishDate(doc: OpenLibraryDoc) {
+  if (!doc.first_publish_year) return undefined;
+  const year = String(doc.first_publish_year);
+  const precise = (doc.publish_date ?? [])
+    .map(normalizeLooseDate)
+    .filter((date): date is string => Boolean(date?.startsWith(year)))
+    .sort();
+  return precise.find((date) => date.length === 10) ?? precise[0] ?? year;
+}
+
 function normalizeOpenLibraryBook(doc: OpenLibraryDoc): ExternalBookCandidate | null {
   if (!doc.title) {
     return null;
@@ -93,7 +108,7 @@ function normalizeOpenLibraryBook(doc: OpenLibraryDoc): ExternalBookCandidate | 
     title: doc.title,
     authors: doc.author_name ?? [],
     thumbnailUrl: coverUrl(doc),
-    publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
+    publishedDate: firstPublishDate(doc),
     publisher: doc.publisher?.[0],
     pageCount: doc.number_of_pages_median,
     language: normalizeLanguage(doc.language),
@@ -113,8 +128,14 @@ export async function searchOpenLibrary(query: string, startIndex = 0, options: 
   url.searchParams.set("limit", String(pageSize));
   url.searchParams.set(
     "fields",
-    "key,title,author_name,cover_i,cover_edition_key,edition_key,first_publish_year,publisher,number_of_pages_median,language,isbn,subject"
+    `key,title,author_name,cover_i,cover_edition_key,edition_key,first_publish_year,publisher,number_of_pages_median,language,isbn,subject${
+      options.orderBy === "newest" ? ",publish_date" : ""
+    }`
   );
+
+  if (options.orderBy === "newest") {
+    url.searchParams.set("sort", "new");
+  }
 
   if (options.language && options.language !== "all") {
     const language = options.language.toLowerCase();

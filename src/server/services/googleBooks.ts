@@ -57,6 +57,7 @@ type SearchGoogleBooksOptions = {
   mode?: "all" | "title" | "author" | "isbn";
   language?: string;
   pageSize?: number;
+  orderBy?: "relevance" | "newest";
 };
 
 function buildGoogleBooksQuery(query: string, mode: SearchGoogleBooksOptions["mode"]) {
@@ -122,6 +123,10 @@ export async function searchGoogleBooks(query: string, startIndex = 0, options: 
   url.searchParams.set("maxResults", String(pageSize));
   url.searchParams.set("startIndex", String(startIndex));
   url.searchParams.set("printType", "books");
+
+  if (options.orderBy === "newest") {
+    url.searchParams.set("orderBy", "newest");
+  }
 
   if (options.language && options.language !== "all") {
     url.searchParams.set("langRestrict", options.language.slice(0, 2).toLowerCase());

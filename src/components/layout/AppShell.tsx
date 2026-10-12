@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, CalendarDays, Library, Search, Sparkles, UsersRound } from "lucide-react";
+import { BookOpen, CalendarClock, CalendarDays, Library, Search, Sparkles, UsersRound } from "lucide-react";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
@@ -19,7 +19,8 @@ const navItems = [
   { href: "/library", label: "Bibliotheque", mobileLabel: "Biblio", icon: Library },
   { href: "/diary", label: "Journal", mobileLabel: "Journal", icon: CalendarDays },
   { href: "/commu", label: "Commu", mobileLabel: "Commu", icon: UsersRound },
-  { href: "/trending", label: "Tendance", mobileLabel: "Top", icon: BookOpen }
+  { href: "/trending", label: "Tendance", mobileLabel: "Top", icon: BookOpen },
+  { href: "/calendar", label: "Calendrier", mobileLabel: "Sorties", icon: CalendarClock }
 ];
 
 export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
@@ -43,9 +44,9 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex items-center gap-2 rounded px-3 py-2 text-sm font-bold text-muted transition hover:bg-white/7 hover:text-paper"
+                className="inline-flex items-center gap-2 rounded px-2 py-2 text-sm font-bold text-muted transition hover:bg-white/7 hover:text-paper xl:px-3"
               >
-                <item.icon size={16} />
+                <item.icon size={16} className="hidden xl:block" />
                 {item.label}
               </Link>
             ))}
@@ -54,7 +55,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
               href="/search"
-              className="hidden rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-lime sm:inline-flex"
+              className="hidden rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-lime sm:inline-flex lg:hidden xl:inline-flex"
             >
               Ajouter un livre
             </Link>
@@ -78,7 +79,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
       <SiteFooter />
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl shadow-black/40 backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">
+        <div className="mx-auto grid max-w-lg grid-cols-7 gap-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
