@@ -5,8 +5,8 @@ import { parseLibraryImport } from "@/server/services/libraryImport";
 describe("parseLibraryImport", () => {
   it("parses a Goodreads export with quoted accents and dates", () => {
     const csv = [
-      "Book Id,Title,Author,ISBN13,My Rating,Exclusive Shelf,Date Read,My Review",
-      '42,"L’Étranger","Camus, Albert","=""9782070360024""",5,read,2026/06/12,"Très bon, vraiment"'
+      "Book Id,Title,Author,ISBN13,My Rating,Exclusive Shelf,Date Read,Date Added,My Review",
+      '42,"L’Étranger","Camus, Albert","=""9782070360024""",5,read,2026/06/12,2026/05/30,"Très bon, vraiment"'
     ].join("\n");
 
     const [row] = parseLibraryImport(csv);
@@ -17,14 +17,15 @@ describe("parseLibraryImport", () => {
     expect(row.status).toBe(ReadingStatus.READ);
     expect(row.rating).toBe(5);
     expect(row.finishedAt).toBe("2026-06-12");
+    expect(row.addedAt).toBe("2026-05-30");
     expect(row.review).toBe("Très bon, vraiment");
   });
 
   it("parses the native BookBox format and keeps invalid rows for preview", () => {
     const csv = [
-      "title,authors,isbn13,isbn10,status,rating,startedAt,finishedAt,review",
-      "Dune,Frank Herbert,9780441172719,,READING,4,2026-07-01,,Lecture en cours",
-      ",Auteur,,,,,,,,"
+      "title,authors,isbn13,isbn10,status,rating,startedAt,finishedAt,addedAt,review",
+      "Dune,Frank Herbert,9780441172719,,READING,4,2026-07-01,,2026-06-15,Lecture en cours",
+      ",Auteur,,,,,,,,,"
     ].join("\n");
 
     const rows = parseLibraryImport(csv);
@@ -33,7 +34,8 @@ describe("parseLibraryImport", () => {
       title: "Dune",
       authors: ["Frank Herbert"],
       status: ReadingStatus.READING,
-      startedAt: "2026-07-01"
+      startedAt: "2026-07-01",
+      addedAt: "2026-06-15"
     });
     expect(rows[1].title).toBe("");
   });

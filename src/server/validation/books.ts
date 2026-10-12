@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GENRE_SLUGS, MAX_BOOK_GENRES } from "@/lib/genres";
 
 const webUrlSchema = z.string().trim().max(2000).url().refine((value) => {
   const protocol = new URL(value).protocol;
@@ -6,6 +7,8 @@ const webUrlSchema = z.string().trim().max(2000).url().refine((value) => {
 }, "L’URL doit utiliser HTTP ou HTTPS.");
 
 const authorSchema = z.string().trim().min(1).max(120);
+
+const genresSchema = z.array(z.enum(GENRE_SLUGS)).max(MAX_BOOK_GENRES).default([]);
 
 export const searchBooksSchema = z.object({
   q: z.string().trim().min(2, "Recherche trop courte.").max(120),
@@ -24,7 +27,8 @@ export const manualBookSchema = z.object({
   publishedDate: z.string().trim().max(32).optional(),
   publisher: z.string().trim().max(180).optional(),
   pageCount: z.number().int().positive().optional(),
-  language: z.string().trim().max(16).optional()
+  language: z.string().trim().max(16).optional(),
+  genres: genresSchema
 });
 
 export const googleBookUpsertSchema = z.object({
@@ -39,6 +43,7 @@ export const googleBookUpsertSchema = z.object({
   publisher: z.string().trim().max(180).optional(),
   pageCount: z.number().int().positive().optional(),
   language: z.string().trim().max(16).optional(),
+  genres: genresSchema,
   isbn10: z.array(z.string().trim().regex(/^[0-9X-]{10,20}$/i)).max(20).default([]),
   isbn13: z.array(z.string().trim().regex(/^[0-9X-]{10,20}$/i)).max(20).default([])
 });
@@ -57,5 +62,6 @@ export const externalBookUpsertSchema = z.object({
   publishedDate: z.string().trim().max(32).optional(),
   publisher: z.string().trim().max(180).optional(),
   pageCount: z.number().int().positive().optional(),
-  language: z.string().trim().max(16).optional()
+  language: z.string().trim().max(16).optional(),
+  genres: genresSchema
 });

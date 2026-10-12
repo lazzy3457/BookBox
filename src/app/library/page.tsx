@@ -32,7 +32,7 @@ export default async function LibraryPage() {
         include: { entries: { orderBy: { entryDate: "desc" }, take: 1 } }
       }
     },
-    orderBy: { updatedAt: "desc" }
+    orderBy: { createdAt: "desc" }
   });
 
   return (
@@ -40,13 +40,14 @@ export default async function LibraryPage() {
       <SectionHeader
         eyebrow="Personnel"
         title="Bibliothèque"
-        description="Une vue etagere avec filtres et tris bases sur les donnees Google Books : titre, auteur, publication, pages et statut."
+        description="Une vue etagere avec filtres et tris : genre, date d'ajout, titre, auteur, publication, pages et statut."
       />
       {items.length ? (
         <LibraryShelf
           items={items.map((item) => ({
             id: item.id,
             status: item.status,
+            addedAt: item.createdAt.toISOString(),
             updatedAt: item.updatedAt.toISOString(),
             latestReading: item.readingPeriods[0] ? {
               startedAt: item.readingPeriods[0].startedAt?.toISOString() ?? null,
@@ -65,6 +66,7 @@ export default async function LibraryPage() {
               publisher: item.book.publisher,
               pageCount: item.book.pageCount,
               language: item.book.language,
+              genres: item.book.genres,
               source: item.book.source
             }
           }))}

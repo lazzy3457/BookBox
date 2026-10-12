@@ -1,6 +1,6 @@
 # BooksBox — Contexte agent
 
-Dernière mise à jour : 2 juillet 2026
+Dernière mise à jour : 12 octobre 2026
 
 ## Produit
 
@@ -9,7 +9,8 @@ BooksBox est une application sociale de lecture francophone inspirée de Letterb
 Fonctions actuelles :
 
 - recherche Google Books/Open Library et ajout manuel ;
-- bibliothèque, favoris et statuts ;
+- genres principaux en badges, déduits des sources externes ou choisis manuellement ;
+- bibliothèque, favoris, statuts et date d’ajout ;
 - journal daté avec lectures, relectures et progression par page, pourcentage ou chapitre ;
 - reviews, commentaires, réactions, follows, listes et feed ;
 - recommandations personnalisées explicables ;
@@ -44,14 +45,14 @@ Fonctions actuelles :
 ## Fichiers de référence
 
 - `README.md` : installation et utilisation.
-- `architecture.md` : architecture actuelle.
+- `docs/architecture.md` : architecture actuelle.
 - `prisma/schema.prisma` : modèle de données.
 - `docs/launch-checklist.md` : prérequis de mise en ligne.
 - `docs/production-operations.md` : exploitation et incidents.
 - `docs/processing-register.md` : registre RGPD synthétique.
 - `docs/dependency-security.md` : alertes de dépendances.
 
-`prd-booksbox-v1.md`, `epics.md` et `ux-design-specification.md` sont historiques et ne décrivent plus nécessairement l’implémentation.
+Les documents de `docs/archive/` (`prd-booksbox-v1.md`, `epics.md`, `ux-design-specification.md`) sont historiques et ne décrivent plus nécessairement l’implémentation.
 
 ## Validation
 

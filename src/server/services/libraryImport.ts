@@ -14,6 +14,7 @@ export type ImportRow = {
   rating: number | null;
   startedAt: string | null;
   finishedAt: string | null;
+  addedAt: string | null;
   review: string | null;
 };
 
@@ -101,6 +102,7 @@ export function parseLibraryImport(text: string): ImportRow[] {
       rating: ratingValue >= 1 && ratingValue <= 5 ? ratingValue : null,
       startedAt: isoDate(record["Date Started"] || record.startedAt || ""),
       finishedAt: isoDate(record["Date Read"] || record.finishedAt || ""),
+      addedAt: isoDate(record["Date Added"] || record.addedAt || ""),
       review: (record["My Review"] || record.review || "").trim() || null
     };
   });
@@ -166,7 +168,12 @@ export async function commitLibraryImport(userId: string, preview: ImportPreview
       const userBook = await tx.userBook.upsert({
         where: { userId_bookId: { userId, bookId } },
         update: row.state === "conflict" ? { status: row.status } : {},
-        create: { userId, bookId, status: row.status }
+        create: {
+          userId,
+          bookId,
+          status: row.status,
+          ...(row.addedAt ? { createdAt: new Date(`${row.addedAt}T12:00:00.000Z`) } : {})
+        }
       });
       if (row.startedAt || row.finishedAt) {
         const existingPeriod = await tx.readingPeriod.findFirst({ where: { userBookId: userBook.id }, orderBy: { createdAt: "desc" } });

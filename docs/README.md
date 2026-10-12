@@ -8,14 +8,14 @@
 - [Exploitation de production](production-operations.md) : sauvegardes, incidents et modération.
 - [Registre des traitements](processing-register.md) : finalités, bases et durées.
 - [Sécurité des dépendances](dependency-security.md) : alertes npm et réévaluation.
-- [Architecture](../architecture.md) : stack, flux et modèle.
+- [Architecture](architecture.md) : stack, flux et modèle.
 
 ## Documents historiques
 
 Les fichiers suivants sont conservés pour retracer la conception mais ne font pas foi :
 
-- `prd-booksbox-v1.md`
-- `epics.md`
-- `ux-design-specification.md`
+- `archive/prd-booksbox-v1.md`
+- `archive/epics.md`
+- `archive/ux-design-specification.md`
 
 En cas de contradiction, le code, `README.md`, `architecture.md`, `.env.example` et les documents actifs de ce dossier sont prioritaires.

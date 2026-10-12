@@ -1,6 +1,6 @@
 # Architecture BooksBox
 
-Dernière mise à jour : 2 juillet 2026
+Dernière mise à jour : 12 octobre 2026
 
 Ce document décrit l’architecture réellement utilisée. Les anciens documents produit et UX restent des archives de conception.
 
@@ -36,6 +36,7 @@ Le web est le client principal. Le mobile Expo consomme le même backend avec un
 src/app/                 pages web, métadonnées et routes API
 src/components/          composants React par domaine
 src/lib/                 configuration publique et helpers partagés
+src/server/actions/      server actions des formulaires web
 src/server/auth/         sessions web/mobile et rôles
 src/server/email/        transport SMTP
 src/server/security/     limitation des requêtes
@@ -46,6 +47,13 @@ scripts/                 préflight, administration et lancement
 docs/                    exploitation, conformité et sécurité
 mobile/                  application Expo
 ```
+
+Répartition des points d’entrée :
+
+- `src/server/services/` porte la logique métier et les accès Prisma ; c’est la seule couche à faire évoluer pour changer une règle.
+- `src/server/actions/` contient les server actions appelées par les formulaires web ; elles délèguent aux services.
+- `src/app/api/` expose les routes appelées côté client web ; `src/app/api/mobile/` expose celles du client Expo (authentification `Bearer`). Les deux délèguent aux mêmes services.
+- Une nouvelle fonctionnalité commence par un service, puis un point d’entrée web et/ou mobile.
 
 ## Authentification et autorisation
 
@@ -63,9 +71,18 @@ L’ancien mécanisme `ADMIN_EMAILS` n’est plus utilisé.
 
 ## Domaines métier
 
+### Livres et genres
+
+- `Book.genres` contient au plus trois genres principaux, sous forme de slugs issus de la liste fermée de `src/lib/genres.ts` (Fantasy, Science-fiction, Romance, Thriller, Policier, Horreur, Aventure, Roman historique, Littérature, Classique, Jeunesse, Young adult, BD & manga, Poésie, Théâtre, Biographie, Histoire, Philosophie, Sciences, Développement personnel).
+- `genresFromCategories` convertit les catégories Google Books et les sujets Open Library : un genre doit totaliser au moins la moitié des correspondances du genre dominant, et les genres documentaires sont écartés pour un livre classé « Fiction ».
+- À l’ajout d’un livre Google Books, la fiche du volume est consultée pour obtenir la catégorie détaillée ; un échec réseau n’empêche pas l’ajout. Un livre existant conserve ses genres.
+- Un livre manuel reçoit les genres choisis dans le formulaire ; les valeurs inconnues sont refusées par la validation Zod.
+- Les genres s’affichent en badges (`GenreBadges`) sur la fiche livre, les résultats de recherche et l’étagère, qui propose aussi un filtre par genre.
+- `npm run genres:backfill` (option `-- --dry-run`) renseigne les livres existants sans genre.
+
 ### Lecture
 
-- `UserBook` représente la présence du livre dans la bibliothèque.
+- `UserBook` représente la présence du livre dans la bibliothèque. Son `createdAt` sert de date d’ajout : elle est affichée sur l’étagère et la fiche livre, et sert au tri « Ajout récent » ; `updatedAt` alimente le tri « Activité récente ».
 - `ReadingPeriod` représente une lecture ou une relecture avec début et fin.
 - `ReadingEntry` représente une progression datée en page, pourcentage ou chapitre.
 - Une entrée de journal est privée par défaut et peut être rendue publique individuellement.
@@ -76,7 +93,7 @@ Le score combine notes, favoris, statuts, auteurs appréciés et proximité avec
 
 ### Import
 
-L’import Goodreads/BookBox fonctionne en deux phases : prévisualisation sans écriture, puis confirmation transactionnelle. La correspondance utilise ISBN, identifiant externe, puis titre/auteur normalisés.
+L’import Goodreads/BookBox fonctionne en deux phases : prévisualisation sans écriture, puis confirmation transactionnelle. La correspondance utilise ISBN, identifiant externe, puis titre/auteur normalisés. La date d’ajout (`Date Added` Goodreads ou colonne `addedAt` BookBox) est reprise comme `UserBook.createdAt` lorsqu’un livre entre dans la bibliothèque ; un livre déjà présent conserve sa date d’ajout.
 
 ### Social et confidentialité
 
@@ -114,9 +131,9 @@ Les relations utilisateur utilisent en majorité `onDelete: Cascade`. Le journal
 1. Renseigner toutes les variables décrites dans `.env.example`.
 2. Choisir et confirmer la politique des comptes inactifs.
 3. Exécuter `npm run preflight`.
-4. Appliquer `npx prisma migrate deploy`.
+4. Appliquer `npx prisma migrate deploy`, puis `npm run genres:backfill` si des livres antérieurs aux genres existent.
 5. Exécuter tests, lint et build.
 6. Accorder au moins un rôle administrateur.
 7. Vérifier SMTP, sauvegardes et restauration.
 
-Voir [docs/launch-checklist.md](docs/launch-checklist.md) et [docs/production-operations.md](docs/production-operations.md).
+Voir [docs/launch-checklist.md](launch-checklist.md) et [docs/production-operations.md](production-operations.md).

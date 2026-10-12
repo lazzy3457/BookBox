@@ -229,7 +229,7 @@ BooksBox/
       http/               Erreurs API
       services/           Google Books, Open Library, feed, tendances
       validation/         Schemas de validation
-    lib/                  Helpers partages
+    lib/                  Helpers partages (genres, auteurs, site)
     types/                Types TypeScript globaux
   mobile/
     App.tsx               Entree de l'application Expo
@@ -263,8 +263,8 @@ BooksBox/
 Le schema principal est dans `prisma/schema.prisma`. Les tables principales sont :
 
 - `User` : comptes utilisateurs.
-- `Book` : livres importes ou ajoutes manuellement.
-- `UserBook` : bibliotheque personnelle et statut de lecture.
+- `Book` : livres importes ou ajoutes manuellement, avec leurs genres principaux (`genres`).
+- `UserBook` : bibliotheque personnelle, statut de lecture et date d'ajout (`createdAt`).
 - `Review` : avis et notes.
 - `ReviewComment` : commentaires de reviews.
 - `ReviewReaction` et `ReviewCommentReaction` : likes et reactions.
@@ -292,6 +292,7 @@ Depuis la racine :
 - `npm test` : lance les tests Vitest.
 - `npm run preflight` : contrôle les variables indispensables avant une mise en ligne.
 - `npm run admin:grant -- adresse@email.fr` : accorde manuellement le rôle administrateur à un compte vérifié.
+- `npm run genres:backfill` : renseigne les genres des livres existants depuis Google Books / Open Library (`-- --dry-run` pour simuler, Node.js 22.18+ requis).
 - `npm run prisma:generate` : genere le client Prisma.
 - `npm run prisma:migrate` : applique les migrations en developpement.
 - `npm run prisma:studio` : ouvre Prisma Studio.
@@ -327,7 +328,8 @@ npm run typecheck
 - Recherche de livres via Google Books et Open Library.
 - Recherche par titre, auteur ou ISBN.
 - Import d'un livre externe ou ajout manuel.
-- Bibliotheque personnelle avec statuts de lecture et favoris.
+- Genres principaux (Fantasy, Science-fiction, Romance, Policier...) deduits de Google Books / Open Library ou choisis a l'ajout manuel, affiches en badges et filtrables dans la bibliotheque.
+- Bibliotheque personnelle avec statuts de lecture, favoris et date d'ajout de chaque livre (affichee et triable).
 - Journal de lecture daté, relectures et progression par page, pourcentage ou chapitre.
 - Recommandations personnalisées explicables avec actions « Pas intéressé » et « Déjà lu ».
 - Import Goodreads et CSV BookBox avec prévisualisation et résolution des conflits.
@@ -396,7 +398,7 @@ Attention : `/api/auth/signup` exige désormais l’âge minimum et les versions
 
 ## Documentation complémentaire
 
-- [Architecture actuelle](architecture.md)
+- [Architecture actuelle](docs/architecture.md)
 - [Checklist de mise en ligne](docs/launch-checklist.md)
 - [Conformité web](docs/legal-compliance.md)
 - [Référence API](docs/api-reference.md)
@@ -404,7 +406,7 @@ Attention : `/api/auth/signup` exige désormais l’âge minimum et les versions
 - [Registre synthétique des traitements](docs/processing-register.md)
 - [Suivi des dépendances](docs/dependency-security.md)
 
-Les fichiers `prd-booksbox-v1.md`, `epics.md` et `ux-design-specification.md` sont des archives de conception.
+Les archives de conception (PRD, epics, spécification UX) sont rangées dans `docs/archive/`.
 
 ## Depannage
 

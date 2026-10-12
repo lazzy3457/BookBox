@@ -12,6 +12,7 @@
     "prisma:studio": "prisma studio",
     "test": "vitest run --configLoader runner",
     "admin:grant": "node scripts/grant-admin.mjs",
+    "genres:backfill": "node --env-file=.env scripts/backfill-genres.mjs",
     "preflight": "node --env-file=.env scripts/preflight.mjs"
   },
   "dependencies": {

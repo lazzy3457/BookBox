@@ -31,12 +31,12 @@ L’ancien client mobile doit transmettre les nouveaux champs juridiques avant d
 - `GET/POST /api/reading-journal`
 - `PATCH/DELETE /api/reading-journal/:entryId`
 - `POST /api/library/import`
-- `GET /api/library/import/template`
+- `GET /api/library/import/template` : modèle CSV BookBox (`title,authors,isbn13,isbn10,status,rating,startedAt,finishedAt,addedAt,review`). `addedAt` (AAAA-MM-JJ) est facultatif et fixe la date d’ajout à la bibliothèque ; l’import Goodreads lit `Date Added`.
 
 ## Livres et découverte
 
-- `GET /api/books/search`
-- `POST /api/books`
+- `GET /api/books/search` : chaque résultat porte `genres` (slugs de `src/lib/genres.ts`).
+- `POST /api/books` : accepte `genres` (au plus trois slugs connus) pour un livre externe ou manuel.
 - `GET /api/books/:bookId`
 - `GET /api/trending`
 - `GET/POST /api/recommendations`

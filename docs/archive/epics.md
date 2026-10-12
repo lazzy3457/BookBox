@@ -10,7 +10,7 @@ epics_status: proposed
 
 # Archive — Découpage initial des epics
 
-> Ce document est conservé pour l’historique produit. Plusieurs epics sont désormais livrés et certaines hypothèses techniques sont obsolètes. L’implémentation actuelle est décrite dans `README.md` et `architecture.md`.
+> Ce document est conservé pour l’historique produit. Plusieurs epics sont désormais livrés et certaines hypothèses techniques sont obsolètes. L’implémentation actuelle est décrite dans `README.md` et `docs/architecture.md`.
 
 # BooksBox — Découpage en epics et stories
 

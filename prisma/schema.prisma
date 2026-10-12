@@ -195,6 +195,7 @@ model Book {
   publisher           String?
   pageCount           Int?
   language            String?
+  genres              String[] @default([])
   source              String   @default("manual")
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

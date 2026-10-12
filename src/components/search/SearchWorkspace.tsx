@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen, ChevronDown, ChevronLeft, ChevronRight, Clock, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Toast } from "@/components/ui/Toast";
+import { GenreBadges } from "@/components/books/GenreBadges";
+import { GENRES, MAX_BOOK_GENRES } from "@/lib/genres";
 
 type SearchMode = "all" | "title" | "author" | "isbn";
 type SourceFilter = "all" | "google_books" | "open_library";
@@ -25,6 +27,7 @@ type Candidate = {
   publisher?: string;
   pageCount?: number;
   language?: string;
+  genres?: string[];
 };
 
 type RecentBook = {
@@ -178,6 +181,7 @@ export function SearchWorkspace() {
   const [manualPageCount, setManualPageCount] = useState("");
   const [manualLanguage, setManualLanguage] = useState("");
   const [manualDescription, setManualDescription] = useState("");
+  const [manualGenres, setManualGenres] = useState<string[]>([]);
 
   const effectiveMode = isLikelyIsbn(query) ? "isbn" : searchMode;
 
@@ -486,7 +490,8 @@ export function SearchWorkspace() {
         publisher: manualPublisher || undefined,
         pageCount: manualPageCount ? Number(manualPageCount) : undefined,
         language: manualLanguage || undefined,
-        description: manualDescription || undefined
+        description: manualDescription || undefined,
+        genres: manualGenres
       })
     });
     const payload = await response.json();
@@ -512,6 +517,7 @@ export function SearchWorkspace() {
       setManualPageCount("");
       setManualLanguage("");
       setManualDescription("");
+      setManualGenres([]);
       setManualOpen(false);
       setToast({ tone: "success", message: `"${payload.title}" est cree et ajoute a ta bibliotheque.` });
     } catch (error) {
@@ -558,6 +564,7 @@ export function SearchWorkspace() {
             </div>
             <h3 className="text-lg font-black leading-tight text-paper">{book.title}</h3>
             <p className="mt-1 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
+            <GenreBadges genres={book.genres ?? []} className="mt-2" />
             <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-xs font-bold text-muted">
               {formatEdition(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatEdition(book)}</span> : null}
               {formatIsbn(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatIsbn(book)}</span> : null}
@@ -913,6 +920,35 @@ export function SearchWorkspace() {
               className="min-h-24 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm outline-none focus:border-mint md:col-span-2"
               placeholder="Description"
             />
+            <fieldset className="md:col-span-2">
+              <legend className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-muted">
+                Genres <span className="normal-case tracking-normal">({manualGenres.length}/{MAX_BOOK_GENRES})</span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {GENRES.map((genre) => {
+                  const selected = manualGenres.includes(genre.slug);
+                  const disabled = !selected && manualGenres.length >= MAX_BOOK_GENRES;
+                  return (
+                    <button
+                      key={genre.slug}
+                      type="button"
+                      aria-pressed={selected}
+                      disabled={disabled}
+                      onClick={() =>
+                        setManualGenres((current) =>
+                          selected ? current.filter((slug) => slug !== genre.slug) : [...current, genre.slug]
+                        )
+                      }
+                      className={`rounded-full border px-3 py-1 text-xs font-black transition disabled:opacity-40 ${
+                        selected ? "border-sky bg-sky/15 text-sky" : "border-line bg-ink text-muted hover:border-sky/60 hover:text-paper"
+                      }`}
+                    >
+                      {genre.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
           </div>
           <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded bg-white px-4 py-3 text-sm font-black text-ink transition hover:bg-paper md:w-auto">
             <Plus size={16} />

@@ -16,6 +16,7 @@ import { AddToListButton } from "@/components/lists/AddToListButton";
 import { StarRating } from "@/components/reviews/StarRating";
 import { BookCard } from "@/components/books/BookCard";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
+import { GenreBadges } from "@/components/books/GenreBadges";
 import { ReadingJournal } from "@/components/library/ReadingJournal";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import type { Metadata } from "next";
@@ -189,6 +190,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     <span>Auteur inconnu</span>
                   )}
                 </div>
+                <GenreBadges genres={book.genres} className="mt-4" />
                 {book.description ? (
                   <ExpandableDescription text={book.description} />
                 ) : (
@@ -214,6 +216,11 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             <div className="min-w-0 overflow-hidden rounded border border-line bg-ink/55 p-4">
               <h2 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-muted">Bibliotheque</h2>
               <LibraryActions bookId={book.id} initialStatus={userBook?.status ?? null} />
+              {userBook ? (
+                <p className="mt-3 text-xs font-bold text-muted">
+                  Ajouté le {userBook.createdAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              ) : null}
               {userBook ? <FavoriteButton bookId={book.id} initial={userBook.isFavorite} /> : null}
               {session?.user?.id ? <AddToListButton bookId={book.id} /> : null}
             </div>
