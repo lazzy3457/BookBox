@@ -168,6 +168,13 @@ export async function buildAccountExport(userId: string) {
     })
   ]);
 
+  const [progressStats, xpEvents, activityDays, badges] = await Promise.all([
+    prisma.userStats.findUnique({ where: { userId } }),
+    prisma.xpEvent.findMany({ where: { userId }, orderBy: { createdAt: "asc" }, select: { reason: true, sourceId: true, amount: true, day: true, createdAt: true } }),
+    prisma.activityDay.findMany({ where: { userId }, orderBy: { day: "asc" }, select: { day: true, xp: true, validatedAt: true, frozen: true } }),
+    prisma.userBadge.findMany({ where: { userId }, orderBy: { earnedAt: "asc" }, select: { badgeSlug: true, tier: true, earnedAt: true } })
+  ]);
+
   return {
     format: "booksbox-account-export",
     version: 1,
@@ -184,6 +191,7 @@ export async function buildAccountExport(userId: string) {
     recommendationDismissals,
     devices,
     moderationReports,
+    progression: { stats: progressStats, xpEvents, activityDays, badges },
     compliance: { legalAcceptances, legalNotices, moderationAppeals, moderationActions }
   };
 }

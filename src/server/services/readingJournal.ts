@@ -1,5 +1,6 @@
 import { ReadingStatus } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
+import { recordProgress } from "@/server/services/progression";
 
 function startOfToday() {
   const date = new Date();
@@ -8,6 +9,19 @@ function startOfToday() {
 }
 
 export async function updateLibraryStatus(userId: string, bookId: string, status: ReadingStatus) {
+  const previous = await prisma.userBook.findUnique({
+    where: { userId_bookId: { userId, bookId } },
+    select: { status: true }
+  });
+  const item = await saveLibraryStatus(userId, bookId, status);
+
+  if (!previous) await recordProgress(userId, "LIBRARY_ADD", bookId);
+  if (status === ReadingStatus.READ && previous?.status !== ReadingStatus.READ) await recordProgress(userId, "BOOK_READ", bookId);
+
+  return item;
+}
+
+async function saveLibraryStatus(userId: string, bookId: string, status: ReadingStatus) {
   return prisma.$transaction(async (tx) => {
     const item = await tx.userBook.upsert({
       where: { userId_bookId: { userId, bookId } },

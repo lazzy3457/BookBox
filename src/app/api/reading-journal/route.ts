@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, notFound } from "@/server/http/errors";
+import { recordProgress } from "@/server/services/progression";
 import { readingEntrySchema, readingPeriodSchema, readingPeriodUpdateSchema } from "@/server/validation/library";
 
 function asDate(value: string | null | undefined) {
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
         isPublic: input.isPublic
       }
     });
+    await recordProgress(userId, "JOURNAL_ENTRY", entry.id);
     return NextResponse.json({ entry }, { status: 201 });
   } catch (error) {
     return apiError(error);

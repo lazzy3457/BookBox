@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CheckCircle2, EyeOff, LockKeyhole, Moon, Palette, Save, Sun, UserRound } from "lucide-react";
+import { Bell, CheckCircle2, EyeOff, LockKeyhole, Medal, Moon, Palette, Save, Sun, UserRound } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { Toast } from "@/components/ui/Toast";
@@ -14,7 +14,7 @@ type Notifications = {
   enabled: boolean; likesEnabled: boolean; commentsEnabled: boolean;
   friendReviewsEnabled: boolean; followersEnabled: boolean;
 };
-type Props = { profile: Profile; hideSpoilers: boolean; theme: ThemeId; notifications: Notifications };
+type Props = { profile: Profile; hideSpoilers: boolean; theme: ThemeId; notifications: Notifications; badges: React.ReactNode };
 type ToastState = { message: string; tone: "success" | "error" | "info" } | null;
 
 function errorMessage(payload: unknown, fallback: string) {
@@ -29,7 +29,7 @@ function errorMessage(payload: unknown, fallback: string) {
 }
 
 const nav = [
-  ["profil", "Profil"], ["preferences", "Préférences"], ["notifications", "Notifications"],
+  ["profil", "Profil"], ["preferences", "Préférences"], ["notifications", "Notifications"], ["badges", "Badges"],
   ["confidentialite", "Confidentialité"], ["donnees-securite", "Données & sécurité"]
 ];
 
@@ -46,7 +46,7 @@ function Switch({ checked, disabled, label, onChange }: { checked: boolean; disa
   );
 }
 
-export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications }: Props) {
+export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications, badges }: Props) {
   const [active, setActive] = useState("profil");
   const [profile, setProfile] = useState({
     name: initialProfile.name ?? "", username: initialProfile.username ?? "",
@@ -192,6 +192,11 @@ export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initi
               <div className="flex items-center justify-between gap-4 p-4"><div><h3 className="font-black text-paper">Toutes les notifications</h3><p className="mt-1 text-sm text-muted">Coupe ou réactive l’ensemble des alertes.</p></div><Switch checked={notifications.enabled} disabled={pendingNotification !== null} label="Toutes les notifications" onChange={() => toggleNotification("enabled")} /></div>
               {notificationRows.map(([key, title, description]) => <div key={key} className={`flex items-center justify-between gap-4 p-4 transition ${notifications.enabled ? "" : "opacity-45"}`}><div><h3 className="font-bold text-paper">{title}</h3><p className="mt-1 text-sm text-muted">{description}</p></div><Switch checked={notifications[key]} disabled={!notifications.enabled || pendingNotification !== null} label={title} onChange={() => toggleNotification(key)} /></div>)}
             </div>
+          </section>
+
+          <section id="badges" className={section}>
+            <div className="flex items-center gap-3"><Medal className="text-mint" /><div><h2 className="text-xl font-black text-paper">Badges</h2><p className="text-sm text-muted">Tous les badges disponibles, tes paliers obtenus et ta progression vers les suivants.</p></div></div>
+            <div className="mt-5">{badges}</div>
           </section>
 
           <section id="confidentialite" className={section}>

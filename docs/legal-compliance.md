@@ -1,6 +1,6 @@
 # Conformité web BooksBox
 
-Dernière mise à jour : 2 juillet 2026
+Dernière mise à jour : 26 octobre 2026
 
 Ce document décrit les mécanismes intégrés au produit. Il ne remplace pas un avis juridique.
 
@@ -21,7 +21,13 @@ Les versions des conditions et de la politique sont centralisées dans `src/lib/
 
 Les paramètres permettent la modification du profil, le masquage privé des spoilers, le changement de mot de passe, l’export JSON, la suppression du compte, la gestion des blocages et les préférences détaillées de notifications. Un changement de mot de passe invalide les anciennes sessions.
 
-Les données de conformité, signalement et modération sont incluses dans l’export. Les notifications légales liées à l’e-mail sont supprimées avec le compte. Les actions de modération restent anonymisées pour préserver l’audit.
+Les données de conformité, signalement et modération sont incluses dans l’export, ainsi que les données de progression (journal d’XP, jours d’activité, statistiques et badges).
+
+## Progression et visibilité
+
+Le parcours de lecture enregistre les actions qui rapportent de l’XP, avec leur date, pour calculer le niveau, la série et les badges. Ces données servent uniquement à cette fonctionnalité : aucun profilage publicitaire ni partage avec des tiers.
+
+Sur le profil public, seuls le niveau, son titre et le plus haut palier obtenu par badge sont visibles. Le détail de l’XP, la série, le calendrier d’activité et les compteurs restent privés. Le fuseau horaire du navigateur est enregistré pour déterminer le jour local ; il n’est jamais affiché. Ces données sont supprimées avec le compte. Les notifications légales liées à l’e-mail sont supprimées avec le compte. Les actions de modération restent anonymisées pour préserver l’audit.
 
 ## Cookies
 

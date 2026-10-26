@@ -43,3 +43,7 @@ export function conflict(message: string, code = "CONFLICT") {
 export function notFound(message: string, code = "NOT_FOUND") {
   return Object.assign(new Error(message), { status: 404, code });
 }
+
+export function badRequest(message: string, code = "BAD_REQUEST") {
+  return Object.assign(new Error(message), { status: 400, code });
+}
