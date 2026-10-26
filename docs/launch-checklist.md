@@ -30,7 +30,8 @@ Une case non validée signifie que le site n’est pas prêt à être ouvert au 
 ## Base de données
 
 - [ ] PostgreSQL de production est créé avec accès chiffré.
-- [ ] `npx prisma migrate deploy` réussit.
+- [ ] La base de production est distincte de celle du staging, avec des identifiants et des secrets propres (voir `docs/environnements.md`).
+- [ ] `npm run db:deploy` réussit (jamais `prisma migrate dev` hors développement).
 - [ ] Une sauvegarde chiffrée est planifiée.
 - [ ] Une restauration a été testée.
 - [ ] La rotation respecte la durée documentée.
@@ -60,7 +61,7 @@ npm audit --omit=dev
 - [ ] Les alertes npm restantes sont relues dans `docs/dependency-security.md`.
 - [ ] `robots.txt`, `sitemap.xml`, `manifest.webmanifest` et l’image Open Graph répondent.
 - [ ] Les pages 404, erreur, inscription, connexion, paramètres et signalement sont testées au clavier.
-- [ ] Aucune donnée privée n’apparaît dans une réponse publique.
+- [ ] Aucune donnée privée n’apparaît dans une réponse publique (profil public : niveau et badges seulement, sans XP détaillée ni calendrier).
 
 ## Après ouverture
 

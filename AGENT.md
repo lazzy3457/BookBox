@@ -1,6 +1,6 @@
 # BooksBox — Contexte agent
 
-Dernière mise à jour : 12 octobre 2026
+Dernière mise à jour : 26 octobre 2026
 
 ## Produit
 
@@ -17,7 +17,7 @@ Fonctions actuelles :
 - import Goodreads et CSV BookBox ;
 - blocage, signalement, modération et suspension ;
 - export et suppression du compte ;
-- XP, parcours quotidien avec série et badges par paliers (`src/lib/progression.ts`) ;
+- XP, niveaux, parcours quotidien avec série et badges par paliers (`src/lib/progression.ts`) ;
 - SEO, footer et pages légales.
 
 ## Stack
@@ -38,6 +38,8 @@ Fonctions actuelles :
 - Une entrée de journal est privée par défaut.
 - Un contenu masqué ou un compte suspendu ne doit apparaître sur aucune surface publique.
 - Le blocage s’applique dans les deux directions.
+- L’XP ne s’attribue que côté serveur, via `recordProgress` après une mutation existante ; jamais par une route dédiée. Barème, badges et niveaux vivent dans `src/lib/progression.ts`.
+- Une migration qui modifie le schéma se teste sur une base de branche (`npm run db:branch`), pas sur la base partagée de `master`.
 - Ne jamais exposer e-mails, secrets, hash, jetons ou entrées privées.
 - Les signalements légaux sont accessibles sans compte ; leur suivi exige code et e-mail.
 - Ne pas ajouter de cookies non nécessaires, analytics ou publicité sans mécanisme juridique adapté.

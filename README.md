@@ -1,6 +1,6 @@
 # BooksBox
 
-BooksBox est une application de lecture sociale pour lecteurs francophones. Elle réunit bibliothèque, journal de lecture, reviews, recommandations personnalisées, import Goodreads/CSV, listes et communauté. Le web Next.js est le client principal ; une application mobile Expo consomme le même backend.
+BooksBox est une application de lecture sociale pour lecteurs francophones. Elle réunit bibliothèque, journal de lecture, reviews, recommandations personnalisées, import Goodreads/CSV, listes, communauté, ainsi qu’un parcours de lecture avec XP, niveaux, séries et badges. Le web Next.js est le client principal ; une application mobile Expo consomme le même backend.
 
 Ce README est prevu pour une installation propre sur une autre machine, par exemple depuis un dossier Drive sans `node_modules`, sans `.next` et sans base de donnees locale.
 
@@ -44,7 +44,7 @@ Sur macOS ou Linux :
 cp .env.example .env
 ```
 
-Le `DATABASE_URL` fourni dans `.env.example` correspond deja au PostgreSQL du fichier `docker-compose.yml`.
+Pour le PostgreSQL du fichier `docker-compose.yml`, renseigner `DATABASE_URL="postgresql://booksbox:booksbox@localhost:5432/booksbox?schema=public"` (valeur rappelée en commentaire dans `.env.example`).
 
 Remplacer au minimum `NEXTAUTH_SECRET` par une valeur longue et aleatoire. En production, renseigner `NEXTAUTH_URL` et `NEXT_PUBLIC_APP_URL` avec l'URL publique en HTTPS afin de générer correctement les liens d’e-mail, le sitemap et les aperçus de partage. `GOOGLE_BOOKS_API_KEY` reste optionnelle en local.
 
@@ -70,6 +70,8 @@ npm run dev
 ```
 
 Le site est disponible sur `http://localhost:3000`.
+
+Une branche qui modifie le schéma peut utiliser sa propre base locale, copiée depuis `booksbox`, avec `npm run db:branch`. Le fonctionnement des environnements (développement, staging, production) est décrit dans [docs/environnements.md](docs/environnements.md).
 
 La base de données est vide au premier lancement. Une nouvelle inscription doit recevoir un e-mail de vérification : configure les variables `SMTP_*` pour tester ce parcours. Sans SMTP en développement, le compte est créé mais aucun e-mail n’est envoyé.
 
@@ -221,15 +223,16 @@ BooksBox/
       search/             Recherche
       commu/              Communaute
       trending/           Tendances
+      parcours/           Parcours de lecture : niveau, serie, calendrier, bareme d'XP
     components/           Composants React reutilisables
     server/               Logique serveur
       actions/            Actions serveur
       auth/               NextAuth, mots de passe, token mobile
       db/                 Client Prisma
       http/               Erreurs API
-      services/           Google Books, Open Library, feed, tendances
+      services/           Google Books, Open Library, feed, tendances, progression
       validation/         Schemas de validation
-    lib/                  Helpers partages (genres, auteurs, site)
+    lib/                  Helpers partages (genres, auteurs, site, bareme d'XP et badges)
     types/                Types TypeScript globaux
   mobile/
     App.tsx               Entree de l'application Expo
@@ -280,6 +283,10 @@ Le schema principal est dans `prisma/schema.prisma`. Les tables principales sont
 - `RecommendationDismissal` : exclusions des recommandations.
 - `UserBlock` : blocages réciproques.
 - `ModerationReport`, `LegalNotice`, `ModerationAction` et `ModerationAppeal` : modération, décisions et recours.
+- `XpEvent` : journal des gains d’XP, une ligne par action et par source (anti-farm).
+- `ActivityDay` : XP cumulée par jour et validation des jours du parcours.
+- `UserStats` : XP totale, série, record, gels, objectif quotidien et fuseau horaire. Le niveau est calculé à partir de l’XP totale.
+- `UserBadge` : paliers de badges obtenus ; le catalogue des badges est défini dans `src/lib/progression.ts`.
 
 ## Scripts utiles
 
@@ -295,6 +302,8 @@ Depuis la racine :
 - `npm run genres:backfill` : renseigne les genres des livres existants depuis Google Books / Open Library (`-- --dry-run` pour simuler, Node.js 22.18+ requis).
 - `npm run prisma:generate` : genere le client Prisma.
 - `npm run prisma:migrate` : applique les migrations en developpement.
+- `npm run db:deploy` : applique les migrations sans réinitialisation (staging et production).
+- `npm run db:branch` : crée une base locale `booksbox_<branche>` copiée depuis `booksbox` et y applique les migrations de la branche.
 - `npm run prisma:studio` : ouvre Prisma Studio.
 
 Depuis `mobile/` :
@@ -331,6 +340,8 @@ npm run typecheck
 - Genres principaux (Fantasy, Science-fiction, Romance, Policier...) deduits de Google Books / Open Library ou choisis a l'ajout manuel, affiches en badges et filtrables dans la bibliotheque.
 - Bibliotheque personnelle avec statuts de lecture, favoris et date d'ajout de chaque livre (affichee et triable).
 - Journal de lecture daté, relectures et progression par page, pourcentage ou chapitre.
+- Parcours de lecture : XP gagnée sur les actions (livre terminé, review, journal, commentaires, likes…), niveaux progressifs avec titres, objectif quotidien, série avec gels et chemin d’étapes, démarré au premier livre terminé.
+- Badges par paliers (Bronze, Argent, Or, Platine) affichés sur les profils, avec le catalogue complet dans les paramètres.
 - Recommandations personnalisées explicables avec actions « Pas intéressé » et « Déjà lu ».
 - Import Goodreads et CSV BookBox avec prévisualisation et résolution des conflits.
 - Fiches livres avec statistiques, reviews, commentaires et activite sociale.
@@ -382,6 +393,16 @@ Le mobile reutilise aussi certaines routes web compatibles avec le token mobile 
 
 Attention : `/api/auth/signup` exige désormais l’âge minimum et les versions juridiques courantes. Le formulaire mobile historique doit être aligné avant de permettre de nouvelles inscriptions depuis le mobile. Les comptes déjà créés continuent à fonctionner.
 
+## Routes de progression
+
+Communes au web et au mobile (session ou token mobile). L’XP n’est jamais attribuée par une route dédiée : elle est enregistrée par les routes existantes après chaque action.
+
+- `GET /api/progression` : niveau, XP, série, objectif du jour, calendrier et derniers gains.
+- `PATCH /api/progression` : objectif quotidien et fuseau horaire.
+- `POST /api/progression/start` : démarre le parcours si un livre est déjà lu.
+- `GET /api/badges` : catalogue des badges et progression de l’utilisateur connecté.
+- `GET /api/users/:userId/badges` : niveau et badges publics d’un lecteur.
+
 ## Routes web de conformité principales
 
 - `POST /api/auth/verify-email`
@@ -399,6 +420,7 @@ Attention : `/api/auth/signup` exige désormais l’âge minimum et les versions
 ## Documentation complémentaire
 
 - [Architecture actuelle](docs/architecture.md)
+- [Environnements](docs/environnements.md)
 - [Checklist de mise en ligne](docs/launch-checklist.md)
 - [Conformité web](docs/legal-compliance.md)
 - [Référence API](docs/api-reference.md)

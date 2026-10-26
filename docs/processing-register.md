@@ -6,6 +6,7 @@
 | Bibliothèque et journal | Suivi des lectures | Contrat | Livres, statuts, dates, notes | Jusqu’à suppression du compte |
 | Communauté | Publications et interactions | Contrat | Reviews, commentaires, follows, listes | Jusqu’à suppression par l’utilisateur ou le compte |
 | Recommandations | Personnaliser les suggestions | Contrat | Notes, favoris, statuts, exclusions | Jusqu’à suppression du compte |
+| Progression | Parcours de lecture, niveaux, séries et badges | Contrat | Journal d’XP (type d’action, identifiant de l’objet, date), XP par jour, série, objectif, fuseau horaire, badges obtenus. Public : niveau, titre et plus haut palier par badge | Jusqu’à suppression du compte |
 | Sécurité | Prévenir les abus | Intérêt légitime | Clés de limitation hachées, sessions | Fenêtre technique ou expiration |
 | Modération | Traiter les abus et contenus illicites | Obligation légale et intérêt légitime | Signalements, décisions, recours | Durée à valider avec le conseil juridique |
 | Notifications | Informer l’utilisateur | Contrat | Préférences, jeton push, messages | Jusqu’au retrait du jeton ou suppression du compte |
