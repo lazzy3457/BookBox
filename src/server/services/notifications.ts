@@ -300,3 +300,14 @@ export async function notifyNewFollower(input: { followerId: string; followingId
     targetUrl: `/profile/${input.followerId}`
   });
 }
+
+export async function notifyBadgeEarned(input: { userId: string; badgeName: string; tierName: string }) {
+  return createNotification({
+    recipientId: input.userId,
+    actorId: null,
+    type: NotificationType.BADGE_EARNED,
+    title: `Nouveau badge : ${input.badgeName} (${input.tierName})`,
+    message: "Retrouve tous tes badges sur ton profil.",
+    targetUrl: "/profile#badges"
+  });
+}

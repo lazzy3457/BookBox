@@ -8,6 +8,9 @@ import { ListCard } from "@/components/lists/ListCard";
 import { EditProfileButton } from "@/components/profile/EditProfileButton";
 import { StarRating } from "@/components/reviews/StarRating";
 import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
+import { BadgeShowcase } from "@/components/progression/BadgeShowcase";
+import { getEarnedBadges, getProgressSummary, syncBadges } from "@/server/services/progression";
+import { Flame, Route, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +71,11 @@ export default async function ProfilePage() {
       take: 12
     })
   ]);
+  const userId = session.user.id;
+  const [earnedBadges, progress] = await Promise.all([
+    syncBadges(userId).then(() => getEarnedBadges(userId)),
+    getProgressSummary(userId)
+  ]);
 
   return (
     <div className="min-w-0 overflow-hidden">
@@ -94,6 +102,16 @@ export default async function ProfilePage() {
             </div>
           </div>
         </section>
+
+      {/* Parcours */}
+      <Link href="/parcours" className="group mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded border border-line bg-panel/80 px-5 py-4 shadow-poster transition hover:border-mint/50">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <span className="inline-flex items-center gap-2 font-black text-paper"><Flame size={18} className={progress.streak ? "text-coral" : "text-muted"} aria-hidden />{progress.streak} {progress.streak > 1 ? "jours" : "jour"} de série</span>
+          <span className="inline-flex items-center gap-2 font-black text-paper"><Sparkles size={18} className="text-amber" aria-hidden />{progress.xpTotal.toLocaleString("fr-FR")} XP</span>
+          <span className="text-muted">Aujourd’hui : {progress.todayXp} / {progress.dailyGoal} XP</span>
+        </div>
+        <span className="inline-flex items-center gap-2 text-sm font-black text-mint group-hover:underline"><Route size={16} aria-hidden />{progress.journeyStartedAt ? "Voir mon parcours" : "Démarrer mon parcours"}</span>
+      </Link>
 
       {/* Favoris */}
       {favorites.length > 0 && (
@@ -126,6 +144,17 @@ export default async function ProfilePage() {
           </div>
         ))}
       </div>
+
+      {/* Badges */}
+      <section id="badges" className="mt-9 min-w-0 scroll-mt-24">
+        <SectionHeader
+          eyebrow="Récompenses"
+          title="Mes badges"
+          description="Le plus haut palier obtenu pour chaque badge."
+          action={<Link href="/settings#badges" className="shrink-0 rounded border border-line bg-panel/60 px-4 py-2 text-xs font-black text-muted transition hover:border-mint/50 hover:text-mint">Tous les badges</Link>}
+        />
+        <BadgeShowcase badges={earnedBadges} emptyMessage="Aucun badge pour le moment. Termine un livre ou publie une review pour obtenir le premier." />
+      </section>
 
       {/* Listes */}
       <section className="mt-9 min-w-0 overflow-hidden">

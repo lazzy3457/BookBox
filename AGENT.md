@@ -17,6 +17,7 @@ Fonctions actuelles :
 - import Goodreads et CSV BookBox ;
 - blocage, signalement, modération et suspension ;
 - export et suppression du compte ;
+- XP, parcours quotidien avec série et badges par paliers (`src/lib/progression.ts`) ;
 - SEO, footer et pages légales.
 
 ## Stack

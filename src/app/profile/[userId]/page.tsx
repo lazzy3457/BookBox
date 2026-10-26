@@ -11,6 +11,8 @@ import { PublicReadingEntries } from "@/components/library/PublicReadingEntries"
 import { ReportButton } from "@/components/moderation/ReportButton";
 import { BlockButton } from "@/components/community/BlockButton";
 import { areUsersBlocked } from "@/server/services/blocks";
+import { getEarnedBadges, syncBadges } from "@/server/services/progression";
+import { BadgeShowcase } from "@/components/progression/BadgeShowcase";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +65,9 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   }
 
   const isOwnProfile = session?.user?.id === userId;
+  // Rattrape les badges de l'historique (actions antérieures au système de badges).
+  await syncBadges(userId);
+  const earnedBadges = await getEarnedBadges(userId);
 
   return (
     <div className="min-w-0 overflow-hidden">
@@ -108,6 +113,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           </div>
         ))}
       </div>
+
+      <section id="badges" className="mt-9 min-w-0 scroll-mt-24">
+        <SectionHeader eyebrow="Récompenses" title="Badges" description="Le plus haut palier obtenu pour chaque badge." />
+        <BadgeShowcase badges={earnedBadges} emptyMessage="Ce lecteur n’a pas encore de badge." />
+      </section>
 
       <section className="mt-9 min-w-0 overflow-hidden">
         <SectionHeader

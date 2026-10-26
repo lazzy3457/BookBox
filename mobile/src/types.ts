@@ -6,7 +6,8 @@ export type NotificationType =
   | "REVIEW_COMMENT"
   | "COMMENT_REPLY"
   | "FRIEND_REVIEW"
-  | "NEW_FOLLOWER";
+  | "NEW_FOLLOWER"
+  | "BADGE_EARNED";
 
 export type User = {
   id: string;

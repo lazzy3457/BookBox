@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, conflict } from "@/server/http/errors";
 import { notifyFriendReview } from "@/server/services/notifications";
+import { recordProgress } from "@/server/services/progression";
 import { reviewMutationSchema } from "@/server/validation/reviews";
 import { enforceRateLimit } from "@/server/security/rateLimit";
 
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
     });
 
     await notifyFriendReview({ actorId: userId, reviewId: review.id });
+    // Source = livre : supprimer puis réécrire une review ne redonne pas d'XP.
+    await recordProgress(userId, "REVIEW", review.bookId);
 
     return NextResponse.json(review, { status: 201 });
   } catch (error) {

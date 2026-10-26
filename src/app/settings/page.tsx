@@ -9,6 +9,8 @@ import { BlockedUsers } from "@/components/settings/BlockedUsers";
 import { prisma } from "@/server/db/prisma";
 import { resolveTheme } from "@/lib/themes";
 import { getOrCreateNotificationPreferences } from "@/server/services/notifications";
+import { getBadgeOverview } from "@/server/services/progression";
+import { BadgeCatalog } from "@/components/progression/BadgeCatalog";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +29,14 @@ export default async function SettingsPage() {
     );
   }
 
-  const [user, preference, notifications] = await Promise.all([
+  const [user, preference, notifications, badges] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: session.user.id },
       select: { name: true, username: true, email: true, emailVerified: true, image: true, bio: true, createdAt: true }
     }),
     prisma.userPreference.findUnique({ where: { userId: session.user.id } }),
-    getOrCreateNotificationPreferences(session.user.id)
+    getOrCreateNotificationPreferences(session.user.id),
+    getBadgeOverview(session.user.id)
   ]);
 
   return (
@@ -58,7 +61,7 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <SettingsWorkspace profile={user} hideSpoilers={preference?.hideSpoilers ?? true} theme={resolveTheme(preference?.theme)} notifications={notifications} />
+      <SettingsWorkspace profile={user} hideSpoilers={preference?.hideSpoilers ?? true} theme={resolveTheme(preference?.theme)} notifications={notifications} badges={<BadgeCatalog badges={badges} />} />
       <div id="comptes-bloques" className="scroll-mt-28"><BlockedUsers /></div>
       <div id="import-bibliotheque" className="scroll-mt-28"><LibraryImport /></div>
       <AccountDataControls />

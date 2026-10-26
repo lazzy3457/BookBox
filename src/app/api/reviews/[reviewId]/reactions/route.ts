@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError } from "@/server/http/errors";
 import { notifyReviewReaction } from "@/server/services/notifications";
+import { recordProgress } from "@/server/services/progression";
 import { reactionMutationSchema } from "@/server/validation/reviews";
 import { enforceRateLimit } from "@/server/security/rateLimit";
 import { assertUsersCanInteract } from "@/server/services/blocks";
@@ -42,6 +43,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ rev
     });
 
     await notifyReviewReaction({ actorId: userId, reviewId });
+    if (input.kind === "LIKE") await recordProgress(userId, "LIKE_REVIEW", reviewId);
 
     return NextResponse.json({ liked: true, reaction }, { status: 201 });
   } catch (error) {
