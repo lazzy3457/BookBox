@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 const footerLinks = [
   { href: "/mentions-legales", label: "Mentions légales" },
@@ -16,10 +16,8 @@ export function SiteFooter() {
     <footer className="border-t border-line/80 bg-ink/65">
       <div className="mx-auto grid max-w-[1520px] gap-7 px-3 py-8 sm:px-5 md:grid-cols-[1fr_auto] md:items-end xl:px-10">
         <div className="max-w-xl">
-          <Link href="/" className="inline-flex items-center gap-2 font-black text-paper">
-            <span className="grid h-8 w-8 place-items-center rounded bg-mint text-ink">
-              <BookOpen size={16} />
-            </span>
+          <Link href="/" className="font-display inline-flex items-center gap-2 font-black text-paper">
+            <BrandMark className="h-8 w-8" />
             BooksBox
           </Link>
           <p className="mt-3 text-sm leading-6 text-muted">

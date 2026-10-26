@@ -101,7 +101,7 @@ export default async function DiaryPage() {
                       ? event.isReread ? "Relecture commencée" : "Lecture commencée"
                       : [event.chapter ? `Chapitre ${event.chapter}` : null, event.page ? `page ${event.page}` : null, event.percentage != null ? `${event.percentage}%` : null].filter(Boolean).join(" · ") || "Note de lecture";
                   return (
-                    <article key={event.id} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition hover:bg-white/[0.025] md:grid-cols-[92px_56px_minmax(220px,1fr)_minmax(180px,0.7fr)_90px] md:gap-4 md:px-5">
+                    <article key={event.id} className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition hover:bg-paper/[0.03] md:grid-cols-[92px_56px_minmax(220px,1fr)_minmax(180px,0.7fr)_90px] md:gap-4 md:px-5">
                       <span className="hidden text-xs font-bold capitalize text-muted md:block">{index === 0 ? month.replace(/\s+\d{4}$/, "") : ""}</span>
                       <time className="text-center text-lg font-black text-paper md:text-left md:text-sm" dateTime={event.date.toISOString()}>
                         {event.date.toLocaleDateString("fr-FR", { day: "2-digit" })}

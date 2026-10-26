@@ -240,7 +240,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
                       <StarRating value={review.rating} />
                     </div>
                     {review.body ? (
-                      <p className="mt-3 line-clamp-4 text-sm leading-6 text-white/65">
+                      <p className="mt-3 line-clamp-4 text-sm leading-6 text-paper/75">
                         {review.spoiler ? "Cette review contient des spoilers." : review.body}
                       </p>
                     ) : null}

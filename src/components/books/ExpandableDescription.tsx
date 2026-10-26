@@ -22,7 +22,7 @@ export function ExpandableDescription({ text }: ExpandableDescriptionProps) {
   }, [text]);
 
   return (
-    <div className="mt-5 max-w-3xl leading-7 text-white/65">
+    <div className="mt-5 max-w-3xl leading-7 text-paper/75">
       <div ref={contentRef} className={expanded ? "" : "max-h-40 overflow-hidden"}>
         <p>{text}</p>
       </div>

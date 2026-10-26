@@ -24,4 +24,10 @@ describe("settings validation", () => {
   it("valide la préférence de spoilers", () => {
     expect(userPreferenceSchema.parse({ hideSpoilers: true })).toEqual({ hideSpoilers: true });
   });
+
+  it("valide le thème et refuse un thème inconnu ou un patch vide", () => {
+    expect(userPreferenceSchema.parse({ theme: "nuit" })).toEqual({ theme: "nuit" });
+    expect(userPreferenceSchema.safeParse({ theme: "neon" }).success).toBe(false);
+    expect(userPreferenceSchema.safeParse({}).success).toBe(false);
+  });
 });

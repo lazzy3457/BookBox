@@ -1,5 +1,9 @@
 import type { Config } from "tailwindcss";
 
+// Les couleurs pointent vers des variables CSS définies par thème dans globals.css
+// (`data-theme="cosy"` par défaut, `data-theme="nuit"` pour l'ancienne DA premium).
+const themeColor = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,23 +13,30 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#071017",
-        night: "#0b1620",
-        panel: "#101c26",
-        panelSoft: "#162431",
-        slateCard: "#1d2a35",
-        line: "#263846",
-        paper: "#f2ece2",
-        muted: "#94a9b8",
-        mint: "#00d474",
-        lime: "#9ae66e",
-        coral: "#ff6b57",
-        amber: "#f5c451",
-        sky: "#4ca3ff"
+        ink: themeColor("ink"),
+        night: themeColor("night"),
+        panel: themeColor("panel"),
+        panelSoft: themeColor("panel-soft"),
+        slateCard: themeColor("slate-card"),
+        line: themeColor("line"),
+        paper: themeColor("paper"),
+        muted: themeColor("muted"),
+        mint: themeColor("mint"),
+        lime: themeColor("lime"),
+        coral: themeColor("coral"),
+        amber: themeColor("amber"),
+        sky: themeColor("sky")
+      },
+      borderRadius: {
+        DEFAULT: "var(--radius)"
+      },
+      fontFamily: {
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
+        display: ["var(--font-heading)", "Georgia", "serif"]
       },
       boxShadow: {
-        glow: "0 20px 70px rgba(0, 212, 116, 0.16)",
-        poster: "0 14px 34px rgba(0, 0, 0, 0.34)"
+        glow: "var(--shadow-glow)",
+        poster: "var(--shadow-poster)"
       }
     }
   },

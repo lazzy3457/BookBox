@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, CheckCircle2, EyeOff, LockKeyhole, Moon, Save, UserRound } from "lucide-react";
+import { Bell, CheckCircle2, EyeOff, LockKeyhole, Moon, Palette, Save, Sun, UserRound } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { Toast } from "@/components/ui/Toast";
+import { ThemeId, themes } from "@/lib/themes";
 
 type Profile = {
   name: string | null; username: string | null; email: string | null;
@@ -13,7 +14,7 @@ type Notifications = {
   enabled: boolean; likesEnabled: boolean; commentsEnabled: boolean;
   friendReviewsEnabled: boolean; followersEnabled: boolean;
 };
-type Props = { profile: Profile; hideSpoilers: boolean; notifications: Notifications };
+type Props = { profile: Profile; hideSpoilers: boolean; theme: ThemeId; notifications: Notifications };
 type ToastState = { message: string; tone: "success" | "error" | "info" } | null;
 
 function errorMessage(payload: unknown, fallback: string) {
@@ -32,6 +33,10 @@ const nav = [
   ["confidentialite", "Confidentialité"], ["donnees-securite", "Données & sécurité"]
 ];
 
+function applyTheme(theme: ThemeId) {
+  document.documentElement.setAttribute("data-theme", theme);
+}
+
 function Switch({ checked, disabled, label, onChange }: { checked: boolean; disabled?: boolean; label: string; onChange: () => void }) {
   return (
     <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} onClick={onChange}
@@ -41,7 +46,7 @@ function Switch({ checked, disabled, label, onChange }: { checked: boolean; disa
   );
 }
 
-export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initialSpoilers, notifications: initialNotifications }: Props) {
+export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications }: Props) {
   const [active, setActive] = useState("profil");
   const [profile, setProfile] = useState({
     name: initialProfile.name ?? "", username: initialProfile.username ?? "",
@@ -49,6 +54,7 @@ export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initi
   });
   const [profileSaving, setProfileSaving] = useState(false);
   const [hideSpoilers, setHideSpoilers] = useState(initialSpoilers);
+  const [theme, setTheme] = useState(initialTheme);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [pendingNotification, setPendingNotification] = useState<keyof Notifications | null>(null);
   const [password, setPassword] = useState({ currentPassword: "", newPassword: "", confirmation: "" });
@@ -83,6 +89,20 @@ export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initi
       if (!response.ok) throw new Error();
       setToast({ message: next ? "Les spoilers seront masqués." : "Les spoilers seront affichés.", tone: "success" });
     } catch { setHideSpoilers(previous); setToast({ message: "La préférence n’a pas pu être enregistrée.", tone: "error" }); }
+  }
+
+  async function selectTheme(next: ThemeId) {
+    const previous = theme;
+    if (next === previous) return;
+    setTheme(next); applyTheme(next);
+    try {
+      const response = await fetch("/api/settings/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme: next }) });
+      if (!response.ok) throw new Error();
+      setToast({ message: "Thème mis à jour.", tone: "success" });
+    } catch {
+      setTheme(previous); applyTheme(previous);
+      setToast({ message: "Le thème n’a pas pu être enregistré.", tone: "error" });
+    }
   }
 
   async function toggleNotification(key: keyof Notifications) {
@@ -123,7 +143,7 @@ export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initi
         <nav aria-label="Sections des paramètres" className="sticky top-16 z-20 -mx-3 overflow-x-auto border-y border-line bg-ink/95 px-3 py-3 backdrop-blur lg:mx-0 lg:rounded lg:border lg:bg-panel/80 lg:p-3">
           <div className="flex min-w-max gap-2 lg:block lg:min-w-0 lg:space-y-1">
             {nav.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined}
-              className={`block rounded px-3 py-2.5 text-sm font-bold transition ${active === id ? "bg-mint text-ink" : "text-muted hover:bg-white/5 hover:text-paper"}`}>{label}</a>)}
+              className={`block rounded px-3 py-2.5 text-sm font-bold transition ${active === id ? "bg-mint text-ink" : "text-muted hover:bg-paper/5 hover:text-paper"}`}>{label}</a>)}
           </div>
         </nav>
 
@@ -143,7 +163,26 @@ export function SettingsWorkspace({ profile: initialProfile, hideSpoilers: initi
             <h2 className="text-xl font-black text-paper">Préférences</h2>
             <div className="mt-5 divide-y divide-line rounded border border-line">
               <div className="flex items-center justify-between gap-4 p-4"><div className="flex gap-3"><EyeOff className="text-mint" /><div><h3 className="font-bold text-paper">Masquer les spoilers</h3><p className="mt-1 text-sm text-muted">Cache les reviews signalées comme sensibles jusqu’à ton action.</p></div></div><Switch checked={hideSpoilers} label="Masquer les spoilers" onChange={toggleSpoilers} /></div>
-              <div className="flex gap-3 p-4"><Moon className="text-sky" /><div><h3 className="font-bold text-paper">Apparence sombre</h3><p className="mt-1 text-sm text-muted">Le thème sombre est l’apparence officielle de cette version de BooksBox.</p></div></div>
+              <div className="p-4">
+                <div className="flex gap-3"><Palette className="text-mint" /><div><h3 className="font-bold text-paper">Apparence</h3><p className="mt-1 text-sm text-muted">Choisis l’ambiance de ta bibliothèque.</p></div></div>
+                <div role="radiogroup" aria-label="Thème" className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {themes.map((option) => (
+                    <button key={option.id} type="button" role="radio" aria-checked={theme === option.id} onClick={() => selectTheme(option.id)}
+                      className={`flex items-start gap-3 rounded border p-3 text-left transition ${theme === option.id ? "border-mint bg-mint/10" : "border-line bg-ink/40 hover:border-mint/50"}`}>
+                      <span className={`mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded ${option.id === "nuit" ? "bg-[#0b1620] text-[#00d474]" : "bg-[#f5ede1] text-[#7a2e3a]"} border border-line`}>
+                        {option.id === "nuit" ? <Moon size={18} /> : <Sun size={18} />}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="flex flex-wrap items-center gap-2 font-bold text-paper">
+                          {option.label}
+                          {option.premium ? <span className="rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-amber">Premium</span> : null}
+                        </span>
+                        <span className="mt-1 block text-sm text-muted">{option.description}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 

@@ -291,7 +291,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <textarea
             value={reviewBody}
             onChange={(event) => setReviewBody(event.target.value)}
-            className="mt-3 min-h-28 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm text-white outline-none focus:border-mint"
+            className="mt-3 min-h-28 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm text-paper outline-none focus:border-mint"
           />
           <label className="mt-3 flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
@@ -309,7 +309,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
       ) : reviewBody ? (
         <div className="mt-4">
           {isRevealed ? (
-            <p className="leading-7 text-white/65">{reviewBody}</p>
+            <p className="leading-7 text-paper/75">{reviewBody}</p>
           ) : (
             <div className="rounded border border-coral/30 bg-coral/8 p-4">
               <p className="text-sm text-muted">Cette review contient des spoilers.</p>
@@ -366,7 +366,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
                 <textarea
                   value={editingCommentBody}
                   onChange={(event) => setEditingCommentBody(event.target.value)}
-                  className="min-h-20 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm text-white outline-none focus:border-mint"
+                  className="min-h-20 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm text-paper outline-none focus:border-mint"
                 />
                 <div className="mt-2 flex gap-2">
                   <button
@@ -404,7 +404,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         <input
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          className="h-10 min-w-0 flex-1 rounded border border-line bg-ink px-3 text-sm text-white outline-none placeholder:text-muted/45 focus:border-mint"
+          className="h-10 min-w-0 flex-1 rounded border border-line bg-ink px-3 text-sm text-paper outline-none placeholder:text-muted/45 focus:border-mint"
           placeholder="Ajouter un commentaire..."
         />
         <button

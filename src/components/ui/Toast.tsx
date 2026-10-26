@@ -49,13 +49,13 @@ export function Toast({ message, tone = "info", durationMs = 5000, onClose }: To
         <button
           type="button"
           onClick={onClose}
-          className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded text-muted transition hover:bg-white/10 hover:text-paper"
+          className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded text-muted transition hover:bg-paper/10 hover:text-paper"
           aria-label="Fermer le message"
         >
           <X size={14} />
         </button>
       </div>
-      <div className="h-1 bg-white/10">
+      <div className="h-1 bg-paper/10">
         <div
           className={`h-full origin-left animate-[toast-progress_5s_linear_forwards] ${progressStyles[tone]}`}
           style={{ animationDuration: `${durationMs}ms` }}
