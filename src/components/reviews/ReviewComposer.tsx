@@ -71,7 +71,7 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
       <textarea
         value={body}
         onChange={(event) => setBody(event.target.value)}
-        className="min-h-32 w-full resize-y rounded border border-line bg-ink px-4 py-3 text-sm text-white outline-none transition placeholder:text-muted/45 focus:border-mint"
+        className="min-h-32 w-full resize-y rounded border border-line bg-ink px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/45 focus:border-mint"
         placeholder="Une impression, une phrase, ou rien du tout."
       />
 

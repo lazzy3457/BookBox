@@ -46,7 +46,7 @@ export function UserMenu({ user, isAdmin = false }: UserMenuProps) {
         onClick={() => setIsOpen((current) => !current)}
         className="group inline-flex items-center gap-2 rounded border border-line bg-panel/80 p-1.5 pr-2 text-left transition hover:border-mint/60 hover:bg-panel"
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded bg-mint text-sm font-black text-ink ring-1 ring-white/10">
+        <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded bg-mint text-sm font-black text-ink ring-1 ring-paper/10">
           {user.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.image} alt={displayName} className="h-full w-full object-cover" />

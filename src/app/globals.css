@@ -2,9 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/*
+ * Thèmes BooksBox.
+ * - "cosy" : DA par défaut, bibliothèque chaleureuse (bordeaux, terracotta, papier, encre).
+ * - "nuit" : ancienne DA sombre, réservée à l'offre premium.
+ * Les tokens Tailwind (ink, panel, paper, mint…) gardent leurs noms historiques :
+ * ink = fond le plus profond, panel = cartes, paper = texte principal, mint = accent principal.
+ */
+:root,
+[data-theme="cosy"] {
+  color-scheme: light;
+  --c-ink: 243 234 221;
+  --c-night: 236 225 210;
+  --c-panel: 255 253 249;
+  --c-panel-soft: 247 240 230;
+  --c-slate-card: 250 245 238;
+  --c-line: 229 216 199;
+  --c-paper: 43 29 23;
+  --c-muted: 122 101 88;
+  --c-mint: 122 46 58;
+  --c-lime: 150 58 72;
+  --c-coral: 196 105 61;
+  --c-amber: 196 134 42;
+  --c-sky: 166 112 98;
+  --radius: 14px;
+  --font-body: var(--font-nunito), system-ui, sans-serif;
+  --font-heading: var(--font-fraunces), Georgia, serif;
+  --shadow-poster: 0 14px 34px rgba(91, 48, 30, 0.1);
+  --shadow-glow: 0 12px 30px rgba(122, 46, 58, 0.16);
+  --cover-placeholder: linear-gradient(145deg, #7a2e3a 0%, #a2483f 48%, #c4693d 100%);
+  --cover-text: 255 247 238;
+  --page-background:
+    radial-gradient(circle at top left, rgba(196, 105, 61, 0.1), transparent 32rem),
+    radial-gradient(circle at 82% 8%, rgba(122, 46, 58, 0.07), transparent 30rem),
+    linear-gradient(180deg, #f5ede1 0%, #f3eadd 52%, #f5ede1 100%);
+  --focus-ring: #7a2e3a;
+  --selection: rgba(196, 105, 61, 0.28);
+}
+
+[data-theme="nuit"] {
   color-scheme: dark;
-  background: #08090d;
+  --c-ink: 7 16 23;
+  --c-night: 11 22 32;
+  --c-panel: 16 28 38;
+  --c-panel-soft: 22 36 49;
+  --c-slate-card: 29 42 53;
+  --c-line: 38 56 70;
+  --c-paper: 242 236 226;
+  --c-muted: 148 169 184;
+  --c-mint: 0 212 116;
+  --c-lime: 154 230 110;
+  --c-coral: 255 107 87;
+  --c-amber: 245 196 81;
+  --c-sky: 76 163 255;
+  --radius: 0.25rem;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--font-inter), system-ui, sans-serif;
+  --shadow-poster: 0 14px 34px rgba(0, 0, 0, 0.34);
+  --shadow-glow: 0 20px 70px rgba(0, 212, 116, 0.16);
+  --cover-placeholder: linear-gradient(135deg, #1d2a35 0%, #101c26 50%, #071017 100%);
+  --cover-text: 242 236 226;
+  --page-background:
+    radial-gradient(circle at top left, rgba(0, 212, 116, 0.11), transparent 30rem),
+    radial-gradient(circle at 82% 10%, rgba(76, 163, 255, 0.11), transparent 28rem),
+    linear-gradient(180deg, #071017 0%, #0b1620 52%, #071017 100%);
+  --focus-ring: #65e6bd;
+  --selection: rgba(0, 212, 116, 0.35);
+}
+
+html {
+  background: rgb(var(--c-ink));
 }
 
 * {
@@ -15,11 +82,27 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(0, 212, 116, 0.11), transparent 30rem),
-    radial-gradient(circle at 82% 10%, rgba(76, 163, 255, 0.11), transparent 28rem),
-    linear-gradient(180deg, #071017 0%, #0b1620 52%, #071017 100%);
-  color: #f7f1e8;
+  background: var(--page-background);
+  color: rgb(var(--c-paper));
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-heading);
+}
+
+/* Fraunces est plus élégante en gras modéré qu'en 900. */
+[data-theme="cosy"] :is(h1, h2, h3, .font-display) {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.cover-placeholder {
+  background: var(--cover-placeholder);
+  color: rgb(var(--cover-text));
 }
 
 a {
@@ -36,11 +119,11 @@ select {
 }
 
 ::selection {
-  background: rgba(0, 212, 116, 0.35);
+  background: var(--selection);
 }
 
 :focus-visible {
-  outline: 2px solid #65e6bd;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
 }
 

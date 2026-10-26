@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { themeIds } from "@/lib/themes";
 
 const optionalAvatar = z.union([
   z.literal(""),
@@ -16,8 +17,9 @@ export const profileSettingsSchema = z.object({
 });
 
 export const userPreferenceSchema = z.object({
-  hideSpoilers: z.boolean()
-});
+  hideSpoilers: z.boolean(),
+  theme: z.enum(themeIds)
+}).partial().refine((value) => Object.keys(value).length > 0, "Aucune préférence à modifier.");
 
 export const passwordSettingsSchema = z.object({
   currentPassword: z.string().min(1, "Saisis ton mot de passe actuel."),

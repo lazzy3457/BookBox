@@ -29,10 +29,10 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
           // eslint-disable-next-line @next/next/no-img-element
           <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full flex-col justify-between bg-gradient-to-br from-slateCard via-panel to-ink p-4">
-            <BookOpen className="text-mint/60" />
+          <div className="cover-placeholder flex h-full flex-col justify-between p-4">
+            <BookOpen className="opacity-70" />
             <div>
-              <div className="line-clamp-4 text-base font-black leading-tight text-paper">{book.title}</div>
+              <div className="font-display line-clamp-4 text-base font-black leading-tight">{book.title}</div>
               <div className="mt-2 h-1 w-10 rounded bg-mint" />
             </div>
           </div>
@@ -65,7 +65,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
             // eslint-disable-next-line @next/next/no-img-element
             <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <BookOpen className="text-white/30" />
+            <BookOpen className="text-mint/30" />
           )}
         </div>
         <div className="min-w-0 flex-1">

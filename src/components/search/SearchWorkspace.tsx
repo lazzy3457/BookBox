@@ -535,7 +535,7 @@ export function SearchWorkspace() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <BookOpen className="text-white/30" />
+          <BookOpen className="text-mint/30" />
         )}
       </div>
     );
@@ -569,14 +569,14 @@ export function SearchWorkspace() {
               {formatEdition(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatEdition(book)}</span> : null}
               {formatIsbn(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatIsbn(book)}</span> : null}
             </div>
-            {book.description ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/65">{book.description}</p> : null}
+            {book.description ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-paper/75">{book.description}</p> : null}
           </div>
           <div className="grid min-w-0 gap-2 sm:w-36 sm:shrink-0">
             <button
               type="button"
               onClick={() => openBookPage(book)}
               disabled={isOpening}
-              className="inline-flex h-10 items-center justify-center rounded bg-paper px-3 text-xs font-black text-ink transition hover:bg-white disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-10 items-center justify-center rounded bg-paper px-3 text-xs font-black text-ink transition hover:bg-paper/85 disabled:cursor-wait disabled:opacity-60"
             >
               {isOpening ? "Ouverture..." : "Voir la fiche"}
             </button>
@@ -606,7 +606,7 @@ export function SearchWorkspace() {
               value={query}
               onChange={(event) => updateQuery(event.target.value)}
               onFocus={() => setShowSuggestions(suggestions.length > 0)}
-              className="h-12 w-full rounded border border-line bg-ink px-4 text-white outline-none transition placeholder:text-muted/45 focus:border-mint"
+              className="h-12 w-full rounded border border-line bg-ink px-4 text-paper outline-none transition placeholder:text-muted/45 focus:border-mint"
               placeholder="Titre, auteur ou ISBN"
             />
             {showSuggestions ? (
@@ -950,7 +950,7 @@ export function SearchWorkspace() {
               </div>
             </fieldset>
           </div>
-          <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded bg-white px-4 py-3 text-sm font-black text-ink transition hover:bg-paper md:w-auto">
+          <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded bg-paper px-4 py-3 text-sm font-black text-ink transition hover:bg-paper/85 md:w-auto">
             <Plus size={16} />
             Creer le livre
           </button>

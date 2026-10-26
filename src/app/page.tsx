@@ -60,8 +60,8 @@ export default async function HomePage() {
                 Ton carnet de lecture devient un mur de couvertures vivant.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-muted sm:mt-5 sm:text-base sm:leading-7">
-                Recherche, note, classe et decouvre les lectures de ton cercle avec une interface sombre,
-                dense et visuelle pensee pour le bureau.
+                Recherche, note, classe et decouvre les lectures de ton cercle dans une bibliothèque chaleureuse,
+                où chaque lecture trouve sa discussion.
               </p>
             </div>
             <div className="mt-6 grid gap-3 sm:mt-8 sm:flex sm:flex-wrap">

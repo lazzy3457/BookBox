@@ -112,6 +112,7 @@ model UserPreference {
   id           String   @id @default(cuid())
   userId       String   @unique
   hideSpoilers Boolean  @default(true)
+  theme        String   @default("cosy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -7,6 +7,7 @@ import { LibraryImport } from "@/components/settings/LibraryImport";
 import { AccountDataControls } from "@/components/settings/AccountDataControls";
 import { BlockedUsers } from "@/components/settings/BlockedUsers";
 import { prisma } from "@/server/db/prisma";
+import { resolveTheme } from "@/lib/themes";
 import { getOrCreateNotificationPreferences } from "@/server/services/notifications";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <SettingsWorkspace profile={user} hideSpoilers={preference?.hideSpoilers ?? true} notifications={notifications} />
+      <SettingsWorkspace profile={user} hideSpoilers={preference?.hideSpoilers ?? true} theme={resolveTheme(preference?.theme)} notifications={notifications} />
       <div id="comptes-bloques" className="scroll-mt-28"><BlockedUsers /></div>
       <div id="import-bibliotheque" className="scroll-mt-28"><LibraryImport /></div>
       <AccountDataControls />

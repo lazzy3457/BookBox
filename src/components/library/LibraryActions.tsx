@@ -72,7 +72,7 @@ export function LibraryActions({ bookId, initialStatus = null }: LibraryActionsP
             className={`rounded border px-3 py-2 text-xs font-bold transition ${
               status === nextStatus
                 ? "border-mint bg-mint text-ink"
-                : "border-line bg-panelSoft text-white/70 hover:border-mint hover:text-white"
+                : "border-line bg-panelSoft text-paper/75 hover:border-mint hover:text-paper"
             }`}
           >
             {label}

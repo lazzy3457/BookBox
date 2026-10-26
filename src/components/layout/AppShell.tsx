@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpen, CalendarDays, Library, Search, Sparkles, UsersRound } from "lucide-react";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -29,11 +30,9 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
       <header className="sticky top-0 z-30 border-b border-line/80 bg-ink/90 backdrop-blur">
         <div className="mx-auto flex min-h-14 max-w-[1520px] items-center gap-2 px-3 py-2 sm:min-h-16 sm:gap-5 sm:px-5 sm:py-3 xl:px-10">
           <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div className="grid h-8 w-8 place-items-center rounded bg-mint text-ink shadow-glow sm:h-10 sm:w-10">
-              <BookOpen size={18} />
-            </div>
+            <BrandMark className="h-8 w-8 sm:h-10 sm:w-10" />
             <div className="min-w-0">
-              <div className="text-sm font-black tracking-normal text-paper sm:text-lg">BooksBox</div>
+              <div className="font-display text-sm font-black tracking-normal text-paper sm:text-lg">BooksBox</div>
               <div className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-mint/80 sm:block">social reading</div>
             </div>
           </Link>
@@ -43,7 +42,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex items-center gap-2 rounded px-3 py-2 text-sm font-bold text-muted transition hover:bg-white/7 hover:text-paper"
+                className="inline-flex items-center gap-2 rounded px-3 py-2 text-sm font-bold text-muted transition hover:bg-paper/[0.06] hover:text-paper"
               >
                 <item.icon size={16} />
                 {item.label}
@@ -54,7 +53,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
               href="/search"
-              className="hidden rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-lime sm:inline-flex"
+              className="hidden whitespace-nowrap rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-lime sm:inline-flex"
             >
               Ajouter un livre
             </Link>
@@ -65,7 +64,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
                 <Link className="rounded border border-line px-2.5 py-2 text-xs font-bold text-muted hover:text-paper sm:px-3" href="/login">
                   Connexion
                 </Link>
-                <Link className="hidden rounded bg-white px-3 py-2 text-xs font-black text-ink sm:inline-flex" href="/signup">
+                <Link className="hidden rounded bg-paper px-3 py-2 text-xs font-black text-ink sm:inline-flex" href="/signup">
                   Inscription
                 </Link>
               </div>
@@ -83,7 +82,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex min-w-0 flex-col items-center gap-1 rounded px-0.5 py-2 text-[10px] font-black text-muted transition hover:bg-white/7 hover:text-paper"
+              className="flex min-w-0 flex-col items-center gap-1 rounded px-0.5 py-2 text-[10px] font-black text-muted transition hover:bg-paper/[0.06] hover:text-paper"
             >
               <item.icon size={18} />
               <span className="w-full truncate text-center">{item.mobileLabel}</span>

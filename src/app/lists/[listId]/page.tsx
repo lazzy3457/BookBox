@@ -89,7 +89,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-slateCard to-ink" />
+                  <div className="h-full w-full cover-placeholder" />
                 )}
               </div>
             ))}
@@ -113,7 +113,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
                 {" · "}{list._count.entries} livre{list._count.entries !== 1 ? "s" : ""}
               </p>
               {list.description && (
-                <p className="mt-3 max-w-2xl leading-7 text-white/65">{list.description}</p>
+                <p className="mt-3 max-w-2xl leading-7 text-paper/75">{list.description}</p>
               )}
             </div>
 
@@ -166,7 +166,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
                   <img src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <BookOpen size={20} className="text-white/25" />
+                    <BookOpen size={20} className="text-mint/30" />
                   </div>
                 )}
               </div>

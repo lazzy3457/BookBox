@@ -45,7 +45,7 @@ export function ListCard({ list }: Props) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-slateCard to-ink" />
+                  <div className="h-full w-full cover-placeholder" />
                 )}
               </div>
             ))}

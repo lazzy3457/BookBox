@@ -171,7 +171,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <BookOpen size={64} className="text-white/25" />
+                  <BookOpen size={64} className="text-mint/30" />
                 )}
               </div>
 

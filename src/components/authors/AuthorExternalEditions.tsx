@@ -254,7 +254,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
               // eslint-disable-next-line @next/next/no-img-element
               <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <BookOpen className="text-white/30" />
+              <BookOpen className="text-mint/30" />
             )}
           </div>
           <div className="min-w-0 flex-1">

@@ -211,7 +211,7 @@ export function LibraryShelf({ items }: LibraryShelfProps) {
             <button
               type="button"
               onClick={() => removeFromLibrary(item.book.id, item.book.title)}
-              className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-ink/85 text-muted shadow-poster transition hover:bg-coral hover:text-white"
+              className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-ink/85 text-muted shadow-poster transition hover:bg-coral hover:text-paper"
               title="Retirer de ma bibliotheque"
             >
               <Trash2 size={14} />

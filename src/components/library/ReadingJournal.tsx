@@ -252,7 +252,7 @@ export function ReadingJournal({ bookId, periods: initialPeriods }: { bookId: st
                 <div className="text-[11px] font-black uppercase tracking-[0.18em] text-mint">Journal</div>
                 <h3 id="reading-entry-title" className="mt-1 text-xl font-black text-paper">{editingEntry ? "Modifier l’entrée" : "Ajouter une entrée"}</h3>
               </div>
-              <button onClick={() => setEntryOpen(false)} className="grid h-9 w-9 place-items-center rounded text-muted hover:bg-white/5 hover:text-paper" aria-label="Fermer"><X size={18} /></button>
+              <button onClick={() => setEntryOpen(false)} className="grid h-9 w-9 place-items-center rounded text-muted hover:bg-paper/5 hover:text-paper" aria-label="Fermer"><X size={18} /></button>
             </div>
             <form action={addEntry} className="grid gap-4 p-5 sm:grid-cols-2">
               <label className="text-xs font-black text-muted sm:col-span-2">Date
