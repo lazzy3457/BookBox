@@ -43,10 +43,12 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-label={item.label}
+                title={item.label}
                 className="inline-flex items-center gap-2 rounded px-3 py-2 text-sm font-bold text-muted transition hover:bg-paper/[0.06] hover:text-paper"
               >
-                <item.icon size={16} />
-                {item.label}
+                <item.icon size={16} aria-hidden />
+                <span className="hidden xl:inline">{item.label}</span>
               </Link>
             ))}
           </nav>

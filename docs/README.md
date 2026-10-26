@@ -2,6 +2,7 @@
 
 ## Références actives
 
+- [Environnements](environnements.md) : développement, staging, production et base par branche.
 - [Checklist de mise en ligne](launch-checklist.md) : conditions bloquantes avant ouverture.
 - [Conformité web](legal-compliance.md) : mécanismes RGPD, cookies et DSA.
 - [Référence API](api-reference.md) : routes principales et authentification.

@@ -48,6 +48,7 @@ Fonctions actuelles :
 - `README.md` : installation et utilisation.
 - `docs/architecture.md` : architecture actuelle.
 - `prisma/schema.prisma` : modèle de données.
+- `docs/environnements.md` : développement, staging, production et base par branche.
 - `docs/launch-checklist.md` : prérequis de mise en ligne.
 - `docs/production-operations.md` : exploitation et incidents.
 - `docs/processing-register.md` : registre RGPD synthétique.

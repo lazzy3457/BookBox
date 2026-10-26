@@ -10,7 +10,11 @@ const invalidUrls = ["NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL"].filter((name) => {
   try { return new URL(process.env[name] ?? "").protocol !== "https:"; } catch { return true; }
 });
 const inactivePolicyMissing = process.env.INACTIVE_ACCOUNT_POLICY_CONFIRMED !== "confirmed";
-if (missing.length || invalidUrls.length || inactivePolicyMissing) {
+const localDatabase = (() => {
+  try { return ["localhost", "127.0.0.1", "::1"].includes(new URL(process.env.DATABASE_URL ?? "").hostname); } catch { return false; }
+})();
+if (localDatabase) console.error("DATABASE_URL pointe sur une base locale : utiliser la base de l’environnement (staging ou production).");
+if (missing.length || invalidUrls.length || inactivePolicyMissing || localDatabase) {
   if (missing.length) console.error(`Variables manquantes : ${missing.join(", ")}`);
   if (invalidUrls.length) console.error(`URL HTTPS obligatoire : ${invalidUrls.join(", ")}`);
   if (inactivePolicyMissing) console.error("Politique des comptes inactifs non confirmée : définir INACTIVE_ACCOUNT_POLICY_CONFIRMED=confirmed après validation.");

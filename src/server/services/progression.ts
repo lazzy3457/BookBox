@@ -266,6 +266,6 @@ export async function getEarnedBadges(userId: string) {
     const tiers = owned.filter((entry) => entry.badgeSlug === badge.slug);
     if (!tiers.length) return [];
     const best = tiers.reduce((top, entry) => (entry.tier > top.tier ? entry : top));
-    return [{ slug: badge.slug, name: badge.name, description: badge.description, icon: badge.icon, tier: best.tier, tierName: tierName(best.tier), threshold: badge.tiers[best.tier - 1], unit: badge.unit, earnedAt: best.earnedAt }];
+    return [{ slug: badge.slug, name: badge.name, description: badge.description, icon: badge.icon, tier: best.tier, tierName: tierName(best.tier), threshold: badge.tiers[best.tier - 1], unit: badge.unit, unitOne: badge.unitOne, earnedAt: best.earnedAt }];
   });
 }

@@ -65,19 +65,24 @@ export type BadgeDefinition = {
   description: string;
   metric: BadgeMetric;
   unit: string;
+  unitOne: string;
   icon: BadgeIcon;
   tiers: number[];
 };
 
 export const BADGES: BadgeDefinition[] = [
-  { slug: "lecteur", name: "Lecteur", description: "Terminer des livres.", metric: "booksRead", unit: "livres lus", icon: "book", tiers: [1, 10, 50, 100] },
-  { slug: "critique", name: "Critique", description: "Publier des reviews.", metric: "reviews", unit: "reviews", icon: "review", tiers: [1, 10, 50] },
-  { slug: "coeur-genereux", name: "Cœur généreux", description: "Liker des reviews et des commentaires.", metric: "likes", unit: "likes", icon: "heart", tiers: [10, 100, 500] },
-  { slug: "bavard", name: "Bavard", description: "Commenter les reviews des autres lecteurs.", metric: "comments", unit: "commentaires", icon: "comment", tiers: [10, 50, 200] },
-  { slug: "carnet-de-bord", name: "Carnet de bord", description: "Tenir son journal de lecture.", metric: "journalEntries", unit: "entrées", icon: "journal", tiers: [10, 50, 200] },
-  { slug: "regulier", name: "Régulier", description: "Valider des jours d'affilée.", metric: "streak", unit: "jours de série", icon: "flame", tiers: [7, 30, 100, 365] },
-  { slug: "grand-voyageur", name: "Grand voyageur", description: "Valider des jours sur son parcours.", metric: "journeyDays", unit: "jours validés", icon: "route", tiers: [10, 50, 100, 365] }
+  { slug: "lecteur", name: "Lecteur", description: "Terminer des livres.", metric: "booksRead", unit: "livres lus", unitOne: "livre lu", icon: "book", tiers: [1, 10, 50, 100] },
+  { slug: "critique", name: "Critique", description: "Publier des reviews.", metric: "reviews", unit: "reviews", unitOne: "review", icon: "review", tiers: [1, 10, 50] },
+  { slug: "coeur-genereux", name: "Cœur généreux", description: "Liker des reviews et des commentaires.", metric: "likes", unit: "likes", unitOne: "like", icon: "heart", tiers: [10, 100, 500] },
+  { slug: "bavard", name: "Bavard", description: "Commenter les reviews des autres lecteurs.", metric: "comments", unit: "commentaires", unitOne: "commentaire", icon: "comment", tiers: [10, 50, 200] },
+  { slug: "carnet-de-bord", name: "Carnet de bord", description: "Tenir son journal de lecture.", metric: "journalEntries", unit: "entrées", unitOne: "entrée", icon: "journal", tiers: [10, 50, 200] },
+  { slug: "regulier", name: "Régulier", description: "Valider des jours d'affilée.", metric: "streak", unit: "jours de série", unitOne: "jour de série", icon: "flame", tiers: [7, 30, 100, 365] },
+  { slug: "grand-voyageur", name: "Grand voyageur", description: "Valider des jours sur son parcours.", metric: "journeyDays", unit: "jours validés", unitOne: "jour validé", icon: "route", tiers: [10, 50, 100, 365] }
 ];
+
+export function formatBadgeCount(badge: Pick<BadgeDefinition, "unit" | "unitOne">, count: number) {
+  return `${count} ${count > 1 ? badge.unit : badge.unitOne}`;
+}
 
 export const TIER_NAMES = ["Bronze", "Argent", "Or", "Platine"];
 

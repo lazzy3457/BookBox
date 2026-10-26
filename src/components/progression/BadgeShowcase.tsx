@@ -1,5 +1,5 @@
 import { BadgeMedal, tierTextClass } from "@/components/progression/BadgeMedal";
-import type { BadgeIcon } from "@/lib/progression";
+import { formatBadgeCount, type BadgeIcon } from "@/lib/progression";
 
 type EarnedBadge = {
   slug: string;
@@ -9,6 +9,7 @@ type EarnedBadge = {
   tierName: string;
   threshold: number;
   unit: string;
+  unitOne: string;
 };
 
 export function BadgeShowcase({ badges, emptyMessage }: { badges: EarnedBadge[]; emptyMessage: string }) {
@@ -25,7 +26,7 @@ export function BadgeShowcase({ badges, emptyMessage }: { badges: EarnedBadge[];
             <div className="truncate font-black text-paper">{badge.name}</div>
             <div className="text-xs font-bold">
               <span className={tierTextClass(badge.tier)}>{badge.tierName}</span>
-              <span className="text-muted"> · {badge.threshold} {badge.unit}</span>
+              <span className="text-muted"> · {formatBadgeCount(badge, badge.threshold)}</span>
             </div>
           </div>
         </li>

@@ -13,7 +13,9 @@
     "test": "vitest run --configLoader runner",
     "admin:grant": "node scripts/grant-admin.mjs",
     "genres:backfill": "node --env-file=.env scripts/backfill-genres.mjs",
-    "preflight": "node --env-file=.env scripts/preflight.mjs"
+    "preflight": "node --env-file=.env scripts/preflight.mjs",
+    "db:deploy": "prisma migrate deploy",
+    "db:branch": "node --env-file=.env scripts/db-branch.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
