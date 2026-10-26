@@ -9,6 +9,7 @@ import { EditProfileButton } from "@/components/profile/EditProfileButton";
 import { StarRating } from "@/components/reviews/StarRating";
 import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
 import { BadgeShowcase } from "@/components/progression/BadgeShowcase";
+import { LevelBadge, LevelBar } from "@/components/progression/LevelProgress";
 import { getEarnedBadges, getProgressSummary, syncBadges } from "@/server/services/progression";
 import { Flame, Route, Sparkles } from "lucide-react";
 
@@ -106,6 +107,8 @@ export default async function ProfilePage() {
       {/* Parcours */}
       <Link href="/parcours" className="group mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded border border-line bg-panel/80 px-5 py-4 shadow-poster transition hover:border-mint/50">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <span className="inline-flex items-center gap-2"><LevelBadge level={progress.level.level} /><span className="font-black text-paper">{progress.level.title}</span></span>
+          <span className="w-40 max-w-full"><LevelBar level={progress.level} compact /></span>
           <span className="inline-flex items-center gap-2 font-black text-paper"><Flame size={18} className={progress.streak ? "text-coral" : "text-muted"} aria-hidden />{progress.streak} {progress.streak > 1 ? "jours" : "jour"} de série</span>
           <span className="inline-flex items-center gap-2 font-black text-paper"><Sparkles size={18} className="text-amber" aria-hidden />{progress.xpTotal.toLocaleString("fr-FR")} XP</span>
           <span className="text-muted">Aujourd’hui : {progress.todayXp} / {progress.dailyGoal} XP</span>

@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { JourneyPath } from "@/components/progression/JourneyPath";
 import { ActivityCalendar } from "@/components/progression/ActivityCalendar";
 import { DailyGoalPicker, StartJourneyButton, TimezoneSync } from "@/components/progression/ProgressControls";
+import { LevelBar } from "@/components/progression/LevelProgress";
 import { DAILY_XP_CAPS, XP_RULES, type XpReasonKey } from "@/lib/progression";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,21 @@ export default async function JourneyPage() {
         description="Chaque action rapporte de l’XP. Atteins ton objectif quotidien pour valider la journée et faire grandir ta série."
         action={<Link href="/settings#badges" className="inline-flex shrink-0 items-center gap-2 rounded border border-line bg-panel/60 px-4 py-2 text-sm font-black text-muted transition hover:border-mint/50 hover:text-mint"><Medal size={16} aria-hidden />Tous les badges</Link>}
       />
+
+      <section aria-label="Niveau" className="mb-4 flex min-w-0 flex-col gap-4 rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink p-5 shadow-poster sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+        <div className="flex items-center gap-4">
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 border-mint bg-panel font-display text-2xl font-black tabular-nums text-mint shadow-glow">
+            {progress.level.level}
+          </div>
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Niveau {progress.level.level}</div>
+            <div className="font-display text-2xl font-black text-paper">{progress.level.title}</div>
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <LevelBar level={progress.level} />
+        </div>
+      </section>
 
       <section aria-label="Résumé" className="mb-8 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded border border-line bg-panel/80 p-5 shadow-poster">

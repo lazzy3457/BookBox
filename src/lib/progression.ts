@@ -44,6 +44,51 @@ export function cappedAmount(reason: XpReasonKey, alreadyEarnedTodayInGroup: num
   return Math.max(0, Math.min(rule.amount, remaining));
 }
 
+// Niveaux : le niveau n demande LEVEL_XP_BASE × n² XP au total (10, 40, 90, 160…),
+// chaque niveau est donc un peu plus long à atteindre que le précédent.
+export const LEVEL_XP_BASE = 10;
+
+const LEVEL_TITLES = [
+  { from: 0, title: "Nouveau lecteur" },
+  { from: 1, title: "Lecteur curieux" },
+  { from: 5, title: "Lecteur assidu" },
+  { from: 10, title: "Bibliophile" },
+  { from: 20, title: "Rat de bibliothèque" },
+  { from: 30, title: "Érudit" },
+  { from: 50, title: "Légende de BooksBox" }
+];
+
+export function xpForLevel(level: number) {
+  return LEVEL_XP_BASE * level * level;
+}
+
+export function levelFromXp(xp: number) {
+  let level = Math.floor(Math.sqrt(Math.max(0, xp) / LEVEL_XP_BASE));
+  // Corrige les arrondis de la racine carrée aux paliers exacts.
+  while (xpForLevel(level + 1) <= xp) level += 1;
+  while (level > 0 && xpForLevel(level) > xp) level -= 1;
+  return level;
+}
+
+export function levelTitle(level: number) {
+  return [...LEVEL_TITLES].reverse().find((entry) => level >= entry.from)!.title;
+}
+
+export function levelProgress(xp: number) {
+  const level = levelFromXp(xp);
+  const floor = xpForLevel(level);
+  const next = xpForLevel(level + 1);
+  return {
+    level,
+    title: levelTitle(level),
+    xpIntoLevel: xp - floor,
+    xpForNextLevel: next - floor,
+    xpToNextLevel: next - xp,
+    nextLevelXp: next,
+    percent: Math.floor(((xp - floor) / (next - floor)) * 100)
+  };
+}
+
 export const DEFAULT_DAILY_GOAL = 10;
 export const DAILY_GOAL_OPTIONS = [
   { value: 10, label: "Tranquille", hint: "10 likes, ou une entrée de journal" },

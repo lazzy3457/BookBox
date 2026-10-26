@@ -83,8 +83,8 @@ Un compte non vérifié ou suspendu ne peut pas se connecter. Une ancienne sessi
 
 L’XP est attribuée côté serveur après les mutations existantes (bibliothèque, reviews, likes, commentaires, journal, abonnements) ; aucune route ne permet d’en gagner directement. Le barème, les badges et les étapes du parcours sont définis dans `src/lib/progression.ts`.
 
-- `GET /api/progression` : XP totale, série, XP du jour et objectif, gels, calendrier des 5 dernières semaines, derniers gains.
+- `GET /api/progression` : XP totale, niveau (`10 × n²` XP pour le niveau n) et titre, série, XP du jour et objectif, gels, calendrier des 5 dernières semaines, derniers gains.
 - `PATCH /api/progression` : objectif quotidien (`10`, `20`, `30` ou `50`) et fuseau horaire IANA.
 - `POST /api/progression/start` : démarre le parcours si au moins un livre est marqué lu.
 - `GET /api/badges` : catalogue ; connecté, ajoute les paliers obtenus et la progression vers le suivant.
-- `GET /api/users/:userId/badges` : plus haut palier obtenu par badge, sans compteurs.
+- `GET /api/users/:userId/badges` : niveau, titre et plus haut palier obtenu par badge, sans compteurs.

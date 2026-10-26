@@ -4,6 +4,8 @@ import {
   badgeBySlug,
   cappedAmount,
   displayedStreak,
+  levelFromXp,
+  levelProgress,
   localDay,
   nextTier,
   reachedTiers
@@ -91,6 +93,23 @@ describe("displayedStreak", () => {
   it("drops to zero once a day is missed without freeze", () => {
     const state = { currentStreak: 4, longestStreak: 4, lastValidatedDay: "2026-10-24", streakFreezes: 0 };
     expect(displayedStreak(state, "2026-10-26").streak).toBe(0);
+  });
+});
+
+describe("levels", () => {
+  it("reaches level 1 at 10 XP and grows progressively", () => {
+    expect(levelFromXp(0)).toBe(0);
+    expect(levelFromXp(9)).toBe(0);
+    expect(levelFromXp(10)).toBe(1);
+    expect(levelFromXp(39)).toBe(1);
+    expect(levelFromXp(40)).toBe(2);
+    expect(levelFromXp(1000)).toBe(10);
+    expect(levelFromXp(999)).toBe(9);
+  });
+
+  it("describes progress towards the next level", () => {
+    expect(levelProgress(66)).toMatchObject({ level: 2, title: "Lecteur curieux", xpIntoLevel: 26, xpForNextLevel: 50, xpToNextLevel: 24, percent: 52 });
+    expect(levelProgress(0)).toMatchObject({ level: 0, title: "Nouveau lecteur", xpToNextLevel: 10 });
   });
 });
 

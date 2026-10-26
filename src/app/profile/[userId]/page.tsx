@@ -13,6 +13,8 @@ import { BlockButton } from "@/components/community/BlockButton";
 import { areUsersBlocked } from "@/server/services/blocks";
 import { getEarnedBadges, syncBadges } from "@/server/services/progression";
 import { BadgeShowcase } from "@/components/progression/BadgeShowcase";
+import { LevelBadge } from "@/components/progression/LevelProgress";
+import { levelProgress } from "@/lib/progression";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +32,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     prisma.follow.count({ where: { followingId: userId } }),
     prisma.follow.count({ where: { followerId: userId } }),
     prisma.userBook.findMany({
-      where: { userId, hiddenAt: null },
+      where: { userId },
       orderBy: { updatedAt: "desc" },
       take: 10,
       include: { book: true }
     }),
     prisma.review.findMany({
-      where: { userId },
+      where: { userId, hiddenAt: null },
       orderBy: { updatedAt: "desc" },
       take: 8,
       include: { book: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
@@ -67,7 +69,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const isOwnProfile = session?.user?.id === userId;
   // Rattrape les badges de l'historique (actions antérieures au système de badges).
   await syncBadges(userId);
-  const earnedBadges = await getEarnedBadges(userId);
+  const [earnedBadges, stats] = await Promise.all([
+    getEarnedBadges(userId),
+    prisma.userStats.findUnique({ where: { userId }, select: { xpTotal: true } })
+  ]);
+  const level = levelProgress(stats?.xpTotal ?? 0);
 
   return (
     <div className="min-w-0 overflow-hidden">
@@ -81,6 +87,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             <div className="min-w-0 pb-1">
               <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
               <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{user.name ?? user.username ?? "Lecteur BooksBox"}</h1>
+              <div className="mt-2 flex items-center gap-2 text-sm">
+                <LevelBadge level={level.level} />
+                <span className="font-bold text-muted">{level.title}</span>
+              </div>
               <p className="mt-2 text-sm text-muted">
                 {user.username ? `@${user.username}` : "Lecteur de la communaute BooksBox"}
               </p>

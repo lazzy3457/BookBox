@@ -11,6 +11,7 @@ import {
   dateToDay,
   dayToDate,
   displayedStreak,
+  levelProgress,
   localDay,
   metricsForReason,
   nextTier,
@@ -215,6 +216,7 @@ export async function getProgressSummary(userId: string) {
   return {
     today,
     xpTotal: stats.xpTotal,
+    level: levelProgress(stats.xpTotal),
     dailyGoal: stats.dailyGoal,
     timezone: stats.timezone,
     todayXp: todayActivity?.xp ?? 0,
