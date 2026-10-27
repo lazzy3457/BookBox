@@ -41,7 +41,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       where: { userId, hiddenAt: null },
       orderBy: { updatedAt: "desc" },
       take: 8,
-      include: { book: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
+      include: { book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
     }),
     session?.user?.id
       ? prisma.follow.findUnique({

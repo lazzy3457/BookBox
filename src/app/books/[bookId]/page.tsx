@@ -19,6 +19,7 @@ import { ExpandableDescription } from "@/components/books/ExpandableDescription"
 import { GenreBadges } from "@/components/books/GenreBadges";
 import { ReadingJournal } from "@/components/library/ReadingJournal";
 import { getBlockedUserIds } from "@/server/services/blocks";
+import { toCommentView } from "@/server/services/comments";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -374,14 +375,9 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     canManage: review.userId === session?.user?.id,
                     canReport: Boolean(session?.user?.id && review.userId !== session.user.id),
                     reactionsCount: review.reactions.length,
-                    comments: review.comments.filter((comment) => !blockedUserIdSet.has(comment.userId)).map((comment) => ({
-                      id: comment.id,
-                      body: comment.body,
-                      userName: comment.user.name ?? "Lecteur BooksBox",
-                      canManage: comment.userId === session?.user?.id,
-                      createdAt: comment.createdAt.toISOString(),
-                      likesCount: comment.likes.length
-                    }))
+                    comments: review.comments
+                      .filter((comment) => !blockedUserIdSet.has(comment.userId))
+                      .map((comment) => toCommentView(comment, session?.user?.id))
                   }}
                 />
               ))}

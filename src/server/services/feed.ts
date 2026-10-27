@@ -19,7 +19,7 @@ export async function getFriendActivity(userId: string) {
       where: { userId: { in: followingIds }, hiddenAt: null, user: { suspendedAt: null } },
       orderBy: { createdAt: "desc" },
       take: 20,
-      include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
+      include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
     }),
     prisma.userBook.findMany({
       where: { userId: { in: followingIds }, user: { suspendedAt: null } },
@@ -62,7 +62,7 @@ export async function getTopReviewsLast24Hours(userId?: string) {
     },
     orderBy: { createdAt: "desc" },
     take: 30,
-    include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
+    include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
   });
 
   return reviews

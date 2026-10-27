@@ -38,7 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
           where: { userId, hiddenAt: null },
           orderBy: { updatedAt: "desc" },
           take: 8,
-          include: { book: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
+          include: { book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
         }),
         currentUserId
           ? prisma.follow.findUnique({

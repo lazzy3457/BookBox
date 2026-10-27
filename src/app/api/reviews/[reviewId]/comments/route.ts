@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
-import { apiError } from "@/server/http/errors";
+import { apiError, notFound } from "@/server/http/errors";
 import { notifyReviewComment } from "@/server/services/notifications";
 import { recordProgress } from "@/server/services/progression";
 import { commentMutationSchema } from "@/server/validation/reviews";
@@ -20,8 +20,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ rev
     }
     await assertUsersCanInteract(userId, review.userId);
     if (input.parentId) {
-      const parent = await prisma.reviewComment.findUnique({ where: { id: input.parentId }, select: { userId: true } });
-      if (parent) await assertUsersCanInteract(userId, parent.userId);
+      // On ne répond qu'à un commentaire visible de la même review.
+      const parent = await prisma.reviewComment.findFirst({
+        where: { id: input.parentId, reviewId, hiddenAt: null, deletedAt: null, user: { suspendedAt: null } },
+        select: { userId: true }
+      });
+      if (!parent) {
+        throw notFound("Commentaire introuvable.", "COMMENT_NOT_FOUND");
+      }
+      await assertUsersCanInteract(userId, parent.userId);
     }
     const comment = await prisma.reviewComment.create({
       data: {

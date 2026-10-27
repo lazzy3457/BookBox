@@ -89,7 +89,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           user: true,
           reactions: true,
           comments: {
-            where: { hiddenAt: null, user: { suspendedAt: null } },
+            where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } },
             include: { user: true, likes: true },
             orderBy: { createdAt: "asc" }
           }

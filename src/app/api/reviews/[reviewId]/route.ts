@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
     const review = await prisma.review.update({
       where: { id: reviewId },
       data: input,
-      include: { user: true, book: true, reactions: true, comments: { include: { user: true, likes: true } } }
+      include: { user: true, book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null }, include: { user: true, likes: true } } }
     });
 
     return NextResponse.json(review);

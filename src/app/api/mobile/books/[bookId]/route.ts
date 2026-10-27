@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
     const blockedSet = new Set(blockedUserIds);
     const visibleReviews = book.reviews
       .filter((review) => !blockedSet.has(review.userId))
-      .map((review) => ({ ...review, comments: review.comments.filter((comment) => !blockedSet.has(comment.userId)) }));
+      .map((review) => ({ ...review, comments: review.comments.filter((comment) => !comment.deletedAt && !blockedSet.has(comment.userId)) }));
     const [userBook, authorBooks, followingActivity] = await Promise.all([
       currentUserId
         ? prisma.userBook.findUnique({

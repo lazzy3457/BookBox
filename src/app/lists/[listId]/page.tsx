@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
 import { ListReviews } from "@/components/lists/ListReviews";
 import { areUsersBlocked, getBlockedUserIds } from "@/server/services/blocks";
+import { toCommentView } from "@/server/services/comments";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
                   reactions: true,
                   comments: {
                     where: { hiddenAt: null, user: { suspendedAt: null } },
-                    include: { user: true },
+                    include: { user: true, likes: true },
                     orderBy: { createdAt: "asc" },
                   },
                 },
@@ -67,12 +68,9 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
       reactionsCount: review.reactions.length,
       bookTitle: entry.book.title,
       bookId: entry.bookId,
-      comments: review.comments.filter((comment) => !blockedUserIds.has(comment.userId)).map((c) => ({
-        id: c.id,
-        body: c.body,
-        userName: c.user.name ?? "Lecteur BooksBox",
-        createdAt: c.createdAt.toISOString(),
-      })),
+      comments: review.comments
+        .filter((comment) => !blockedUserIds.has(comment.userId))
+        .map((comment) => toCommentView(comment, session?.user?.id)),
     }))
   );
 

@@ -46,7 +46,7 @@ export default async function ProfilePage() {
       where: { userId: session.user.id },
       orderBy: { updatedAt: "desc" },
       take: 8,
-      include: { book: true, reactions: true, comments: true },
+      include: { book: true, reactions: true, comments: { where: { deletedAt: null } } },
     }),
     prisma.userBook.findMany({
       where: { userId: session.user.id, isFavorite: true },
