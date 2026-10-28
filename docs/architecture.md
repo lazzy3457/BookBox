@@ -109,6 +109,7 @@ Le barème, les plafonds, les badges, les titres de niveau et les étapes du par
 ### Social et confidentialité
 
 - Reviews, commentaires, réactions, follows, listes et notifications sont persistés.
+- **Fils de commentaires** : on peut répondre à un commentaire à n’importe quelle profondeur (`ReviewComment.parentId`). La liste plate est transformée en arbre par `buildCommentTree` (`src/lib/commentThread.ts`) ; une réponse dont le parent n’est pas visible remonte à la racine. Supprimer un commentaire qui a des réponses le vide (`deletedAt`) au lieu d’effacer le sous-fil ; les parents supprimés sans réponse restante sont effacés (`src/server/services/comments.ts`).
 - Le blocage supprime les follows mutuels, empêche les interactions et masque réciproquement profils et contenus.
 - Les contenus masqués et comptes suspendus sont exclus des pages et API publiques, y compris les reviews masquées sur le profil public.
 

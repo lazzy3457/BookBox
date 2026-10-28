@@ -342,6 +342,8 @@ model ReviewComment {
   body         String
   hiddenAt     DateTime?
   hiddenReason String?
+  // Suppression douce : un commentaire qui a encore des réponses reste dans le fil, sans contenu.
+  deletedAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -353,6 +355,7 @@ model ReviewComment {
 
   @@index([reviewId])
   @@index([userId])
+  @@index([parentId])
 }
 
 model ReviewCommentReaction {

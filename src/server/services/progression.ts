@@ -91,7 +91,7 @@ async function metricValue(userId: string, metric: BadgeMetric) {
       return reviewLikes + commentLikes;
     }
     case "comments":
-      return prisma.reviewComment.count({ where: { userId } });
+      return prisma.reviewComment.count({ where: { userId, deletedAt: null } });
     case "journalEntries":
       return prisma.readingEntry.count({ where: { period: { userBook: { userId } } } });
     case "streak":

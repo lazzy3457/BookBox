@@ -46,8 +46,8 @@ L’ancien client mobile doit transmettre les nouveaux champs juridiques avant d
 - `POST /api/reviews`
 - `PATCH/DELETE /api/reviews/:reviewId`
 - `POST /api/reviews/:reviewId/reactions`
-- `POST /api/reviews/:reviewId/comments`
-- `PATCH/DELETE /api/comments/:commentId`
+- `POST /api/reviews/:reviewId/comments` (`parentId` facultatif pour répondre à un commentaire visible de la même review, à n’importe quelle profondeur)
+- `PATCH/DELETE /api/comments/:commentId` (un commentaire qui a des réponses est vidé et marqué supprimé, `softDeleted: true`, pour ne pas casser le fil)
 - `POST /api/comments/:commentId/reactions`
 - `POST/DELETE /api/follows`
 - `GET /api/feed`

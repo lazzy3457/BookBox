@@ -12,7 +12,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ com
     const userId = await requireCurrentUserId(request);
     await enforceRateLimit({ scope: "comment-reaction", identifier: userId, limit: 60, windowMs: 60_000 });
     const { commentId } = await params;
-    const targetComment = await prisma.reviewComment.findFirst({ where: { id: commentId, hiddenAt: null, user: { suspendedAt: null } }, select: { userId: true } });
+    const targetComment = await prisma.reviewComment.findFirst({ where: { id: commentId, hiddenAt: null, deletedAt: null, user: { suspendedAt: null } }, select: { userId: true } });
     if (!targetComment) {
       throw Object.assign(new Error("Commentaire introuvable."), { status: 404, code: "COMMENT_NOT_FOUND" });
     }

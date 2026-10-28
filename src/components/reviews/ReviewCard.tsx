@@ -1,23 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit3, Eye, MessageCircle, Send, ThumbsUp, Trash2, TriangleAlert } from "lucide-react";
+import { CommentThread, type CommentActions } from "@/components/reviews/CommentThread";
 import { RatingControl } from "@/components/reviews/RatingControl";
 import { StarRating } from "@/components/reviews/StarRating";
 import { Toast } from "@/components/ui/Toast";
 import { ReportButton } from "@/components/moderation/ReportButton";
 import { useUserPreferences } from "@/components/settings/UserPreferencesProvider";
-
-type CommentView = {
-  id: string;
-  body: string;
-  userName: string;
-  canManage: boolean;
-  createdAt: string;
-  likesCount: number;
-};
+import { buildCommentTree, countVisibleComments, type CommentView } from "@/lib/commentThread";
 
 type ReviewCardProps = {
   review: {
@@ -46,8 +39,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const [spoiler, setSpoiler] = useState(review.spoiler);
   const [likesCount, setLikesCount] = useState(review.reactionsCount);
   const [comments, setComments] = useState(review.comments);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editingCommentBody, setEditingCommentBody] = useState("");
+  const commentTree = useMemo(() => buildCommentTree(comments), [comments]);
   const [body, setBody] = useState("");
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,40 +93,33 @@ export function ReviewCard({ review }: ReviewCardProps) {
     setComments((current) =>
       current.map((comment) =>
         comment.id === commentId
-          ? { ...comment, likesCount: Math.max(0, comment.likesCount + (payload.liked ? 1 : -1)) }
+          ? { ...comment, likedByMe: payload.liked, likesCount: Math.max(0, comment.likesCount + (payload.liked ? 1 : -1)) }
           : comment
       )
     );
-    setToast({ tone: "success", message: payload.liked ? "Commentaire aime." : "Like retire." });
     router.refresh();
   }
 
-  function startEditComment(comment: CommentView) {
-    setEditingCommentId(comment.id);
-    setEditingCommentBody(comment.body);
-  }
-
-  async function saveComment(commentId: string) {
+  async function saveComment(commentId: string, nextBody: string) {
     setToast(null);
     const response = await fetch(`/api/comments/${commentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: editingCommentBody })
+      body: JSON.stringify({ body: nextBody })
     });
     const payload = await response.json();
 
     if (!response.ok) {
       setToast({ tone: "error", message: "Le commentaire n'a pas pu etre modifie." });
-      return;
+      return false;
     }
 
     setComments((current) =>
       current.map((comment) => (comment.id === commentId ? { ...comment, body: payload.body } : comment))
     );
-    setEditingCommentId(null);
-    setEditingCommentBody("");
     setToast({ tone: "success", message: "Commentaire modifie." });
     router.refresh();
+    return true;
   }
 
   async function deleteComment(commentId: string) {
@@ -142,16 +127,71 @@ export function ReviewCard({ review }: ReviewCardProps) {
     const response = await fetch(`/api/comments/${commentId}`, {
       method: "DELETE"
     });
+    const payload = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       setToast({ tone: "error", message: "Le commentaire n'a pas pu etre supprime." });
       return;
     }
 
-    setComments((current) => current.filter((comment) => comment.id !== commentId));
+    // Un commentaire qui a des réponses reste dans le fil, vidé ; sinon il disparaît.
+    setComments((current) =>
+      payload.softDeleted
+        ? current.map((comment) =>
+            comment.id === commentId
+              ? { ...comment, body: "", userId: undefined, userName: "", userImage: null, canManage: false, likesCount: 0, likedByMe: false, deleted: true }
+              : comment
+          )
+        : current.filter((comment) => comment.id !== commentId)
+    );
     setToast({ tone: "success", message: "Commentaire supprime." });
     router.refresh();
   }
+
+  async function postComment(commentBody: string, parentId?: string) {
+    setToast(null);
+    const response = await fetch(`/api/reviews/${review.id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: commentBody, parentId })
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setToast({
+        tone: "error",
+        message: response.status === 401 ? "Connecte-toi pour participer a la discussion." : "Ton commentaire n'a pas pu etre publie."
+      });
+      return false;
+    }
+
+    setComments((current) => [
+      ...current,
+      {
+        id: payload.id,
+        parentId: payload.parentId ?? null,
+        body: payload.body,
+        userId: payload.userId,
+        userName: payload.user?.name ?? "Lecteur BooksBox",
+        userImage: payload.user?.image ?? null,
+        canManage: true,
+        createdAt: payload.createdAt,
+        likesCount: 0,
+        likedByMe: false
+      }
+    ]);
+    setToast({ tone: "success", message: parentId ? "Reponse publiee." : "Commentaire publie." });
+    router.refresh();
+    return true;
+  }
+
+  const commentActions: CommentActions = {
+    canReport: Boolean(review.canReport),
+    onLike: toggleCommentLike,
+    onEdit: saveComment,
+    onDelete: deleteComment,
+    onReply: (parentId, replyBody) => postComment(replyBody, parentId)
+  };
 
   async function saveReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -199,36 +239,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
     }
 
     setIsSaving(true);
-    setToast(null);
-
-    const response = await fetch(`/api/reviews/${review.id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body })
-    });
-    const payload = await response.json();
-
+    const ok = await postComment(body);
     setIsSaving(false);
 
-    if (!response.ok) {
-      setToast({ tone: "error", message: "Ton commentaire n'a pas pu etre publie." });
-      return;
+    if (ok) {
+      setBody("");
     }
-
-    setComments((current) => [
-      ...current,
-      {
-        id: payload.id,
-        body: payload.body,
-        userName: payload.user?.name ?? "Lecteur BooksBox",
-        canManage: true,
-        createdAt: payload.createdAt,
-        likesCount: 0
-      }
-    ]);
-    setBody("");
-    setToast({ tone: "success", message: "Commentaire publie." });
-    router.refresh();
   }
 
   return (
@@ -331,90 +347,30 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <ThumbsUp size={14} /> {likesCount}
         </button>
         <span className="inline-flex items-center gap-1">
-          <MessageCircle size={14} /> {comments.length}
+          <MessageCircle size={14} /> {countVisibleComments(comments)}
         </span>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {comments.map((comment) => (
-          <div key={comment.id} className="min-w-0 overflow-hidden rounded-xl bg-ink px-3 py-2">
-            <div className="grid min-w-0 gap-2 sm:flex sm:items-start sm:justify-between sm:gap-3">
-              <div className="text-xs font-extrabold text-paper">{comment.userName}</div>
-              {comment.canManage ? (
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => startEditComment(comment)}
-                    className="grid h-7 w-7 place-items-center rounded-full border border-line text-muted transition hover:border-mint hover:text-mint"
-                    title="Editer le commentaire"
-                  >
-                    <Edit3 size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteComment(comment.id)}
-                    className="grid h-7 w-7 place-items-center rounded-full border border-line text-muted transition hover:border-coral hover:text-coral"
-                    title="Supprimer le commentaire"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ) : review.canReport ? <ReportButton targetType="COMMENT" targetId={comment.id} compact /> : null}
-            </div>
-            {editingCommentId === comment.id ? (
-              <div className="mt-2">
-                <textarea
-                  value={editingCommentBody}
-                  onChange={(event) => setEditingCommentBody(event.target.value)}
-                  className="min-h-20 w-full resize-y rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper outline-none focus:border-mint"
-                />
-                <div className="mt-2 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => saveComment(comment.id)}
-                    className="bb-btn-primary px-3 py-1.5 text-xs"
-                  >
-                    Enregistrer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingCommentId(null)}
-                    className="bb-btn-ghost px-3 py-1.5 text-xs"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-1 text-sm leading-6 text-muted">{comment.body}</p>
-            )}
-            <button
-              type="button"
-              onClick={() => toggleCommentLike(comment.id)}
-              className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-muted transition hover:text-mint"
-            >
-              <ThumbsUp size={12} />
-              {comment.likesCount}
-            </button>
-          </div>
-        ))}
       </div>
 
       <form onSubmit={submitComment} className="mt-4 grid gap-2 sm:flex">
         <input
           value={body}
           onChange={(event) => setBody(event.target.value)}
+          maxLength={1200}
           className="h-10 min-w-0 flex-1 rounded-full border border-line bg-ink px-4 text-sm text-paper outline-none placeholder:text-muted/45 focus:border-mint"
-          placeholder="Ajouter un commentaire..."
+          placeholder="Lance la discussion..."
         />
         <button
-          disabled={isSaving}
+          disabled={isSaving || !body.trim()}
           className="bb-btn-primary h-10 px-4 text-xs"
         >
           <Send size={14} />
           {isSaving ? "Envoi..." : "Commenter"}
         </button>
       </form>
+
+      <div className="mt-3">
+        <CommentThread nodes={commentTree} actions={commentActions} />
+      </div>
 
       {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </article>

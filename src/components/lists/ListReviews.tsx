@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
+import type { CommentView } from "@/lib/commentThread";
 
 type Review = {
   id: string;
@@ -17,14 +18,7 @@ type Review = {
   reactionsCount: number;
   bookTitle: string;
   bookId: string;
-  comments: Array<{
-    id: string;
-    body: string;
-    userName: string;
-    canManage?: boolean;
-    createdAt: string;
-    likesCount?: number;
-  }>;
+  comments: CommentView[];
 };
 
 const INITIAL_COUNT = 2;
@@ -47,15 +41,7 @@ export function ListReviews({ reviews }: { reviews: Review[] }) {
             <span className="truncate">{review.bookTitle}</span>
           </Link>
           <ReviewCard
-            review={{
-              ...review,
-              canManage: review.canManage ?? false,
-              comments: review.comments.map((comment) => ({
-                ...comment,
-                canManage: comment.canManage ?? false,
-                likesCount: comment.likesCount ?? 0
-              }))
-            }}
+            review={{ ...review, canManage: review.canManage ?? false }}
           />
         </div>
       ))}

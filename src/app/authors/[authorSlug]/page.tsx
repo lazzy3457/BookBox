@@ -107,7 +107,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
             createdAt: true,
             userId: true,
             user: { select: { name: true, image: true } },
-            _count: { select: { reactions: true, comments: true } },
+            _count: { select: { reactions: true, comments: { where: { hiddenAt: null, deletedAt: null } } } },
             reactions: { where: { userId: viewerId ?? "", kind: "LIKE" }, select: { id: true } }
           }
         }

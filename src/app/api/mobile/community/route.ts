@@ -39,7 +39,7 @@ export async function GET(request: Request) {
           user: true,
           book: true,
           reactions: blockedUserIds.length ? { where: { userId: { notIn: blockedUserIds } } } : true,
-          comments: { where: { hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) } }
+          comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) } }
         }
       }),
       getTrendingBooks(),

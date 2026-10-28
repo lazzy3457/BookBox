@@ -154,7 +154,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
         book: { select: { id: true, title: true, thumbnailUrl: true } },
         reactions: { select: { userId: true, kind: true } },
         comments: {
-          where: { hiddenAt: null, user: { suspendedAt: null } },
+          where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } },
           orderBy: { createdAt: "asc" },
           select: { id: true, body: true, user: { select: { name: true, image: true } } }
         }

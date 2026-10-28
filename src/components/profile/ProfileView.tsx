@@ -58,7 +58,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       include: {
         book: { select: { id: true, title: true, thumbnailUrl: true } },
         reactions: { select: { userId: true, kind: true } },
-        comments: { where: { hiddenAt: null, user: { suspendedAt: null } }, select: { id: true } }
+        comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } }, select: { id: true } }
       }
     }),
     prisma.bookList.findMany({

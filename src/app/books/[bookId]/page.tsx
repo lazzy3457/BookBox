@@ -7,6 +7,7 @@ import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBookDetails } from "@/server/services/books";
 import { getBlockedUserIds } from "@/server/services/blocks";
+import { toCommentView } from "@/server/services/comments";
 import { authorHref } from "@/lib/authors";
 import { genreLabel } from "@/lib/genres";
 import { plural } from "@/lib/format";
@@ -114,14 +115,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
     reactionsCount: review.reactions.length,
     comments: review.comments
       .filter((comment) => !blocked.has(comment.userId))
-      .map((comment) => ({
-        id: comment.id,
-        body: comment.body,
-        userName: comment.user.name ?? "Lecteur BooksBox",
-        canManage: comment.userId === viewerId,
-        createdAt: comment.createdAt.toISOString(),
-        likesCount: comment.likes.length
-      }))
+      .map((comment) => toCommentView(comment, viewerId))
   });
 
   // L'avis mis en avant : le plus aimé, avec un vrai texte, d'un autre lecteur.
@@ -226,7 +220,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           isSignedIn={Boolean(viewerId)}
           hasUserReview={visibleReviews.some((review) => review.userId === viewerId)}
           averageRating={averageRating}
-          featured={featured ? { ...toView(featured), commentsCount: featured.comments.length, liked: featured.reactions.some((reaction) => reaction.userId === viewerId && reaction.kind === "LIKE") } : null}
+          featured={featured ? { ...toView(featured), commentsCount: featured.comments.filter((comment) => !comment.deletedAt).length, liked: featured.reactions.some((reaction) => reaction.userId === viewerId && reaction.kind === "LIKE") } : null}
           reviews={otherReviews.map(toView)}
         />
 

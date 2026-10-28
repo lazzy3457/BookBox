@@ -58,7 +58,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ authorSlug
             user: true,
             reactions: true,
             comments: {
-              where: { hiddenAt: null, user: { suspendedAt: null } },
+              where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } },
               include: { user: true, likes: true },
               orderBy: { createdAt: "asc" }
             }

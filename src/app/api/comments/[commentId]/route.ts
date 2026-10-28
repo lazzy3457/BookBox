@@ -3,13 +3,14 @@ import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, notFound } from "@/server/http/errors";
 import { commentMutationSchema } from "@/server/validation/reviews";
+import { deleteCommentKeepingThread } from "@/server/services/comments";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ commentId: string }> }) {
   try {
     const userId = await requireCurrentUserId(request);
     const { commentId } = await params;
     const input = commentMutationSchema.pick({ body: true }).parse(await request.json());
-    const existing = await prisma.reviewComment.findUnique({ where: { id: commentId } });
+    const existing = await prisma.reviewComment.findFirst({ where: { id: commentId, deletedAt: null } });
 
     if (!existing) {
       throw notFound("Commentaire introuvable.", "COMMENT_NOT_FOUND");
@@ -35,7 +36,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ c
   try {
     const userId = await requireCurrentUserId(request);
     const { commentId } = await params;
-    const existing = await prisma.reviewComment.findUnique({ where: { id: commentId } });
+    const existing = await prisma.reviewComment.findFirst({ where: { id: commentId, deletedAt: null } });
 
     if (!existing) {
       throw notFound("Commentaire introuvable.", "COMMENT_NOT_FOUND");
@@ -45,9 +46,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ c
       throw Object.assign(new Error("Tu ne peux supprimer que ton commentaire."), { status: 403, code: "FORBIDDEN" });
     }
 
-    await prisma.reviewComment.delete({ where: { id: commentId } });
+    const { softDeleted } = await deleteCommentKeepingThread(commentId);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, softDeleted });
   } catch (error) {
     return apiError(error);
   }
