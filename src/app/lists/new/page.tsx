@@ -15,8 +15,8 @@ export default async function NewListPage() {
         <div className="flex items-center gap-3">
           <ListPlus size={22} className="text-mint" />
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Collections</div>
-            <h1 className="mt-1 text-3xl font-black text-paper">Nouvelle liste</h1>
+            <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-mint">Collections</div>
+            <h1 className="mt-1 text-3xl font-extrabold text-paper">Nouvelle liste</h1>
           </div>
         </div>
         <p className="mt-3 text-sm text-muted">

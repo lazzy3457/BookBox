@@ -1,52 +1,53 @@
 "use client";
 
-import { UserPlus } from "lucide-react";
+import { Check, UserPlus } from "lucide-react";
 import { useState } from "react";
-import { Toast } from "@/components/ui/Toast";
 
 type FollowButtonProps = {
   userId: string;
   initiallyFollowing?: boolean;
+  size?: "small" | "block";
+  onChange?: (isFollowing: boolean) => void;
 };
 
-export function FollowButton({ userId, initiallyFollowing = false }: FollowButtonProps) {
+// « Suivre » / « Abonné » : un second clic sur « Abonné » désabonne.
+export function FollowButton({ userId, initiallyFollowing = false, size = "small", onChange }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(initiallyFollowing);
-  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(false);
 
-  async function followUser() {
+  async function toggle() {
     setIsSaving(true);
-    setToast(null);
-
-    const response = await fetch("/api/follows", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ followingId: userId })
-    });
-
+    setError(false);
+    const response = isFollowing
+      ? await fetch(`/api/follows?followingId=${encodeURIComponent(userId)}`, { method: "DELETE" })
+      : await fetch("/api/follows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ followingId: userId })
+        });
     setIsSaving(false);
-
     if (!response.ok) {
-      setToast({ tone: "error", message: "Ce lecteur n'a pas pu etre ajoute a ton cercle." });
+      setError(true);
       return;
     }
-
-    setIsFollowing(true);
-    setToast({ tone: "success", message: "Lecteur ajoute a ton cercle." });
+    setIsFollowing(!isFollowing);
+    onChange?.(!isFollowing);
   }
 
+  const width = size === "block" ? "w-full" : "";
+
   return (
-    <div>
-      <button
-        type="button"
-        onClick={followUser}
-        disabled={isFollowing || isSaving}
-        className="inline-flex items-center gap-2 rounded bg-mint px-3 py-2 text-xs font-black text-ink transition hover:bg-lime disabled:bg-panelSoft disabled:text-muted"
-      >
-        <UserPlus size={14} />
-        {isFollowing ? "Suivi" : isSaving ? "Ajout..." : "Suivre"}
-      </button>
-      {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
-    </div>
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={isSaving}
+      aria-pressed={isFollowing}
+      title={error ? "L'action n'a pas pu aboutir, réessaie." : isFollowing ? "Se désabonner" : undefined}
+      className={`${isFollowing ? "bb-btn-outline" : "bb-btn-primary"} ${width} ${size === "small" ? "px-3 py-1.5 text-xs" : ""} ${error ? "ring-2 ring-coral" : ""}`}
+    >
+      {isFollowing ? <Check size={14} aria-hidden /> : <UserPlus size={14} aria-hidden />}
+      {isSaving ? "…" : isFollowing ? "Abonné" : "Suivre"}
+    </button>
   );
 }

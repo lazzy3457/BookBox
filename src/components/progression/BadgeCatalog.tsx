@@ -23,7 +23,7 @@ export function BadgeCatalog({ badges }: { badges: CatalogBadge[] }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted">
-        <span className="font-black text-paper">{earnedCount}</span> {earnedCount > 1 ? "paliers obtenus" : "palier obtenu"} sur {tierCount}. Chaque badge se débloque en plusieurs paliers : Bronze, Argent, Or, puis Platine.
+        <span className="font-extrabold text-paper">{earnedCount}</span> {earnedCount > 1 ? "paliers obtenus" : "palier obtenu"} sur {tierCount}. Chaque badge se débloque en plusieurs paliers : Bronze, Argent, Or, puis Platine.
       </p>
       <ul className="grid min-w-0 gap-3 xl:grid-cols-2">
         {badges.map((badge) => {
@@ -39,7 +39,7 @@ export function BadgeCatalog({ badges }: { badges: CatalogBadge[] }) {
                 <BadgeMedal icon={badge.icon} tier={best?.tier ?? null} size="lg" label={best ? `${badge.name}, palier ${best.name}` : `${badge.name}, verrouillé`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <h3 className="font-black text-paper">{badge.name}</h3>
+                    <h3 className="font-extrabold text-paper">{badge.name}</h3>
                     <span className="text-xs font-bold tabular-nums text-muted">{formatBadgeCount(badge, badge.value)}</span>
                   </div>
                   <p className="mt-1 text-sm text-muted">{badge.description}</p>
@@ -54,7 +54,7 @@ export function BadgeCatalog({ badges }: { badges: CatalogBadge[] }) {
               <ol className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {badge.tiers.map((tier) => (
                   <li key={tier.tier} className={`rounded border px-2.5 py-2 text-xs ${tier.earnedAt ? "border-line bg-panel" : "border-dashed border-line text-muted"}`}>
-                    <div className={`flex items-center gap-1 font-black ${tier.earnedAt ? tierTextClass(tier.tier) : ""}`}>
+                    <div className={`flex items-center gap-1 font-extrabold ${tier.earnedAt ? tierTextClass(tier.tier) : ""}`}>
                       {tier.earnedAt ? <Check size={12} aria-hidden /> : null}
                       {tier.name}
                     </div>

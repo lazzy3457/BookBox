@@ -1,265 +1,27 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth/options";
-import { prisma } from "@/server/db/prisma";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { BookCard } from "@/components/books/BookCard";
-import { ListCard } from "@/components/lists/ListCard";
-import { EditProfileButton } from "@/components/profile/EditProfileButton";
-import { StarRating } from "@/components/reviews/StarRating";
-import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
-import { BadgeShowcase } from "@/components/progression/BadgeShowcase";
-import { LevelBadge, LevelBar } from "@/components/progression/LevelProgress";
-import { getEarnedBadges, getProgressSummary, syncBadges } from "@/server/services/progression";
-import { Flame, Route, Sparkles } from "lucide-react";
+import { ProfileView, parseProfileTab } from "@/components/profile/ProfileView";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage() {
-  const session = await getServerSession(authOptions);
+export const metadata: Metadata = {
+  title: "Mon profil"
+};
+
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
 
   if (!session?.user?.id) {
     return (
-      <div className="rounded border border-line bg-panel/75 p-5 sm:p-8">
-        <h1 className="text-2xl font-black text-paper">Profil lecteur</h1>
-        <p className="mt-3 text-muted">Connecte-toi pour voir ton profil.</p>
-        <Link href="/login" className="mt-5 inline-block rounded bg-mint px-5 py-3 font-black text-ink">
-          Connexion
-        </Link>
+      <div className="bb-card mx-auto mt-6 flex max-w-xl flex-col items-start gap-3 p-8">
+        <h1 className="bb-h1">Profil lecteur</h1>
+        <p className="text-sm text-muted">Connecte-toi pour voir ton profil.</p>
+        <Link href="/login?callbackUrl=/profile" className="bb-btn-primary px-5 py-2.5 text-sm">Connexion</Link>
       </div>
     );
   }
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, favorites, lists, publicEntries] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.user.id } }),
-    prisma.userBook.count({ where: { userId: session.user.id } }),
-    prisma.review.count({ where: { userId: session.user.id } }),
-    prisma.follow.count({ where: { followingId: session.user.id } }),
-    prisma.follow.count({ where: { followerId: session.user.id } }),
-    prisma.userBook.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      take: 10,
-      include: { book: true },
-    }),
-    prisma.review.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      take: 8,
-      include: { book: true, reactions: true, comments: true },
-    }),
-    prisma.userBook.findMany({
-      where: { userId: session.user.id, isFavorite: true },
-      orderBy: { updatedAt: "desc" },
-      include: { book: true },
-    }),
-    prisma.bookList.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      include: {
-        entries: {
-          orderBy: { order: "asc" },
-          take: 5,
-          include: { book: { select: { thumbnailUrl: true, title: true } } },
-        },
-        _count: { select: { entries: true } },
-      },
-    }),
-    prisma.readingEntry.findMany({
-      where: { isPublic: true, period: { userBook: { userId: session.user.id } } },
-      include: { period: { include: { userBook: { include: { book: true } } } } },
-      orderBy: { entryDate: "desc" },
-      take: 12
-    })
-  ]);
-  const userId = session.user.id;
-  const [earnedBadges, progress] = await Promise.all([
-    syncBadges(userId).then(() => getEarnedBadges(userId)),
-    getProgressSummary(userId)
-  ]);
-
-  return (
-    <div className="min-w-0 overflow-hidden">
-      {/* Header profil */}
-        <section className="mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
-          <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
-          <div className="grid min-w-0 gap-4 px-4 pb-5 sm:flex sm:items-end sm:gap-6 sm:px-7 sm:pb-7">
-            <div className="-mt-12 h-24 w-24 shrink-0 overflow-hidden rounded border-4 border-panel bg-ink sm:h-28 sm:w-28">
-              {user?.image ? (
-                <img src={user.image} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="grid h-full w-full place-items-center text-4xl font-black text-mint">
-                  {(user?.name ?? "B").slice(0, 1)}
-                </div>
-              )}
-            </div>
-            <div className="grid min-w-0 flex-1 gap-4 pb-1 sm:flex sm:items-end sm:justify-between">
-              <div className="min-w-0">
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
-                <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{user?.name ?? "Lecteur BooksBox"}</h1>
-                <p className="mt-2 text-sm text-muted">{user?.bio ?? "Profil simple V1 avec stats de lecture."}</p>
-              </div>
-              <EditProfileButton user={{ name: user?.name ?? null, bio: user?.bio ?? null, image: user?.image ?? null }} />
-            </div>
-          </div>
-        </section>
-
-      {/* Parcours */}
-      <Link href="/parcours" className="group mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded border border-line bg-panel/80 px-5 py-4 shadow-poster transition hover:border-mint/50">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-          <span className="inline-flex items-center gap-2"><LevelBadge level={progress.level.level} /><span className="font-black text-paper">{progress.level.title}</span></span>
-          <span className="w-40 max-w-full"><LevelBar level={progress.level} compact /></span>
-          <span className="inline-flex items-center gap-2 font-black text-paper"><Flame size={18} className={progress.streak ? "text-coral" : "text-muted"} aria-hidden />{progress.streak} {progress.streak > 1 ? "jours" : "jour"} de série</span>
-          <span className="inline-flex items-center gap-2 font-black text-paper"><Sparkles size={18} className="text-amber" aria-hidden />{progress.xpTotal.toLocaleString("fr-FR")} XP</span>
-          <span className="text-muted">Aujourd’hui : {progress.todayXp} / {progress.dailyGoal} XP</span>
-        </div>
-        <span className="inline-flex items-center gap-2 text-sm font-black text-mint group-hover:underline"><Route size={16} aria-hidden />{progress.journeyStartedAt ? "Voir mon parcours" : "Démarrer mon parcours"}</span>
-      </Link>
-
-      {/* Favoris */}
-      {favorites.length > 0 && (
-        <section className="mb-8">
-          <SectionHeader
-            eyebrow="Coups de cœur"
-            title="Mes favoris"
-            description="Les livres que tu as marqués comme coups de cœur."
-          />
-          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-10">
-            {favorites.map((entry) => (
-              <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} variant="poster" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Stats */}
-      <SectionHeader eyebrow="Stats" title="Activité" />
-      <div className="grid min-w-0 gap-4 xl:grid-cols-4">
-        {[
-          ["Livres", libraryCount],
-          ["Reviews", reviewCount],
-          ["Followers", followerCount],
-          ["Abonnements", followingCount],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
-            <div className="text-sm text-muted">{label}</div>
-            <div className="mt-2 text-3xl font-black text-paper">{value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Badges */}
-      <section id="badges" className="mt-9 min-w-0 scroll-mt-24">
-        <SectionHeader
-          eyebrow="Récompenses"
-          title="Mes badges"
-          description="Le plus haut palier obtenu pour chaque badge."
-          action={<Link href="/settings#badges" className="shrink-0 rounded border border-line bg-panel/60 px-4 py-2 text-xs font-black text-muted transition hover:border-mint/50 hover:text-mint">Tous les badges</Link>}
-        />
-        <BadgeShowcase badges={earnedBadges} emptyMessage="Aucun badge pour le moment. Termine un livre ou publie une review pour obtenir le premier." />
-      </section>
-
-      {/* Listes */}
-      <section className="mt-9 min-w-0 overflow-hidden">
-        <div className="grid gap-3 sm:flex sm:items-center sm:justify-between">
-          <SectionHeader
-            eyebrow="Collections"
-            title="Mes listes"
-            description="Tes sagas, thématiques et sélections personnelles."
-          />
-          <Link
-            href="/lists/new"
-            className="shrink-0 rounded border border-line bg-panel/60 px-4 py-2 text-xs font-black text-muted transition hover:border-mint/50 hover:text-mint"
-          >
-            + Nouvelle liste
-          </Link>
-        </div>
-        {lists.length > 0 ? (
-          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
-            {lists.map((list) => (
-              <ListCard key={list.id} list={list} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-            Aucune liste pour le moment.{" "}
-            <Link href="/lists/new" className="font-bold text-mint hover:underline">
-              Créer ta première liste →
-            </Link>
-          </div>
-        )}
-      </section>
-
-      <PublicReadingEntries entries={publicEntries} />
-
-      {/* Historique */}
-      <section className="mt-9 min-w-0 overflow-hidden">
-        <SectionHeader
-          eyebrow="Historique"
-          title="Derniers livres"
-          description="Les livres ajoutes ou mis a jour recemment dans ta bibliotheque."
-        />
-        {recentBooks.length ? (
-          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-10">
-            {recentBooks.map((entry) => (
-              <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} badge={entry.status} variant="poster" />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-            Aucun livre dans l'historique pour le moment.
-          </div>
-        )}
-      </section>
-
-  {/* Reviews */}
-      <section className="mt-9 min-w-0 overflow-hidden">
-        <SectionHeader
-          eyebrow="Reviews"
-          title="Dernieres reviews"
-          description="Tes avis les plus recents, avec reactions et commentaires."
-        />
-        {recentReviews.length ? (
-          <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-            {recentReviews.map((review) => (
-              <Link
-                key={review.id}
-                href={`/books/${review.bookId}`}
-                className="group rounded border border-line bg-panel/80 p-4 shadow-poster transition hover:border-mint/50 hover:bg-panelSoft sm:p-5"
-              >
-                <div className="flex min-w-0 gap-3 sm:gap-4">
-                  <div className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
-                    {review.book.thumbnailUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="line-clamp-1 text-sm font-black text-paper group-hover:text-mint transition">
-                      {review.book.title}
-                    </div>
-                    <div className="mt-2">
-                      <StarRating value={review.rating} />
-                    </div>
-                    {review.body ? (
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
-                        {review.spoiler ? "Review marquée comme spoiler." : review.body}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 text-xs font-bold text-muted">
-                      {review.reactions.length} réactions · {review.comments.length} commentaires
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-            Aucune review publiée pour le moment.
-          </div>
-        )}
-      </section>
-    </div>
-  );
+  return <ProfileView userId={session.user.id} viewerId={session.user.id} tab={parseProfileTab(params.tab)} basePath="/profile" />;
 }

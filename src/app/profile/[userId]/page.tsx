@@ -1,195 +1,39 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
-import { FollowButton } from "@/components/community/FollowButton";
-import { BookCard } from "@/components/books/BookCard";
-import { StarRating } from "@/components/reviews/StarRating";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
-import { ReportButton } from "@/components/moderation/ReportButton";
-import { BlockButton } from "@/components/community/BlockButton";
 import { areUsersBlocked } from "@/server/services/blocks";
-import { getEarnedBadges, syncBadges } from "@/server/services/progression";
-import { BadgeShowcase } from "@/components/progression/BadgeShowcase";
-import { LevelBadge } from "@/components/progression/LevelProgress";
-import { levelProgress } from "@/lib/progression";
+import { ProfileView, parseProfileTab } from "@/components/profile/ProfileView";
 
 export const dynamic = "force-dynamic";
 
-export default async function PublicProfilePage({ params }: { params: Promise<{ userId: string }> }) {
-  const session = await getServerSession(authOptions);
+export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
   const { userId } = await params;
-  if (session?.user?.id && await areUsersBlocked(session.user.id, userId)) notFound();
+  const user = await prisma.user.findUnique({ where: { id: userId, suspendedAt: null }, select: { name: true, username: true } });
+  return { title: user ? user.name ?? user.username ?? "Lecteur" : "Lecteur introuvable" };
+}
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, recentBooks, recentReviews, isFollowing, publicEntries] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId, suspendedAt: null }
-    }),
-    prisma.userBook.count({ where: { userId } }),
-    prisma.review.count({ where: { userId, hiddenAt: null } }),
-    prisma.follow.count({ where: { followingId: userId } }),
-    prisma.follow.count({ where: { followerId: userId } }),
-    prisma.userBook.findMany({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      take: 10,
-      include: { book: true }
-    }),
-    prisma.review.findMany({
-      where: { userId, hiddenAt: null },
-      orderBy: { updatedAt: "desc" },
-      take: 8,
-      include: { book: true, reactions: true, comments: { where: { hiddenAt: null, user: { suspendedAt: null } } } }
-    }),
-    session?.user?.id
-      ? prisma.follow.findUnique({
-          where: {
-            followerId_followingId: {
-              followerId: session.user.id,
-              followingId: userId
-            }
-          }
-        })
-      : Promise.resolve(null)
-    ,
-    prisma.readingEntry.findMany({
-      where: { isPublic: true, period: { userBook: { userId } } },
-      include: { period: { include: { userBook: { include: { book: true } } } } },
-      orderBy: { entryDate: "desc" },
-      take: 12
-    })
+export default async function PublicProfilePage({ params, searchParams }: { params: Promise<{ userId: string }>; searchParams: Promise<{ tab?: string }> }) {
+  const [session, { userId }, query] = await Promise.all([getServerSession(authOptions), params, searchParams]);
+  const viewerId = session?.user?.id ?? null;
+  if (viewerId && viewerId !== userId && (await areUsersBlocked(viewerId, userId))) notFound();
+
+  const [user, follow] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId, suspendedAt: null }, select: { id: true } }),
+    viewerId ? prisma.follow.findUnique({ where: { followerId_followingId: { followerId: viewerId, followingId: userId } } }) : null
   ]);
+  if (!user) notFound();
 
-  if (!user) {
-    notFound();
-  }
-
-  const isOwnProfile = session?.user?.id === userId;
-  // Rattrape les badges de l'historique (actions antérieures au système de badges).
-  await syncBadges(userId);
-  const [earnedBadges, stats] = await Promise.all([
-    getEarnedBadges(userId),
-    prisma.userStats.findUnique({ where: { userId }, select: { xpTotal: true } })
-  ]);
-  const level = levelProgress(stats?.xpTotal ?? 0);
-
+  // « Voir comme les autres » : son propre profil public s'affiche sans les commandes du propriétaire.
   return (
-    <div className="min-w-0 overflow-hidden">
-      <section className="mb-8 min-w-0 overflow-hidden rounded border border-line bg-gradient-to-br from-slateCard via-panel to-ink shadow-poster">
-        <div className="h-28 bg-gradient-to-r from-mint/40 via-sky/35 to-coral/40" />
-        <div className="grid min-w-0 gap-4 px-4 pb-5 sm:flex sm:items-end sm:justify-between sm:gap-6 sm:px-7 sm:pb-7">
-          <div className="grid min-w-0 gap-4 sm:flex sm:items-end sm:gap-6">
-            <div className="-mt-12 grid h-24 w-24 place-items-center rounded border-4 border-panel bg-ink text-3xl font-black text-mint sm:h-28 sm:w-28 sm:text-4xl">
-              {(user.name ?? user.username ?? "B").slice(0, 1)}
-            </div>
-            <div className="min-w-0 pb-1">
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-mint">Profil lecteur</div>
-              <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{user.name ?? user.username ?? "Lecteur BooksBox"}</h1>
-              <div className="mt-2 flex items-center gap-2 text-sm">
-                <LevelBadge level={level.level} />
-                <span className="font-bold text-muted">{level.title}</span>
-              </div>
-              <p className="mt-2 text-sm text-muted">
-                {user.username ? `@${user.username}` : "Lecteur de la communaute BooksBox"}
-              </p>
-              <p className="mt-2 max-w-2xl text-sm text-muted">{user.bio ?? "Aucune bio pour le moment."}</p>
-            </div>
-          </div>
-          {!isOwnProfile && session?.user?.id ? (
-            <div className="flex flex-wrap gap-2 pb-1">
-              <FollowButton userId={user.id} initiallyFollowing={Boolean(isFollowing)} />
-              <ReportButton targetType="USER" targetId={user.id} label="Signaler le profil" />
-              <BlockButton userId={user.id} userName={user.name ?? user.username ?? "Ce lecteur"} />
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      <PublicReadingEntries entries={publicEntries} />
-
-      <SectionHeader eyebrow="Stats" title="Activite" />
-      <div className="grid min-w-0 gap-4 xl:grid-cols-4">
-        {[
-          ["Livres", libraryCount],
-          ["Reviews", reviewCount],
-          ["Followers", followerCount],
-          ["Abonnements", followingCount]
-        ].map(([label, value]) => (
-          <div key={label} className="rounded border border-line bg-panel/80 p-5 shadow-poster">
-            <div className="text-sm text-muted">{label}</div>
-            <div className="mt-2 text-3xl font-black text-paper">{value}</div>
-          </div>
-        ))}
-      </div>
-
-      <section id="badges" className="mt-9 min-w-0 scroll-mt-24">
-        <SectionHeader eyebrow="Récompenses" title="Badges" description="Le plus haut palier obtenu pour chaque badge." />
-        <BadgeShowcase badges={earnedBadges} emptyMessage="Ce lecteur n’a pas encore de badge." />
-      </section>
-
-      <section className="mt-9 min-w-0 overflow-hidden">
-        <SectionHeader
-          eyebrow="Bibliotheque"
-          title="Derniers livres"
-          description="Les derniers livres ajoutes ou mis a jour par ce lecteur."
-        />
-        {recentBooks.length ? (
-          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-4 md:gap-5 xl:grid-cols-6 2xl:grid-cols-10">
-            {recentBooks.map((entry) => (
-              <BookCard key={entry.id} book={entry.book} href={`/books/${entry.bookId}`} badge={entry.status} variant="poster" />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-            Aucun livre dans l'historique pour le moment.
-          </div>
-        )}
-      </section>
-
-      <section className="mt-9 min-w-0 overflow-hidden">
-        <SectionHeader
-          eyebrow="Reviews"
-          title="Dernieres reviews"
-          description="Les derniers avis publies par ce lecteur."
-        />
-        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-          {recentReviews.map((review) => (
-            <article key={review.id} className="rounded border border-line bg-panel/80 p-4 shadow-poster sm:p-5">
-              <div className="flex min-w-0 gap-3 sm:gap-4">
-                <Link href={`/books/${review.bookId}`} className="h-24 w-16 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
-                  {review.book.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                  ) : null}
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <Link href={`/books/${review.bookId}`} className="line-clamp-1 text-sm font-black text-paper">
-                    {review.book.title}
-                  </Link>
-                  <div className="mt-2">
-                    <StarRating value={review.rating} />
-                  </div>
-                  {review.body ? (
-                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
-                      {review.spoiler ? "Review marquee comme spoiler." : review.body}
-                    </p>
-                  ) : null}
-                  <div className="mt-3 text-xs font-bold text-muted">
-                    {review.reactions.length} reactions - {review.comments.length} commentaires
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-        {!recentReviews.length ? (
-          <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-            Aucune review publiee pour le moment.
-          </div>
-        ) : null}
-      </section>
-    </div>
+    <ProfileView
+      userId={userId}
+      viewerId={viewerId === userId ? null : viewerId}
+      tab={parseProfileTab(query.tab)}
+      basePath={`/profile/${userId}`}
+      isFollowing={Boolean(follow)}
+      preview={viewerId === userId}
+    />
   );
 }

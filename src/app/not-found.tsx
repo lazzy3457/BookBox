@@ -7,10 +7,10 @@ export default function NotFound() {
       <div className="mx-auto grid h-14 w-14 place-items-center rounded border border-line bg-ink text-mint">
         <BookOpen size={24} />
       </div>
-      <div className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-mint">Page introuvable</div>
-      <h1 className="mt-2 text-3xl font-black text-paper">Cette page a quitté les rayonnages.</h1>
+      <div className="mt-6 text-xs font-extrabold uppercase tracking-[0.2em] text-mint">Page introuvable</div>
+      <h1 className="mt-2 text-3xl font-extrabold text-paper">Cette page a quitté les rayonnages.</h1>
       <p className="mt-3 text-muted">Le lien est peut-être ancien, privé ou n’existe plus.</p>
-      <Link href="/" className="mt-7 inline-flex rounded bg-mint px-5 py-3 text-sm font-black text-ink">
+      <Link href="/" className="mt-7 inline-flex rounded-full bg-mint px-5 py-3 text-sm font-extrabold text-ink">
         Revenir à l’accueil
       </Link>
     </section>

@@ -14,12 +14,12 @@ export function PublicReadingEntries({ entries }: {
 }) {
   if (!entries.length) return null;
   return (
-    <section className="mt-9">
-      <h2 className="mb-4 text-xl font-black text-paper">Journal public</h2>
+    <section className="flex flex-col gap-4">
+      <h2 className="bb-h2">Journal public</h2>
       <div className="grid gap-3 xl:grid-cols-2">
         {entries.map((entry) => (
           <article key={entry.id} className="rounded border border-line bg-panel/80 p-4">
-            <Link href={`/books/${entry.period.userBook.book.id}`} className="font-black text-paper hover:text-mint">{entry.period.userBook.book.title}</Link>
+            <Link href={`/books/${entry.period.userBook.book.id}`} className="font-extrabold text-paper hover:text-mint">{entry.period.userBook.book.title}</Link>
             <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-muted">
               <span className="inline-flex items-center gap-1"><CalendarDays size={12} />{entry.entryDate.toLocaleDateString("fr-FR")}</span>
               <span>{[entry.page ? `p. ${entry.page}` : null, entry.percentage != null ? `${entry.percentage}%` : null, entry.chapter].filter(Boolean).join(" · ")}</span>

@@ -41,7 +41,7 @@ export function ListReviews({ reviews }: { reviews: Review[] }) {
           {/* Lien vers le livre au-dessus de chaque review */}
           <Link
             href={`/books/${review.bookId}`}
-            className="mb-2 inline-flex max-w-full items-center gap-1.5 overflow-hidden text-xs font-black text-muted transition hover:text-mint"
+            className="mb-2 inline-flex max-w-full items-center gap-1.5 overflow-hidden text-xs font-extrabold text-muted transition hover:text-mint"
           >
             <span className="text-muted/50">↳</span>
             <span className="truncate">{review.bookTitle}</span>
@@ -63,7 +63,7 @@ export function ListReviews({ reviews }: { reviews: Review[] }) {
       {remaining > 0 && (
         <button
           onClick={() => setVisible((v) => v + INITIAL_COUNT)}
-          className="flex w-full items-center justify-center gap-2 rounded border border-line bg-panel/60 py-3 text-sm font-black text-muted transition hover:border-mint/40 hover:text-mint"
+          className="flex w-full items-center justify-center gap-2 rounded border border-line bg-panel/60 py-3 text-sm font-extrabold text-muted transition hover:border-mint/40 hover:text-mint"
         >
           <ChevronDown size={15} />
           Voir {Math.min(remaining, INITIAL_COUNT)} review{Math.min(remaining, INITIAL_COUNT) !== 1 ? "s" : ""} de plus

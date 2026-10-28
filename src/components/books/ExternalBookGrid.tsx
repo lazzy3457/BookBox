@@ -96,7 +96,7 @@ export function ExternalBookGrid({ books }: ExternalBookGridProps) {
                 >
                   <BookCard book={book} variant="poster" showScore={false} />
                 </button>
-                <div className="absolute left-2 top-2 rounded bg-ink/90 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-paper shadow-poster">
+                <div className="absolute left-2 top-2 rounded bg-ink/90 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-paper shadow-poster">
                   {sourceLabel(book)}
                 </div>
               </div>
@@ -109,7 +109,7 @@ export function ExternalBookGrid({ books }: ExternalBookGridProps) {
                 type="button"
                 onClick={() => openBook(book)}
                 disabled={isSaving}
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded border border-line bg-ink px-3 py-2 text-xs font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60"
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded border border-line bg-ink px-3 py-2 text-xs font-extrabold text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60"
               >
                 {isSaving ? <Plus size={14} /> : <ArrowRight size={14} />}
                 {isSaving ? "Ouverture..." : "Voir la fiche"}

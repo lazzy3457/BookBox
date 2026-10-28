@@ -12,12 +12,12 @@
 :root,
 [data-theme="cosy"] {
   color-scheme: light;
-  --c-ink: 243 234 221;
+  --c-ink: 245 237 225;
   --c-night: 236 225 210;
-  --c-panel: 255 253 249;
-  --c-panel-soft: 247 240 230;
+  --c-panel: 255 255 255;
+  --c-panel-soft: 239 227 211;
   --c-slate-card: 250 245 238;
-  --c-line: 229 216 199;
+  --c-line: 230 216 198;
   --c-paper: 43 29 23;
   --c-muted: 122 101 88;
   --c-mint: 122 46 58;
@@ -25,10 +25,10 @@
   --c-coral: 196 105 61;
   --c-amber: 196 134 42;
   --c-sky: 166 112 98;
-  --radius: 14px;
+  --radius: 16px;
   --font-body: var(--font-nunito), system-ui, sans-serif;
   --font-heading: var(--font-fraunces), Georgia, serif;
-  --shadow-poster: 0 14px 34px rgba(91, 48, 30, 0.1);
+  --shadow-poster: 0 8px 24px rgba(43, 29, 23, 0.08);
   --shadow-glow: 0 12px 30px rgba(122, 46, 58, 0.16);
   --cover-placeholder: linear-gradient(145deg, #7a2e3a 0%, #a2483f 48%, #c4693d 100%);
   --cover-text: 255 247 238;
@@ -164,5 +164,91 @@ select {
 
   to {
     transform: scaleX(0);
+  }
+}
+
+/*
+ * Briques de la refonte « cosy » (Figma BooksBox, composants « Components 2 »).
+ * Rayons : carte 16px, champ 12px, couverture 10px, pilule 999px.
+ */
+@layer components {
+  .bb-card {
+    @apply rounded border border-line bg-panel shadow-poster;
+  }
+
+  .bb-card-flat {
+    @apply rounded border border-line bg-panel;
+  }
+
+  .bb-eyebrow {
+    @apply text-xs font-extrabold uppercase tracking-[0.14em] text-mint;
+  }
+
+  .bb-label {
+    @apply text-[11px] font-extrabold uppercase tracking-[0.1em];
+  }
+
+  .bb-h1 {
+    @apply font-display text-[30px] font-semibold leading-tight text-paper;
+  }
+
+  .bb-h2 {
+    @apply font-display text-2xl font-semibold leading-snug text-paper;
+  }
+
+  .bb-h3 {
+    @apply font-display text-lg font-semibold leading-snug text-paper;
+  }
+
+  .bb-btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-extrabold leading-snug transition disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .bb-btn-primary {
+    @apply bb-btn bg-mint text-ink hover:bg-lime;
+  }
+
+  .bb-btn-soft {
+    @apply bb-btn bg-ink text-mint hover:bg-panelSoft;
+  }
+
+  .bb-btn-outline {
+    @apply bb-btn border border-line bg-panel text-paper hover:border-mint/50 hover:text-mint;
+  }
+
+  .bb-btn-ghost {
+    @apply bb-btn text-muted hover:bg-panelSoft/60 hover:text-paper;
+  }
+
+  .bb-chip {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-panel px-3.5 py-1.5 text-[13px] font-bold text-paper transition hover:border-mint/50;
+  }
+
+  .bb-chip-active {
+    @apply border-mint bg-mint text-ink hover:border-mint;
+  }
+
+  .bb-tab {
+    @apply inline-flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-1 pb-3 pt-1 text-sm font-bold text-muted transition hover:text-paper;
+  }
+
+  .bb-tab-active {
+    @apply border-mint text-mint hover:text-mint;
+  }
+
+  .bb-input {
+    @apply w-full rounded-xl border border-line bg-panel px-4 py-2.5 text-sm text-paper outline-none transition placeholder:text-muted/70 focus:border-mint/60 focus:ring-2 focus:ring-mint/15;
+  }
+
+  .bb-cover {
+    @apply cover-placeholder overflow-hidden rounded-[10px];
+  }
+
+  .bb-badge {
+    @apply inline-flex items-center rounded-full bg-mint/10 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.1em] text-mint;
+  }
+
+  .bb-track {
+    @apply h-2 overflow-hidden rounded-full bg-panelSoft;
   }
 }

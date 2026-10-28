@@ -32,18 +32,18 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
           <div className="cover-placeholder flex h-full flex-col justify-between p-4">
             <BookOpen className="opacity-70" />
             <div>
-              <div className="font-display line-clamp-4 text-base font-black leading-tight">{book.title}</div>
+              <div className="font-display line-clamp-4 text-base font-extrabold leading-tight">{book.title}</div>
               <div className="mt-2 h-1 w-10 rounded bg-mint" />
             </div>
           </div>
         )}
       </div>
       <div className="mt-3 min-w-0">
-        {badge ? <div className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-mint">{badge}</div> : null}
-        <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper">{book.title}</h3>
+        {badge ? <div className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-mint">{badge}</div> : null}
+        <h3 className="line-clamp-2 text-sm font-extrabold leading-tight text-paper">{book.title}</h3>
         <p className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
         {showScore && typeof book.score === "number" ? (
-          <div className="mt-2 inline-flex rounded bg-amber/15 px-2 py-1 text-xs font-black text-amber">
+          <div className="mt-2 inline-flex rounded bg-amber/15 px-2 py-1 text-xs font-extrabold text-amber">
             Score {book.score}
           </div>
         ) : null}
@@ -69,8 +69,8 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
           )}
         </div>
         <div className="min-w-0 flex-1">
-          {badge ? <div className="mb-2 inline-flex rounded bg-mint/10 px-2 py-1 text-xs font-black text-mint">{badge}</div> : null}
-          <h3 className="line-clamp-2 text-sm font-black leading-tight text-paper min-[360px]:text-base sm:text-lg">{book.title}</h3>
+          {badge ? <div className="mb-2 inline-flex rounded bg-mint/10 px-2 py-1 text-xs font-extrabold text-mint">{badge}</div> : null}
+          <h3 className="line-clamp-2 text-sm font-extrabold leading-tight text-paper min-[360px]:text-base sm:text-lg">{book.title}</h3>
           <p className="mt-2 line-clamp-2 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
           {book.publishedDate ? <p className="mt-3 text-xs text-muted/70">{book.publishedDate}</p> : null}
           {showScore && typeof book.score === "number" ? (

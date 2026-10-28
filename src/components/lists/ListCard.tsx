@@ -54,7 +54,7 @@ export function ListCard({ list }: Props) {
 
         {/* Badge note */}
         {list.rating != null && (
-          <div className="absolute bottom-2 right-2 rounded bg-ink/80 px-2 py-0.5 text-xs font-black text-amber backdrop-blur-sm">
+          <div className="absolute bottom-2 right-2 rounded bg-ink/80 px-2 py-0.5 text-xs font-extrabold text-amber backdrop-blur-sm">
             {list.rating}/5
           </div>
         )}
@@ -67,7 +67,7 @@ export function ListCard({ list }: Props) {
             ? <Globe size={11} className="shrink-0 text-muted/60" />
             : <Lock size={11} className="shrink-0 text-muted/60" />
           }
-          <h3 className="min-w-0 flex-1 truncate text-sm font-black text-paper transition group-hover:text-mint">
+          <h3 className="min-w-0 flex-1 truncate text-sm font-extrabold text-paper transition group-hover:text-mint">
             {list.title}
           </h3>
         </div>

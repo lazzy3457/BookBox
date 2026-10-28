@@ -88,7 +88,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
               </button>
             )}
             <List size={16} className="text-mint" />
-            <span className="text-sm font-black text-paper">
+            <span className="text-sm font-extrabold text-paper">
               {view === "lists" ? "Ajouter à une liste" : "Nouvelle liste"}
             </span>
           </div>
@@ -135,7 +135,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
                           }`}
                       >
                         <div>
-                          <div className="text-sm font-black">{list.title}</div>
+                          <div className="text-sm font-extrabold">{list.title}</div>
                           <div className="mt-0.5 text-xs text-muted">
                             {list._count.entries} livre{list._count.entries !== 1 ? "s" : ""} · {list.isPublic ? "Publique" : "Privée"}
                           </div>
@@ -151,7 +151,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
             /* Formulaire création */
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+                <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
                   Titre <span className="text-coral">*</span>
                 </label>
                 <input
@@ -164,7 +164,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+                <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
                   Description
                 </label>
                 <textarea
@@ -178,7 +178,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
 
               <div className="flex items-center justify-between rounded border border-line bg-panelSoft/50 px-4 py-3">
                 <div>
-                  <div className="text-sm font-black text-paper">Publique</div>
+                  <div className="text-sm font-extrabold text-paper">Publique</div>
                   <div className="text-xs text-muted">Visible par les autres utilisateurs</div>
                 </div>
                 <button
@@ -192,7 +192,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
               <button
                 onClick={handleCreate}
                 disabled={!title.trim() || pending}
-                className="flex w-full items-center justify-center gap-2 rounded bg-mint px-4 py-3 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-mint px-4 py-3 text-sm font-extrabold text-ink transition hover:bg-mint/90 disabled:opacity-50"
               >
                 {pending ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
                 Créer et ajouter

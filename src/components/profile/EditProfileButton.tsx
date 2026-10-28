@@ -19,7 +19,7 @@ export function EditProfileButton({ user }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded border border-line bg-panel/60 px-4 py-2 text-xs font-black text-muted transition hover:border-mint/50 hover:text-mint"
+        className="bb-btn-soft px-4 py-2 text-xs"
       >
         <Pencil size={13} />
         Modifier le profil

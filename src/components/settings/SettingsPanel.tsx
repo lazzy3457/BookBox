@@ -84,7 +84,7 @@ export function SettingsPanel() {
                 <item.icon size={20} />
               </div>
               <div>
-                <h2 className="text-base font-black text-paper">{item.title}</h2>
+                <h2 className="text-base font-extrabold text-paper">{item.title}</h2>
                 <p className="mt-1 max-w-xl text-sm leading-6 text-muted">{item.description}</p>
               </div>
             </div>
@@ -111,7 +111,7 @@ export function SettingsPanel() {
           <div className="grid h-11 w-11 place-items-center rounded bg-sky/12 text-sky">
             <Shield size={20} />
           </div>
-          <h2 className="mt-4 text-lg font-black text-paper">Confidentialite</h2>
+          <h2 className="mt-4 text-lg font-extrabold text-paper">Confidentialite</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
             Les entrées du journal sont privées par défaut. Tu peux bloquer des comptes, exporter tes données et supprimer ton compte à tout moment.
           </p>
@@ -121,7 +121,7 @@ export function SettingsPanel() {
           <div className="grid h-11 w-11 place-items-center rounded bg-amber/12 text-amber">
             <Sparkles size={20} />
           </div>
-          <h2 className="mt-4 text-lg font-black text-paper">Compte</h2>
+          <h2 className="mt-4 text-lg font-extrabold text-paper">Compte</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
             Ton pseudo, ta bio et ton avatar peuvent être modifiés depuis ton profil. Les contrôles d’export et de suppression sont disponibles plus bas.
           </p>

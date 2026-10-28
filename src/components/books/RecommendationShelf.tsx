@@ -62,7 +62,7 @@ export function RecommendationShelf({ initialItems, compact = false }: { initial
                 <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
               ) : <div className="grid h-full place-items-center"><BookOpen className="text-muted" /></div>}
             </div>
-            <h3 className="mt-3 line-clamp-2 text-sm font-black leading-tight text-paper">{book.title}</h3>
+            <h3 className="mt-3 line-clamp-2 text-sm font-extrabold leading-tight text-paper">{book.title}</h3>
             <p className="mt-1 line-clamp-1 text-xs text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
           </Link>
           <p className="mt-2 text-[11px] font-bold text-mint">{reason}</p>

@@ -37,7 +37,7 @@ export function EditProfileModal({ user, onClose }: Props) {
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div className="flex items-center gap-2">
             <User size={16} className="text-mint" />
-            <span className="text-sm font-black text-paper">Modifier le profil</span>
+            <span className="text-sm font-extrabold text-paper">Modifier le profil</span>
           </div>
           <button onClick={onClose} className="text-muted hover:text-paper transition">
             <X size={18} />
@@ -48,7 +48,7 @@ export function EditProfileModal({ user, onClose }: Props) {
         <div className="space-y-4 p-5">
           {/* Avatar preview */}
           <div className="flex items-center gap-4">
-            <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-ink text-2xl font-black text-mint">
+            <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-ink text-2xl font-extrabold text-mint">
               {image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={image} alt="" className="h-full w-full object-cover" />
@@ -57,7 +57,7 @@ export function EditProfileModal({ user, onClose }: Props) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+              <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
                 URL de la photo
               </label>
               <input
@@ -72,7 +72,7 @@ export function EditProfileModal({ user, onClose }: Props) {
 
           {/* Pseudo */}
           <div>
-            <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+            <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
               Pseudo <span className="text-coral">*</span>
             </label>
             <input
@@ -85,7 +85,7 @@ export function EditProfileModal({ user, onClose }: Props) {
 
           {/* Bio */}
           <div>
-            <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+            <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
               Bio
             </label>
             <textarea
@@ -103,14 +103,14 @@ export function EditProfileModal({ user, onClose }: Props) {
           <div className="flex gap-3 pt-1">
             <button
               onClick={onClose}
-              className="rounded border border-line px-4 py-2.5 text-sm font-black text-muted transition hover:text-paper"
+              className="rounded border border-line px-4 py-2.5 text-sm font-extrabold text-muted transition hover:text-paper"
             >
               Annuler
             </button>
             <button
               onClick={handleSave}
               disabled={!name.trim() || pending}
-              className="flex flex-1 items-center justify-center gap-2 rounded bg-mint px-4 py-2.5 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-mint px-4 py-2.5 text-sm font-extrabold text-ink transition hover:bg-mint/90 disabled:opacity-50"
             >
               {pending ? <Loader2 size={15} className="animate-spin" /> : null}
               Sauvegarder

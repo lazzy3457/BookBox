@@ -84,7 +84,7 @@ function SortableEntry({
         <GripVertical size={16} />
       </button>
 
-      <div className="w-6 shrink-0 text-center text-sm font-black text-muted/50">
+      <div className="w-6 shrink-0 text-center text-sm font-extrabold text-muted/50">
         {index + 1}
       </div>
 
@@ -96,7 +96,7 @@ function SortableEntry({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-sm font-black text-paper">{entry.book.title}</div>
+        <div className="line-clamp-1 text-sm font-extrabold text-paper">{entry.book.title}</div>
         <div className="text-xs text-muted">{entry.book.authors.join(", ") || "Auteur inconnu"}</div>
       </div>
 
@@ -173,7 +173,7 @@ export function EditListForm({ list }: Props) {
       {/* Infos de la liste */}
       <div className="space-y-5 rounded border border-line bg-panel/80 p-7 shadow-poster">
         <div>
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+          <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
             Titre <span className="text-coral">*</span>
           </label>
           <input
@@ -185,7 +185,7 @@ export function EditListForm({ list }: Props) {
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+          <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
             Description
           </label>
           <textarea
@@ -197,7 +197,7 @@ export function EditListForm({ list }: Props) {
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+          <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
             Note globale
           </label>
           <div className="flex items-center gap-1">
@@ -220,7 +220,7 @@ export function EditListForm({ list }: Props) {
               );
             })}
             {rating != null && (
-              <span className="ml-2 text-sm font-black text-amber">{rating}/5</span>
+              <span className="ml-2 text-sm font-extrabold text-amber">{rating}/5</span>
             )}
             {rating != null && (
               <button onClick={() => setRating(null)} className="ml-2 text-xs text-muted hover:text-paper transition">
@@ -232,7 +232,7 @@ export function EditListForm({ list }: Props) {
 
         <div className="flex items-center justify-between rounded border border-line bg-panelSoft/50 px-5 py-4">
           <div>
-            <div className="text-sm font-black text-paper">
+            <div className="text-sm font-extrabold text-paper">
               {isPublic ? "Liste publique" : "Liste privée"}
             </div>
             <div className="mt-0.5 text-xs text-muted">
@@ -250,14 +250,14 @@ export function EditListForm({ list }: Props) {
         <div className="flex gap-3 pt-2">
           <button
             onClick={() => router.back()}
-            className="rounded border border-line px-5 py-3 text-sm font-black text-muted transition hover:border-line/80 hover:text-paper"
+            className="rounded border border-line px-5 py-3 text-sm font-extrabold text-muted transition hover:border-line/80 hover:text-paper"
           >
             Annuler
           </button>
           <button
             onClick={handleSave}
             disabled={!title.trim() || pending}
-            className="flex flex-1 items-center justify-center gap-2 rounded bg-mint px-5 py-3 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-mint px-5 py-3 text-sm font-extrabold text-ink transition hover:bg-mint/90 disabled:opacity-50"
           >
             {pending ? <Loader2 size={16} className="animate-spin" /> : null}
             Sauvegarder
@@ -267,7 +267,7 @@ export function EditListForm({ list }: Props) {
 
       {/* Livres de la liste */}
       <div className="rounded border border-line bg-panel/80 p-7 shadow-poster">
-        <h2 className="mb-1 text-sm font-black uppercase tracking-[0.16em] text-muted">
+        <h2 className="mb-1 text-sm font-extrabold uppercase tracking-[0.16em] text-muted">
           Livres dans la liste ({entries.length})
         </h2>
         <p className="mb-4 text-xs text-muted/60">Glisse pour réordonner.</p>
@@ -295,14 +295,14 @@ export function EditListForm({ list }: Props) {
 
       {/* Danger zone */}
       <div className="rounded border border-coral/20 bg-panel/80 p-7 shadow-poster">
-        <h2 className="mb-2 text-sm font-black uppercase tracking-[0.16em] text-coral">
+        <h2 className="mb-2 text-sm font-extrabold uppercase tracking-[0.16em] text-coral">
           Zone de danger
         </h2>
         <p className="mb-4 text-sm text-muted">La suppression est définitive et irréversible.</p>
         {!showConfirmDelete ? (
           <button
             onClick={() => setShowConfirmDelete(true)}
-            className="flex items-center gap-2 rounded border border-coral/40 px-4 py-2.5 text-sm font-black text-coral transition hover:bg-coral/10"
+            className="flex items-center gap-2 rounded border border-coral/40 px-4 py-2.5 text-sm font-extrabold text-coral transition hover:bg-coral/10"
           >
             <Trash2 size={15} />
             Supprimer la liste
@@ -313,7 +313,7 @@ export function EditListForm({ list }: Props) {
             <button
               onClick={handleDelete}
               disabled={pending}
-              className="flex items-center gap-2 rounded bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral/80 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-full bg-coral px-4 py-2 text-sm font-extrabold text-white transition hover:bg-coral/80 disabled:opacity-50"
             >
               {pending ? <Loader2 size={14} className="animate-spin" /> : null}
               Oui, supprimer

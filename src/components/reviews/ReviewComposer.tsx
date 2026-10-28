@@ -54,15 +54,15 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
 
     setBody("");
     setSpoiler(false);
-    setToast({ tone: "success", message: "Ta review est publiee." });
+    setToast({ tone: "success", message: "Ton avis est publié." });
     router.refresh();
   }
 
   return (
-    <form onSubmit={submitReview} className="w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/90 p-4 shadow-poster sm:p-5">
+    <form onSubmit={submitReview} className="bb-card w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-5">
       <div className="mb-4 grid min-w-0 gap-4 sm:flex sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-black text-paper">Publier une review</h2>
+          <h2 className="bb-h3">Mon avis</h2>
           <p className="mt-1 text-sm text-muted">La note suffit, le texte peut venir plus tard.</p>
         </div>
         <RatingControl value={rating} onChange={setRating} />
@@ -71,7 +71,7 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
       <textarea
         value={body}
         onChange={(event) => setBody(event.target.value)}
-        className="min-h-32 w-full resize-y rounded border border-line bg-ink px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/45 focus:border-mint"
+        className="min-h-32 w-full resize-y rounded-xl border border-line bg-ink px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/45 focus:border-mint"
         placeholder="Une impression, une phrase, ou rien du tout."
       />
 
@@ -83,15 +83,15 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
         <button
           type="submit"
           disabled={isSaving || hasUserReview}
-          className="inline-flex w-full items-center justify-center gap-2 rounded bg-mint px-4 py-2 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-60 sm:w-auto"
+          className="bb-btn-primary w-full px-5 py-2.5 text-sm sm:w-auto"
         >
           <Send size={16} />
-          {hasUserReview ? "Review deja publiee" : isSaving ? "Publication..." : "Publier"}
+          {hasUserReview ? "Avis déjà publié" : isSaving ? "Publication..." : "Publier"}
         </button>
       </div>
 
       {hasUserReview ? (
-        <p className="mt-3 rounded border border-line bg-ink/55 px-3 py-2 text-sm text-muted">
+        <p className="mt-3 rounded-xl bg-ink px-3 py-2 text-sm text-muted">
           Tu ne peux publier qu'une seule review par livre. Tu peux modifier ta review existante plus bas.
         </p>
       ) : null}

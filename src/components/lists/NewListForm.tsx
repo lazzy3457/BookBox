@@ -32,7 +32,7 @@ export function NewListForm() {
     <div className="space-y-5 rounded border border-line bg-panel/80 p-7 shadow-poster">
       {/* Titre */}
       <div>
-        <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+        <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
           Titre <span className="text-coral">*</span>
         </label>
         <input
@@ -46,7 +46,7 @@ export function NewListForm() {
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+        <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
           Description
         </label>
         <textarea
@@ -60,7 +60,7 @@ export function NewListForm() {
 
       {/* Note globale */}
       <div>
-        <label className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-muted">
+        <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
           Note globale
         </label>
         <div className="flex items-center gap-1">
@@ -83,7 +83,7 @@ export function NewListForm() {
             );
           })}
           {rating != null && (
-            <span className="ml-2 text-sm font-black text-amber">{rating}/5</span>
+            <span className="ml-2 text-sm font-extrabold text-amber">{rating}/5</span>
           )}
           {rating != null && (
             <button
@@ -99,7 +99,7 @@ export function NewListForm() {
       {/* Visibilité */}
       <div className="flex items-center justify-between rounded border border-line bg-panelSoft/50 px-5 py-4">
         <div>
-          <div className="text-sm font-black text-paper">
+          <div className="text-sm font-extrabold text-paper">
             {isPublic ? "Liste publique" : "Liste privée"}
           </div>
           <div className="mt-0.5 text-xs text-muted">
@@ -122,14 +122,14 @@ export function NewListForm() {
       <div className="flex gap-3 pt-2">
         <button
           onClick={() => router.back()}
-          className="rounded border border-line px-5 py-3 text-sm font-black text-muted transition hover:border-line/80 hover:text-paper"
+          className="rounded border border-line px-5 py-3 text-sm font-extrabold text-muted transition hover:border-line/80 hover:text-paper"
         >
           Annuler
         </button>
         <button
           onClick={handleSubmit}
           disabled={!title.trim() || pending}
-          className="flex flex-1 items-center justify-center gap-2 rounded bg-mint px-5 py-3 text-sm font-black text-ink transition hover:bg-mint/90 disabled:opacity-50"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-mint px-5 py-3 text-sm font-extrabold text-ink transition hover:bg-mint/90 disabled:opacity-50"
         >
           {pending
             ? <Loader2 size={16} className="animate-spin" />

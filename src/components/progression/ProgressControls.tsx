@@ -42,8 +42,8 @@ export function DailyGoalPicker({ dailyGoal }: { dailyGoal: number }) {
           <button key={option.value} type="button" role="radio" aria-checked={goal === option.value} disabled={saving} onClick={() => select(option.value)}
             className={`rounded border p-3 text-left transition disabled:cursor-wait ${goal === option.value ? "border-mint bg-mint/10" : "border-line bg-ink/40 hover:border-mint/50"}`}>
             <span className="flex items-baseline justify-between gap-2">
-              <span className="font-black text-paper">{option.label}</span>
-              <span className="text-sm font-black tabular-nums text-mint">{option.value} XP</span>
+              <span className="font-extrabold text-paper">{option.label}</span>
+              <span className="text-sm font-extrabold tabular-nums text-mint">{option.value} XP</span>
             </span>
             <span className="mt-1 block text-xs text-muted">Par exemple {option.hint}.</span>
           </button>
@@ -73,7 +73,7 @@ export function StartJourneyButton() {
 
   return (
     <div>
-      <button type="button" onClick={start} disabled={pending} className="inline-flex items-center gap-2 rounded bg-mint px-5 py-3 font-black text-ink transition hover:bg-lime disabled:opacity-60">
+      <button type="button" onClick={start} disabled={pending} className="inline-flex items-center gap-2 rounded-full bg-mint px-5 py-3 font-extrabold text-ink transition hover:bg-lime disabled:opacity-60">
         <Flag size={17} aria-hidden />
         {pending ? "Démarrage…" : "Démarrer mon parcours"}
       </button>

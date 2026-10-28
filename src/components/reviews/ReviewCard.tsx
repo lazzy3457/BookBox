@@ -57,7 +57,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   }
 
   const userAvatar = (
-    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded bg-mint text-sm font-black text-ink">
+    <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-mint text-sm font-extrabold text-ink">
       {review.userImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={review.userImage} alt="" className="h-full w-full object-cover" />
@@ -67,7 +67,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     </span>
   );
 
-  const userName = <span className="font-black text-paper">{review.userName}</span>;
+  const userName = <span className="font-display text-base font-semibold text-paper">{review.userName}</span>;
 
   async function toggleReviewLike() {
     const response = await fetch(`/api/reviews/${review.id}/reactions`, {
@@ -232,7 +232,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   }
 
   return (
-    <article className="w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/82 p-4 shadow-poster sm:p-5">
+    <article className="bb-card w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-5">
       <div className="grid min-w-0 gap-3 sm:flex sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-start gap-3">
           {review.userId ? (
@@ -257,7 +257,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {spoiler ? (
-            <div className="inline-flex items-center gap-1 rounded bg-coral/15 px-2 py-1 text-xs font-bold text-coral">
+            <div className="inline-flex items-center gap-1 rounded-full bg-coral/15 px-2 py-1 text-xs font-bold text-coral">
               <TriangleAlert size={13} />
               Spoiler
             </div>
@@ -267,7 +267,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
               <button
                 type="button"
                 onClick={() => setIsEditing((current) => !current)}
-                className="grid h-8 w-8 place-items-center rounded border border-line text-muted transition hover:border-mint hover:text-mint"
+                className="grid h-8 w-8 place-items-center rounded-full border border-line text-muted transition hover:border-mint hover:text-mint"
                 title="Editer"
               >
                 <Edit3 size={14} />
@@ -275,7 +275,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
               <button
                 type="button"
                 onClick={deleteReview}
-                className="grid h-8 w-8 place-items-center rounded border border-line text-muted transition hover:border-coral hover:text-coral"
+                className="grid h-8 w-8 place-items-center rounded-full border border-line text-muted transition hover:border-coral hover:text-coral"
                 title="Supprimer"
               >
                 <Trash2 size={14} />
@@ -286,22 +286,22 @@ export function ReviewCard({ review }: ReviewCardProps) {
       </div>
 
       {isEditing ? (
-        <form onSubmit={saveReview} className="mt-4 rounded border border-line bg-ink/55 p-4">
+        <form onSubmit={saveReview} className="mt-4 rounded-xl bg-ink p-4">
           <RatingControl value={rating} onChange={setRating} />
           <textarea
             value={reviewBody}
             onChange={(event) => setReviewBody(event.target.value)}
-            className="mt-3 min-h-28 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm text-paper outline-none focus:border-mint"
+            className="mt-3 min-h-28 w-full resize-y rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper outline-none focus:border-mint"
           />
           <label className="mt-3 flex items-center gap-2 text-sm text-muted">
             <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
             Contient des spoilers
           </label>
           <div className="mt-3 flex gap-2">
-            <button disabled={isSaving} className="rounded bg-mint px-3 py-2 text-xs font-black text-ink">
+            <button disabled={isSaving} className="bb-btn-primary px-3 py-1.5 text-xs">
               {isSaving ? "Enregistrement..." : "Enregistrer"}
             </button>
-            <button type="button" onClick={() => setIsEditing(false)} className="rounded border border-line px-3 py-2 text-xs font-bold text-muted">
+            <button type="button" onClick={() => setIsEditing(false)} className="bb-btn-ghost px-3 py-1.5 text-xs">
               Annuler
             </button>
           </div>
@@ -309,24 +309,24 @@ export function ReviewCard({ review }: ReviewCardProps) {
       ) : reviewBody ? (
         <div className="mt-4">
           {isRevealed ? (
-            <p className="leading-7 text-paper/75">{reviewBody}</p>
+            <p className="text-sm leading-relaxed text-paper">{reviewBody}</p>
           ) : (
-            <div className="rounded border border-coral/30 bg-coral/8 p-4">
-              <p className="text-sm text-muted">Cette review contient des spoilers.</p>
+            <div className="rounded-xl border border-coral/30 bg-coral/5 p-4">
+              <p className="text-sm text-muted">Cet avis contient des spoilers.</p>
               <button
                 type="button"
                 onClick={() => setIsRevealed(true)}
-                className="mt-3 inline-flex items-center gap-2 rounded bg-coral px-3 py-2 text-xs font-black text-white"
+                className="mt-3 bb-btn bg-coral px-3 py-1.5 text-xs text-white"
               >
                 <Eye size={14} />
-                Reveler la review
+                Révéler l'avis
               </button>
             </div>
           )}
         </div>
       ) : null}
 
-      <div className="mt-5 flex min-w-0 flex-wrap gap-4 border-b border-line pb-4 text-xs font-bold text-muted">
+      <div className="mt-4 flex min-w-0 flex-wrap gap-4 border-b border-line pb-4 text-xs font-bold text-muted">
         <button type="button" onClick={toggleReviewLike} className="inline-flex items-center gap-1 transition hover:text-mint">
           <ThumbsUp size={14} /> {likesCount}
         </button>
@@ -337,15 +337,15 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
       <div className="mt-4 space-y-3">
         {comments.map((comment) => (
-          <div key={comment.id} className="min-w-0 overflow-hidden rounded border border-line bg-ink/55 px-3 py-2">
+          <div key={comment.id} className="min-w-0 overflow-hidden rounded-xl bg-ink px-3 py-2">
             <div className="grid min-w-0 gap-2 sm:flex sm:items-start sm:justify-between sm:gap-3">
-              <div className="text-xs font-black text-paper">{comment.userName}</div>
+              <div className="text-xs font-extrabold text-paper">{comment.userName}</div>
               {comment.canManage ? (
                 <div className="flex gap-1">
                   <button
                     type="button"
                     onClick={() => startEditComment(comment)}
-                    className="grid h-7 w-7 place-items-center rounded border border-line text-muted transition hover:border-mint hover:text-mint"
+                    className="grid h-7 w-7 place-items-center rounded-full border border-line text-muted transition hover:border-mint hover:text-mint"
                     title="Editer le commentaire"
                   >
                     <Edit3 size={12} />
@@ -353,7 +353,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
                   <button
                     type="button"
                     onClick={() => deleteComment(comment.id)}
-                    className="grid h-7 w-7 place-items-center rounded border border-line text-muted transition hover:border-coral hover:text-coral"
+                    className="grid h-7 w-7 place-items-center rounded-full border border-line text-muted transition hover:border-coral hover:text-coral"
                     title="Supprimer le commentaire"
                   >
                     <Trash2 size={12} />
@@ -366,20 +366,20 @@ export function ReviewCard({ review }: ReviewCardProps) {
                 <textarea
                   value={editingCommentBody}
                   onChange={(event) => setEditingCommentBody(event.target.value)}
-                  className="min-h-20 w-full resize-y rounded border border-line bg-ink px-3 py-2 text-sm text-paper outline-none focus:border-mint"
+                  className="min-h-20 w-full resize-y rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper outline-none focus:border-mint"
                 />
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
                     onClick={() => saveComment(comment.id)}
-                    className="rounded bg-mint px-3 py-1.5 text-xs font-black text-ink"
+                    className="bb-btn-primary px-3 py-1.5 text-xs"
                   >
                     Enregistrer
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditingCommentId(null)}
-                    className="rounded border border-line px-3 py-1.5 text-xs font-bold text-muted"
+                    className="bb-btn-ghost px-3 py-1.5 text-xs"
                   >
                     Annuler
                   </button>
@@ -404,12 +404,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
         <input
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          className="h-10 min-w-0 flex-1 rounded border border-line bg-ink px-3 text-sm text-paper outline-none placeholder:text-muted/45 focus:border-mint"
+          className="h-10 min-w-0 flex-1 rounded-full border border-line bg-ink px-4 text-sm text-paper outline-none placeholder:text-muted/45 focus:border-mint"
           placeholder="Ajouter un commentaire..."
         />
         <button
           disabled={isSaving}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded bg-mint px-3 text-xs font-black text-ink disabled:opacity-60"
+          className="bb-btn-primary h-10 px-4 text-xs"
         >
           <Send size={14} />
           {isSaving ? "Envoi..." : "Commenter"}

@@ -15,7 +15,7 @@ export function ActivityCalendar({ today, days, dailyGoal }: { today: string; da
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-black text-muted" aria-hidden>
+      <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-extrabold text-muted" aria-hidden>
         {weekdays.map((weekday, index) => <span key={index}>{weekday}</span>)}
       </div>
       <ol className="mt-1.5 grid grid-cols-7 gap-1.5">

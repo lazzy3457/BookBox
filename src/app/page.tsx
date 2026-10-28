@@ -1,199 +1,323 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
-import { BookOpenCheck, MessageSquareText, Search, ThumbsUp } from "lucide-react";
+import { ReadingStatus } from "@prisma/client";
+import { BookHeart, MessageSquareText, Plus, Quote, Search, Star } from "lucide-react";
 import { authOptions } from "@/server/auth/options";
-import { getFriendActivity, getTopReviewsLast24Hours } from "@/server/services/feed";
+import { prisma } from "@/server/db/prisma";
+import { getFriendActivity } from "@/server/services/feed";
 import { getTrendingBooks } from "@/server/services/trending";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { BookCard } from "@/components/books/BookCard";
-import { CoverShelf } from "@/components/books/CoverShelf";
-import { ActivityFeedPreview } from "@/components/activity/ActivityFeedPreview";
+import { Avatar } from "@/components/ui/Avatar";
+import { BookCover } from "@/components/books/BookCover";
 import { StarRating } from "@/components/reviews/StarRating";
-import { getRecommendations } from "@/server/services/recommendations";
-import { RecommendationShelf } from "@/components/books/RecommendationShelf";
+import { CurrentReadCard } from "@/components/home/CurrentReadCard";
+import { FriendActivity, type FriendActivityItem } from "@/components/activity/FriendActivity";
+import { daysSince, greeting, plural, timeAgo } from "@/lib/format";
+import { GENRES, genreLabel } from "@/lib/genres";
 
 export const dynamic = "force-dynamic";
 
+type TrendingBook = Awaited<ReturnType<typeof getTrendingBooks>>[number];
+
+const heroGenres = ["fantasy", "science-fiction", "romance", "thriller", "policier", "classique", "bd-manga"];
+
+const statusActions: Record<ReadingStatus, string> = {
+  READING: "a commencé",
+  READ: "a terminé",
+  TO_READ: "veut lire",
+  ABANDONED: "a abandonné"
+};
+
+function excerpt(body: string | null, spoiler: boolean, max = 180) {
+  if (!body) return null;
+  if (spoiler) return "Cet avis contient des spoilers.";
+  return body.length > max ? `${body.slice(0, max).trimEnd()}…` : body;
+}
+
+function readersLabel(book: TrendingBook) {
+  return plural(new Set(book.libraries.map((entry) => entry.userId)).size, "lecteur");
+}
+
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
-  const [trending, activity, topReviews, recommendations] = await Promise.all([
-    getTrendingBooks(),
-    session?.user?.id ? getFriendActivity(session.user.id) : Promise.resolve([]),
-    getTopReviewsLast24Hours(session?.user?.id),
-    session?.user?.id ? getRecommendations(session.user.id, 8) : Promise.resolve([])
+  const trending = await getTrendingBooks();
+
+  if (!session?.user?.id) {
+    return <GuestHome trending={trending} />;
+  }
+
+  const userId = session.user.id;
+  const [activity, currentReads] = await Promise.all([
+    getFriendActivity(userId),
+    prisma.userBook.findMany({
+      where: { userId, status: ReadingStatus.READING },
+      orderBy: { updatedAt: "desc" },
+      take: 4,
+      include: {
+        book: true,
+        readingPeriods: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          include: { entries: { where: { page: { not: null } }, orderBy: { entryDate: "desc" }, take: 1 } }
+        }
+      }
+    })
   ]);
-  const activityItems = activity.map((item) =>
+
+  const activityItems: FriendActivityItem[] = activity.slice(0, 8).map((item) =>
     item.type === "review"
       ? {
           id: item.id,
-          type: "review" as const,
           userId: item.review.userId,
           userName: item.review.user.name ?? "Un lecteur",
           userImage: item.review.user.image,
+          action: "a noté",
           bookId: item.review.bookId,
           bookTitle: item.review.book.title,
-          detail: `a publie une review ${item.review.rating}/5`
+          bookThumbnail: item.review.book.thumbnailUrl,
+          meta: [item.review.book.authors[0], timeAgo(item.createdAt)].filter(Boolean).join(" · "),
+          review: {
+            id: item.review.id,
+            liked: item.review.reactions.some((reaction) => reaction.userId === userId && reaction.kind === "LIKE"),
+            rating: item.review.rating,
+            excerpt: excerpt(item.review.body, item.review.spoiler),
+            likes: item.review.reactions.length,
+            comments: item.review.comments.length
+          }
         }
       : {
           id: item.id,
-          type: "library" as const,
           userId: item.entry.userId,
           userName: item.entry.user.name ?? "Un lecteur",
           userImage: item.entry.user.image,
+          action: statusActions[item.entry.status],
           bookId: item.entry.bookId,
           bookTitle: item.entry.book.title,
-          detail: `a marque ce livre en ${item.entry.status}`
+          bookThumbnail: item.entry.book.thumbnailUrl,
+          meta: [
+            item.entry.book.authors[0],
+            item.entry.status === ReadingStatus.TO_READ ? "ajouté à « À lire »" : null,
+            timeAgo(item.createdAt)
+          ].filter(Boolean).join(" · ")
         }
   );
 
+  const firstName = (session.user.name ?? "lecteur").split(" ")[0];
+
   return (
-    <div className="min-w-0 overflow-hidden">
-      <section className="relative overflow-hidden rounded border border-line bg-gradient-to-br from-panel via-night to-ink p-4 shadow-poster sm:p-8">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-mint via-amber to-coral" />
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:gap-10">
-          <div className="flex min-w-0 flex-col justify-between">
-            <div>
-              <div className="mb-3 inline-flex rounded bg-mint/12 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-mint sm:mb-4 sm:text-xs sm:tracking-[0.18em]">
-                BooksBox
-              </div>
-              <h1 className="max-w-4xl text-3xl font-black leading-tight tracking-normal text-paper sm:text-5xl xl:text-6xl">
-                Ton carnet de lecture devient un mur de couvertures vivant.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-muted sm:mt-5 sm:text-base sm:leading-7">
-                Recherche, note, classe et decouvre les lectures de ton cercle dans une bibliothèque chaleureuse,
-                où chaque lecture trouve sa discussion.
-              </p>
-            </div>
-            <div className="mt-6 grid gap-3 sm:mt-8 sm:flex sm:flex-wrap">
-              <Link href="/search" className="inline-flex items-center justify-center gap-2 rounded bg-mint px-5 py-3 font-black text-ink transition hover:bg-lime">
-                <Search size={18} />
-                J'ai fini un livre
-              </Link>
-              <Link href="/trending" className="inline-flex items-center justify-center gap-2 rounded border border-line bg-ink/35 px-5 py-3 font-bold text-muted transition hover:text-paper">
-                Voir tendance
-              </Link>
-            </div>
-          </div>
+    <div className="flex min-w-0 flex-col gap-8">
+      <h1 className="font-display text-4xl font-semibold leading-tight text-paper sm:text-[44px]">
+        {greeting()} {firstName}
+      </h1>
 
-          <div className="min-w-0">
-            <CoverShelf />
-            <div className="mt-4 rounded border border-line bg-ink/55 p-3 sm:p-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded bg-mint text-ink">
-                  <BookOpenCheck size={20} />
-                </div>
-                <div>
-                  <div className="text-sm font-black text-paper">Boucle critique</div>
-                  <div className="text-xs text-muted">{"Recherche -> Lu -> Note -> Review"}</div>
-                </div>
-              </div>
-            </div>
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <section aria-labelledby="reprendre" className="flex min-w-0 flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="reprendre" className="bb-h2">Reprendre ma lecture</h2>
+            <span className="text-sm font-bold text-muted">{plural(currentReads.length, "livre")} en cours</span>
           </div>
-        </div>
-      </section>
-
-      {session?.user?.id ? (
-        <section className="mt-8 min-w-0 overflow-hidden">
-          <SectionHeader eyebrow="Pour toi" title="Recommandations personnalisées" description="Des livres choisis à partir de tes goûts et de lecteurs proches." />
-          <RecommendationShelf initialItems={recommendations} />
+          {currentReads.length ? (
+            currentReads.map((item) => {
+              const period = item.readingPeriods[0];
+              const entry = period?.entries[0];
+              const startedAt = period?.startedAt ?? item.updatedAt;
+              const days = daysSince(startedAt);
+              return (
+                <CurrentReadCard
+                  key={item.id}
+                  bookId={item.bookId}
+                  title={item.book.title}
+                  author={item.book.authors.join(", ") || "Auteur inconnu"}
+                  thumbnailUrl={item.book.thumbnailUrl}
+                  sinceLabel={days === 0 ? "Commencé aujourd'hui" : `En cours depuis ${plural(days, "jour")}`}
+                  periodId={period?.id ?? null}
+                  page={entry?.page ?? null}
+                  pageCount={item.book.pageCount}
+                  percentage={entry?.percentage ?? null}
+                />
+              );
+            })
+          ) : (
+            <div className="bb-card flex flex-col items-start gap-3 p-6">
+              <p className="bb-h3">Aucune lecture en cours</p>
+              <p className="text-sm text-muted">Choisis ton prochain livre : il apparaîtra ici avec ta progression.</p>
+              <Link href="/search" className="bb-btn-primary">
+                <Search size={16} aria-hidden />
+                Trouver un livre
+              </Link>
+            </div>
+          )}
         </section>
-      ) : null}
 
-      <section className="mt-8 min-w-0 overflow-hidden">
-        <SectionHeader
-          eyebrow="Rayon actif"
-          title="Tendances"
-          description="Livres les plus populaires de la communaute ces derniers jours, à decouvrir ou à ajouter a ta liste."
-        />
-        {trending.length ? (
-          <div className="grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
-            {trending.slice(0, 8).map((book) => (
-              <BookCard key={book.id} book={book} href={`/books/${book.id}`} badge="Hot" showScore={false} variant="poster" />
-            ))}
-          </div>
+        <section aria-labelledby="tendances-semaine" className="bb-card flex h-fit flex-col gap-1 p-5">
+          <h2 id="tendances-semaine" className="bb-h3 pb-2">Tendances de la semaine</h2>
+          {trending.length ? (
+            trending.slice(0, 5).map((book, index) => (
+              <Link key={book.id} href={`/books/${book.id}`} className="group flex items-center gap-3.5 py-2.5">
+                <span className="w-10 shrink-0 text-center font-display text-[30px] font-semibold leading-tight text-mint">{index + 1}</span>
+                <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[60px] w-10 rounded-xl" iconSize={0} />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate font-display text-[15px] font-semibold text-paper group-hover:text-mint">{book.title}</span>
+                  <span className="truncate text-xs text-muted">{[book.authors[0], readersLabel(book)].filter(Boolean).join(" · ")}</span>
+                </span>
+              </Link>
+            ))
+          ) : (
+            <p className="py-2 text-sm text-muted">Les tendances apparaîtront dès que la communauté lira.</p>
+          )}
+        </section>
+      </div>
+
+      <section aria-labelledby="amis" className="flex min-w-0 flex-col gap-3">
+        <SectionHeader as="h2" eyebrow="Social" title="Du côté de tes amis" />
+        {activityItems.length ? (
+          activityItems.map((item) => <FriendActivity key={item.id} item={item} />)
         ) : (
-          <div className="rounded border border-line bg-panel/65 p-5">
-            <CoverShelf />
+          <div className="bb-card-flat flex flex-col items-start gap-3 p-6 text-sm text-muted">
+            Aucune activité pour l&apos;instant : suis des lecteurs pour voir ce qu&apos;ils lisent.
+            <Link href="/commu" className="bb-btn-soft">Trouver des lecteurs</Link>
           </div>
         )}
       </section>
+    </div>
+  );
+}
 
-      <div className="mt-8 grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
-        <section className="min-w-0 overflow-hidden">
-          <SectionHeader
-            eyebrow="Social"
-            title="Activite des amis"
-            description={session ? "Les reviews et statuts des personnes suivies." : "Connecte-toi pour voir ton feed personnalise."}
-          />
-          <div className="min-w-0 space-y-3 overflow-hidden">
-            {activityItems.length ? (
-              <ActivityFeedPreview items={activityItems} />
-            ) : (
-              <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-                Aucun evenement pour l'instant. Le feed prendra vie des que tu suis des lecteurs.
-              </div>
-            )}
-          </div>
-        </section>
+async function GuestHome({ trending }: { trending: TrendingBook[] }) {
+  const featured = trending[0];
+  const [featuredReview, recentReaders] = featured
+    ? await Promise.all([
+        prisma.review.findFirst({
+          where: { bookId: featured.id, hiddenAt: null, spoiler: false, body: { not: null }, user: { suspendedAt: null } },
+          orderBy: [{ reactions: { _count: "desc" } }, { createdAt: "desc" }],
+          include: { user: { select: { name: true } } }
+        }),
+        prisma.userBook.findMany({
+          where: { bookId: featured.id, status: ReadingStatus.READ, user: { suspendedAt: null } },
+          orderBy: { updatedAt: "desc" },
+          take: 5,
+          include: { user: { select: { id: true, name: true, image: true } } }
+        })
+      ])
+    : [null, []];
+  const readerCount = featured
+    ? await prisma.userBook.count({ where: { bookId: featured.id, status: ReadingStatus.READ, user: { suspendedAt: null } } })
+    : 0;
 
-        <section className="min-w-0 overflow-hidden">
-          <SectionHeader
-            eyebrow="Reviews"
-            title="Top reviews 24h"
-            description="Les avis qui ont le plus fait reagir la communaute depuis hier."
-          />
-          <div className="min-w-0 space-y-4 overflow-hidden">
-            {topReviews.length ? (
-              topReviews.map((review) => (
-                <article key={review.id} className="w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/82 p-4 shadow-poster">
-                  <div className="flex min-w-0 gap-3">
-                    <Link href={`/books/${review.bookId}`} className="cover-sheen h-20 w-14 shrink-0 overflow-hidden rounded border border-line bg-panelSoft min-[360px]:h-24 min-[360px]:w-16">
-                      {review.book.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={review.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="grid h-full place-items-center text-muted">
-                          <BookOpenCheck size={18} />
-                        </div>
-                      )}
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <Link href={`/books/${review.bookId}`} className="line-clamp-1 text-sm font-black text-paper transition hover:text-mint">
-                        {review.book.title}
-                      </Link>
-                      <Link href={`/profile/${review.userId}`} className="mt-1 block text-xs font-bold text-muted transition hover:text-paper">
-                        par {review.user.name ?? "Lecteur BooksBox"}
-                      </Link>
-                      <div className="mt-2">
-                        <StarRating value={review.rating} />
-                      </div>
-                    </div>
-                  </div>
-                  {review.body ? (
-                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
-                      {review.spoiler ? "Cette review contient des spoilers." : review.body}
-                    </p>
-                  ) : null}
-                  <div className="mt-3 flex min-w-0 flex-wrap gap-4 border-t border-line pt-3 text-xs font-bold text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <ThumbsUp size={13} />
-                      {review.reactions.length}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquareText size={13} />
-                      {review.comments.length}
-                    </span>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-                Aucune review publiee ces dernieres 24h. La prochaine review active prendra cette place.
+  return (
+    <div className="flex min-w-0 flex-col gap-10">
+      <section className="flex flex-col items-center gap-5 pt-6 text-center">
+        <h1 className="font-display text-4xl font-semibold leading-tight text-paper sm:text-5xl">Que veux-tu lire ensuite ?</h1>
+        <form action="/search" className="flex w-full max-w-[760px] items-center gap-3 rounded-full border border-line bg-panel py-1.5 pl-5 pr-1.5 shadow-poster">
+          <Search size={18} aria-hidden className="shrink-0 text-muted" />
+          <label htmlFor="hero-search" className="sr-only">Rechercher un livre</label>
+          <input id="hero-search" name="q" placeholder="Titre, auteur ou ISBN" className="min-w-0 flex-1 bg-transparent py-2 text-base text-paper outline-none placeholder:text-muted/80" />
+          <button type="submit" className="bb-btn-primary px-5 py-2.5 text-sm">Rechercher</button>
+        </form>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Link href="/search" className="bb-chip bb-chip-active">Tout</Link>
+          {heroGenres.map((slug) => (
+            <Link key={slug} href={`/search?genre=${slug}`} className="bb-chip">
+              {genreLabel(slug) ?? GENRES.find((genre) => genre.slug === slug)?.label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {featured ? (
+        <section aria-labelledby="livre-semaine" className="bb-card grid gap-8 p-6 sm:p-10 lg:grid-cols-[220px_minmax(0,1fr)_200px]">
+          <Link href={`/books/${featured.id}`} className="mx-auto lg:mx-0">
+            <BookCover title={featured.title} thumbnailUrl={featured.thumbnailUrl} showTitle className="h-[330px] w-[220px] shadow-poster" iconSize={20} />
+          </Link>
+          <div className="flex min-w-0 flex-col items-start gap-3">
+            <span className="bb-badge">Livre de la semaine</span>
+            <h2 id="livre-semaine" className="font-display text-4xl font-semibold leading-tight text-paper">{featured.title}</h2>
+            <p className="text-sm text-muted">
+              {[featured.authors[0], featured.publishedDate?.slice(0, 4), featured.genres[0] ? genreLabel(featured.genres[0]) : null].filter(Boolean).join(" · ")}
+            </p>
+            {featured.averageRating ? (
+              <div className="flex items-center gap-2 text-xs font-bold text-muted">
+                <StarRating value={Math.round(featured.averageRating)} />
+                {featured.averageRating.toFixed(1).replace(".", ",")} · {readersLabel(featured)} ce mois-ci
               </div>
-            )}
+            ) : null}
+            {featuredReview?.body ? (
+              <figure className="flex w-full gap-3 rounded-xl bg-ink p-4">
+                <Quote size={18} aria-hidden className="mt-1 shrink-0 text-coral" />
+                <div>
+                  <blockquote className="text-[15px] italic leading-relaxed text-paper">« {excerpt(featuredReview.body, false, 220)} »</blockquote>
+                  <figcaption className="mt-2 text-xs text-muted">{featuredReview.user.name ?? "Un lecteur"} · avis le plus apprécié</figcaption>
+                </div>
+              </figure>
+            ) : null}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link href={`/books/${featured.id}`} className="bb-btn-primary px-5 py-2.5 text-sm">Voir la fiche</Link>
+              <Link href="/signup" className="bb-btn-outline px-5 py-2.5 text-sm">
+                <Plus size={16} aria-hidden />
+                Créer un compte pour l&apos;ajouter
+              </Link>
+            </div>
+            <p className="text-xs text-muted">Sans compte, tu peux chercher et lire les fiches. Pour noter et suivre tes lectures, il faut un compte.</p>
           </div>
+          {recentReaders.length ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-bold text-paper">Ils l&apos;ont lu récemment</p>
+              <div className="flex -space-x-2">
+                {recentReaders.map((entry) => (
+                  <Avatar key={entry.id} name={entry.user.name} image={entry.user.image} size={34} className="border-2 border-panel" />
+                ))}
+              </div>
+              {readerCount > recentReaders.length ? (
+                <p className="text-xs text-muted">et {plural(readerCount - recentReaders.length, "autre lecteur", "autres lecteurs")}</p>
+              ) : null}
+            </div>
+          ) : null}
         </section>
-      </div>
+      ) : null}
+
+      <section className="grid gap-8 rounded bg-gradient-to-br from-mint to-[#9a4a3e] p-8 text-ink sm:p-10 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="flex flex-col items-start gap-4">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#f0b48f]">Pourquoi BooksBox ?</p>
+          <h2 className="font-display text-3xl font-semibold leading-tight">Ton carnet de lecture, partagé avec d&apos;autres lecteurs.</h2>
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <Link href="/signup" className="bb-btn bg-ink px-5 py-2.5 text-sm text-mint hover:bg-panel">Créer mon compte</Link>
+            <Link href="/login" className="text-sm font-extrabold hover:underline">J&apos;ai déjà un compte</Link>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { icon: BookHeart, title: "Suis tes lectures", text: "Ta bibliothèque, tes livres en cours et la page où tu t'es arrêté." },
+            { icon: Star, title: "Note et donne ton avis", text: "Une note, une review, des alertes spoiler pour ne rien gâcher aux autres." },
+            { icon: MessageSquareText, title: "Discute avec tes amis", text: "Suis des lecteurs, commente leurs reviews et découvre ce qu'ils lisent." }
+          ].map((item) => (
+            <div key={item.title} className="flex flex-col gap-3 rounded-xl border border-ink/10 bg-ink/10 p-5">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-mint">
+                <item.icon size={18} aria-hidden />
+              </span>
+              <h3 className="font-display text-lg font-semibold">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-ink/80">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="tendances" className="min-w-0">
+        <SectionHeader as="h2" eyebrow="Rayon actif" title="Tendances" description="Les livres qui circulent le plus dans la communauté." />
+        {trending.length > 1 ? (
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+            {trending.slice(1, 7).map((book) => (
+              <Link key={book.id} href={`/books/${book.id}`} className="group flex min-w-0 flex-col gap-2">
+                <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} showTitle className="aspect-[2/3] w-full shadow-poster transition group-hover:-translate-y-1" iconSize={20} />
+                <span className="bb-label pt-1 text-mint">Tendance</span>
+                <span className="truncate font-display text-[15px] font-semibold text-paper">{book.title}</span>
+                <span className="-mt-1.5 truncate text-xs text-muted">{book.authors[0]}</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Les tendances apparaîtront dès que la communauté lira.</p>
+        )}
+      </section>
     </div>
   );
 }

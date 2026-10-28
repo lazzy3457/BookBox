@@ -23,7 +23,7 @@ export function BadgeShowcase({ badges, emptyMessage }: { badges: EarnedBadge[];
         <li key={badge.slug} className="flex min-w-0 items-center gap-3 rounded border border-line bg-panel/80 p-3 shadow-poster">
           <BadgeMedal icon={badge.icon} tier={badge.tier} label={`${badge.name}, palier ${badge.tierName}`} />
           <div className="min-w-0">
-            <div className="truncate font-black text-paper">{badge.name}</div>
+            <div className="truncate font-extrabold text-paper">{badge.name}</div>
             <div className="text-xs font-bold">
               <span className={tierTextClass(badge.tier)}>{badge.tierName}</span>
               <span className="text-muted"> · {formatBadgeCount(badge, badge.threshold)}</span>

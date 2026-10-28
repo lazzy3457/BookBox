@@ -18,7 +18,7 @@ export function GenreBadges({ genres, limit, size = "md", className = "" }: Genr
       {visible.map((genre) => (
         <li
           key={genre}
-          className={`rounded-full border border-sky/30 bg-sky/10 font-black uppercase tracking-[0.1em] text-sky ${badgeSize}`}
+          className={`rounded-full border border-sky/30 bg-sky/10 font-extrabold uppercase tracking-[0.1em] text-sky ${badgeSize}`}
         >
           {genreLabel(genre)}
         </li>

@@ -57,8 +57,8 @@ export function AccountDataControls() {
   return (
     <>
       <section className="mt-7 rounded border border-line bg-panel/80 p-5 shadow-poster">
-        <div className="text-xs font-black uppercase tracking-[0.18em] text-mint">Compte et données</div>
-        <h2 className="mt-1 text-xl font-black text-paper">Contrôler mes données</h2>
+        <div className="text-xs font-extrabold uppercase tracking-[0.18em] text-mint">Compte et données</div>
+        <h2 className="mt-1 text-xl font-extrabold text-paper">Contrôler mes données</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
           Télécharge une copie de tes informations ou supprime définitivement ton compte et son contenu.
         </p>
@@ -67,7 +67,7 @@ export function AccountDataControls() {
             type="button"
             disabled={busy}
             onClick={downloadExport}
-            className="inline-flex items-center justify-center gap-2 rounded border border-line px-4 py-3 text-sm font-black text-paper transition hover:border-mint hover:text-mint disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded border border-line px-4 py-3 text-sm font-extrabold text-paper transition hover:border-mint hover:text-mint disabled:opacity-50"
           >
             <Download size={16} /> Télécharger mes données
           </button>
@@ -75,7 +75,7 @@ export function AccountDataControls() {
             type="button"
             disabled={busy}
             onClick={() => setDeletionOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded border border-coral/45 px-4 py-3 text-sm font-black text-coral transition hover:border-coral hover:bg-coral/10 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded border border-coral/45 px-4 py-3 text-sm font-extrabold text-coral transition hover:border-coral hover:bg-coral/10 disabled:opacity-50"
           >
             <Trash2 size={16} /> Supprimer mon compte
           </button>
@@ -87,8 +87,8 @@ export function AccountDataControls() {
           <div role="dialog" aria-modal="true" aria-labelledby="delete-account-title" className="w-full rounded-t border border-coral/45 bg-panel shadow-2xl sm:max-w-lg sm:rounded">
             <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-coral">Zone dangereuse</div>
-                <h3 id="delete-account-title" className="mt-1 text-xl font-black text-paper">Supprimer définitivement le compte</h3>
+                <div className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-coral">Zone dangereuse</div>
+                <h3 id="delete-account-title" className="mt-1 text-xl font-extrabold text-paper">Supprimer définitivement le compte</h3>
               </div>
               <button type="button" onClick={() => setDeletionOpen(false)} className="grid h-9 w-9 place-items-center rounded text-muted hover:text-paper" aria-label="Fermer">
                 <X size={18} />
@@ -98,7 +98,7 @@ export function AccountDataControls() {
               <p className="text-sm leading-6 text-muted">
                 Bibliothèque, journal, reviews, commentaires, listes et relations sociales seront supprimés. Cette action est irréversible.
               </p>
-              <label className="block text-xs font-black text-muted">
+              <label className="block text-xs font-extrabold text-muted">
                 Mot de passe actuel
                 <input
                   required
@@ -109,7 +109,7 @@ export function AccountDataControls() {
                   className="mt-2 h-11 w-full rounded border border-line bg-ink px-3 text-paper outline-none focus:border-coral"
                 />
               </label>
-              <label className="block text-xs font-black text-muted">
+              <label className="block text-xs font-extrabold text-muted">
                 Recopie SUPPRIMER MON COMPTE
                 <input
                   required
@@ -122,7 +122,7 @@ export function AccountDataControls() {
                 <button type="button" onClick={() => setDeletionOpen(false)} className="rounded px-4 py-2 text-sm font-bold text-muted">Annuler</button>
                 <button
                   disabled={busy || confirmation !== "SUPPRIMER MON COMPTE" || !password}
-                  className="rounded bg-coral px-5 py-2.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-full bg-coral px-5 py-2.5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {busy ? "Suppression…" : "Supprimer définitivement"}
                 </button>

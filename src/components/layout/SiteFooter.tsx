@@ -16,7 +16,7 @@ export function SiteFooter() {
     <footer className="border-t border-line/80 bg-ink/65">
       <div className="mx-auto grid max-w-[1520px] gap-7 px-3 py-8 sm:px-5 md:grid-cols-[1fr_auto] md:items-end xl:px-10">
         <div className="max-w-xl">
-          <Link href="/" className="font-display inline-flex items-center gap-2 font-black text-paper">
+          <Link href="/" className="font-display inline-flex items-center gap-2 font-extrabold text-paper">
             <BrandMark className="h-8 w-8" />
             BooksBox
           </Link>

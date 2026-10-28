@@ -22,25 +22,25 @@ export function ExpandableDescription({ text }: ExpandableDescriptionProps) {
   }, [text]);
 
   return (
-    <div className="mt-5 max-w-3xl leading-7 text-paper/75">
-      <div ref={contentRef} className={expanded ? "" : "max-h-40 overflow-hidden"}>
+    <div className="text-sm leading-relaxed text-paper">
+      <div ref={contentRef} className={expanded ? "" : "max-h-32 overflow-hidden"}>
         <p>{text}</p>
       </div>
       {canExpand && !expanded ? (
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-2 inline-flex rounded px-1 text-sm font-black text-mint transition hover:text-lime"
+          className="mt-2 inline-flex text-[13px] font-extrabold text-mint hover:underline"
           aria-label="Lire toute la description"
         >
-          ...
+          Lire la suite
         </button>
       ) : null}
       {canExpand && expanded ? (
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="mt-2 inline-flex rounded px-1 text-sm font-black text-mint transition hover:text-lime"
+          className="mt-2 inline-flex text-[13px] font-extrabold text-mint hover:underline"
         >
           Voir moins
         </button>

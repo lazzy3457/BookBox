@@ -259,16 +259,16 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
           </div>
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="rounded bg-mint/10 px-2 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-mint">
+              <span className="rounded bg-mint/10 px-2 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-mint">
                 {sourceLabel(book)}
               </span>
               {hasSpecialEditionSignal(book) ? (
-                <span className="rounded bg-amber/15 px-2 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-amber">
+                <span className="rounded bg-amber/15 px-2 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-amber">
                   Edition
                 </span>
               ) : null}
             </div>
-            <h3 className="text-lg font-black leading-tight text-paper">{book.title}</h3>
+            <h3 className="text-lg font-extrabold leading-tight text-paper">{book.title}</h3>
             <p className="mt-1 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
             <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-xs font-bold text-muted">
               {formatEdition(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatEdition(book)}</span> : null}
@@ -279,7 +279,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
             type="button"
             onClick={() => openBook(book)}
             disabled={isSaving}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-black text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60 sm:w-36 sm:shrink-0"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-extrabold text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60 sm:w-36 sm:shrink-0"
           >
             <Plus size={14} />
             {isSaving ? "Ouverture..." : "Voir la fiche"}
@@ -296,7 +296,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
         <button
           type="button"
           onClick={() => setFiltersOpen((value) => !value)}
-          className="inline-flex h-10 items-center gap-2 rounded border border-line bg-ink px-3 text-sm font-black text-paper transition hover:border-mint hover:text-mint"
+          className="inline-flex h-10 items-center gap-2 rounded border border-line bg-ink px-3 text-sm font-extrabold text-paper transition hover:border-mint hover:text-mint"
         >
           <SlidersHorizontal size={16} />
           Filtres
@@ -307,7 +307,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
 
       {filtersOpen ? (
         <div className="mb-5 grid gap-3 rounded border border-line bg-panel/70 p-4 md:grid-cols-3">
-          <label className="text-xs font-black uppercase tracking-[0.14em] text-muted">
+          <label className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
             Source
             <select
               value={source}
@@ -319,7 +319,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
               <option value="open_library">Open Library</option>
             </select>
           </label>
-          <label className="text-xs font-black uppercase tracking-[0.14em] text-muted">
+          <label className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
             Langue
             <input
               list="author-language-options"
@@ -336,7 +336,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
               ))}
             </datalist>
           </label>
-          <label className="text-xs font-black uppercase tracking-[0.14em] text-muted">
+          <label className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
             Edition
             <select
               value={edition}
@@ -381,7 +381,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
                         return next;
                       })
                     }
-                    className="inline-flex h-9 items-center gap-2 rounded border border-line bg-ink px-3 text-xs font-black text-paper transition hover:border-mint hover:text-mint"
+                    className="inline-flex h-9 items-center gap-2 rounded border border-line bg-ink px-3 text-xs font-extrabold text-paper transition hover:border-mint hover:text-mint"
                   >
                     {isExpanded ? "Masquer les editions" : `Voir les editions (${group.editions.length})`}
                     <ChevronDown size={14} className={`transition ${isExpanded ? "rotate-180" : ""}`} />
@@ -426,7 +426,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
                 type="button"
                 onClick={() => changePage(page)}
                 disabled={isLoading}
-                className={`h-10 min-w-10 rounded border px-3 text-sm font-black transition ${
+                className={`h-10 min-w-10 rounded border px-3 text-sm font-extrabold transition ${
                   currentPage === page ? "border-mint bg-mint text-ink" : "border-line bg-ink text-paper hover:border-mint hover:text-mint"
                 }`}
               >
@@ -442,7 +442,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
               id="author-external-page"
               value={pageInput}
               onChange={(event) => setPageInput(event.target.value)}
-              className="h-10 w-16 rounded border border-line bg-ink px-2 text-center text-sm font-black text-paper outline-none transition focus:border-mint"
+              className="h-10 w-16 rounded border border-line bg-ink px-2 text-center text-sm font-extrabold text-paper outline-none transition focus:border-mint"
               inputMode="numeric"
               min={1}
               max={totalPages}

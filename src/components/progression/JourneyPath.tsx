@@ -36,8 +36,8 @@ export function JourneyPath({ journeyDays, started }: { journeyDays: number; sta
                 </svg>
               ) : null}
             </span>
-            <span className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-muted">Jour {milestone.day}</span>
-            <span className={`font-display text-base font-black ${done || current ? "text-paper" : "text-muted"}`}>{milestone.title}</span>
+            <span className="mt-2 text-xs font-extrabold uppercase tracking-[0.16em] text-muted">Jour {milestone.day}</span>
+            <span className={`font-display text-base font-extrabold ${done || current ? "text-paper" : "text-muted"}`}>{milestone.title}</span>
             <span className="max-w-[12rem] text-xs text-muted">
               {current ? `${journeyDays} / ${milestone.day} jours validés` : milestone.description}
             </span>

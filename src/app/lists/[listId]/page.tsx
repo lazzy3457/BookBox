@@ -100,11 +100,11 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
         <div className="px-4 pb-5 pt-4 sm:px-7 sm:pb-7">
           <div className="grid min-w-0 gap-4 sm:flex sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-mint">
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.2em] text-mint">
                 <span>Liste</span>
                 {list.isPublic ? <Globe size={12} /> : <Lock size={12} />}
               </div>
-              <h1 className="mt-2 text-3xl font-black leading-tight text-paper sm:text-4xl">{list.title}</h1>
+              <h1 className="mt-2 text-3xl font-extrabold leading-tight text-paper sm:text-4xl">{list.title}</h1>
               <p className="mt-2 text-sm text-muted">
                 Par{" "}
                 <Link href="/profile" className="font-bold text-paper hover:text-mint transition">
@@ -121,7 +121,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
               {list.rating != null && (
                 <div className="inline-flex items-center gap-1.5 rounded border border-amber/30 bg-amber/10 px-3 py-2">
                   <Star size={14} className="text-amber" fill="currentColor" />
-                  <span className="text-lg font-black text-amber">{list.rating}</span>
+                  <span className="text-lg font-extrabold text-amber">{list.rating}</span>
                   <span className="text-xs text-muted">/5</span>
                 </div>
               )}
@@ -157,7 +157,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
               href={`/books/${entry.bookId}`}
               className="group flex min-w-0 items-center gap-3 overflow-hidden rounded border border-line bg-panel/80 p-3 transition hover:border-mint/50 hover:bg-panelSoft sm:gap-5 sm:p-4"
             >
-              <div className="w-7 shrink-0 text-center text-lg font-black text-muted/50 group-hover:text-mint transition">
+              <div className="w-7 shrink-0 text-center text-lg font-extrabold text-muted/50 group-hover:text-mint transition">
                 {i + 1}
               </div>
               <div className="cover-sheen h-20 w-14 shrink-0 overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
@@ -171,7 +171,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 font-black text-paper">{entry.book.title}</div>
+                <div className="line-clamp-1 font-extrabold text-paper">{entry.book.title}</div>
                 <div className="mt-1 text-sm text-muted">
                   {entry.book.authors.join(", ") || "Auteur inconnu"}
                 </div>

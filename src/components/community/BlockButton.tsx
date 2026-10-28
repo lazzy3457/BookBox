@@ -34,11 +34,11 @@ export function BlockButton({ userId, userName }: { userId: string; userName: st
       {confirming ? (
         <div className="flex items-center gap-2 rounded border border-coral/40 bg-coral/8 p-2">
           <span className="text-xs font-bold text-muted">Confirmer ?</span>
-          <button type="button" disabled={busy} onClick={block} className="rounded bg-coral px-3 py-1.5 text-xs font-black text-white">Bloquer</button>
+          <button type="button" disabled={busy} onClick={block} className="rounded-full bg-coral px-3 py-1.5 text-xs font-extrabold text-white">Bloquer</button>
           <button type="button" onClick={() => setConfirming(false)} className="px-2 py-1.5 text-xs font-bold text-muted">Annuler</button>
         </div>
       ) : (
-        <button type="button" onClick={() => setConfirming(true)} className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-xs font-black text-muted transition hover:border-coral/60 hover:text-coral">
+        <button type="button" onClick={() => setConfirming(true)} className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-xs font-extrabold text-muted transition hover:border-coral/60 hover:text-coral">
           <Ban size={14} /> Bloquer
         </button>
       )}
