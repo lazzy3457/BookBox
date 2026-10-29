@@ -5,7 +5,8 @@ export const notificationPreferenceSchema = z.object({
   likesEnabled: z.boolean().optional(),
   commentsEnabled: z.boolean().optional(),
   friendReviewsEnabled: z.boolean().optional(),
-  followersEnabled: z.boolean().optional()
+  followersEnabled: z.boolean().optional(),
+  groupsEnabled: z.boolean().optional()
 });
 
 export const pushTokenSchema = z.object({

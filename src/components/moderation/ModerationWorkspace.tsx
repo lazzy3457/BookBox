@@ -10,7 +10,7 @@ import { timeAgo, plural } from "@/lib/format";
 type ReportDossier = {
   kind: "report";
   key: string;
-  targetType: "USER" | "REVIEW" | "COMMENT";
+  targetType: "USER" | "REVIEW" | "COMMENT" | "GROUP_THREAD" | "GROUP_POST";
   reason: string;
   status: "OPEN" | "REVIEWING" | "CLOSED";
   title: string;
@@ -64,7 +64,7 @@ const reasonLabels: Record<string, string> = {
   OTHER: "Autre"
 };
 
-const targetLabels = { USER: "Profil", REVIEW: "Avis", COMMENT: "Commentaire" };
+const targetLabels = { USER: "Profil", REVIEW: "Avis", COMMENT: "Commentaire", GROUP_THREAD: "Discussion de groupe", GROUP_POST: "Message de groupe" };
 
 // Motivations types envoyées à l'auteur et aux signaleurs, selon le motif.
 const motivations: Record<string, string[]> = {
@@ -337,7 +337,7 @@ function ReportPanel({ dossier, busy, onDecide }: { dossier: ReportDossier; busy
       ? { id: "restore", decision: { status: "RESOLVED", action: isUser ? "UNSUSPEND" : "RESTORE" }, title: isUser ? "Réactiver le profil" : "Restaurer", text: isUser ? "Le compte redevient visible." : "Le contenu redevient visible.", icon: RotateCcw }
       : isUser
         ? { id: "act", decision: { status: "RESOLVED", action: "SUSPEND" }, title: "Suspendre le profil", text: "Profil et contenus masqués.", icon: UserX }
-        : { id: "act", decision: { status: "RESOLVED", action: "HIDE" }, title: `Masquer ${dossier.targetType === "REVIEW" ? "l'avis" : "le commentaire"}`, text: "Le contenu disparaît, l'auteur est prévenu.", icon: EyeOff },
+        : { id: "act", decision: { status: "RESOLVED", action: "HIDE" }, title: `Masquer ${dossier.targetType === "REVIEW" ? "l'avis" : dossier.targetType === "GROUP_THREAD" ? "la discussion" : dossier.targetType === "GROUP_POST" ? "le message" : "le commentaire"}`, text: "Le contenu disparaît, l'auteur est prévenu.", icon: EyeOff },
     { id: "close", decision: { status: "RESOLVED", action: "NONE" }, title: "Clore sans action", text: "Signalement fondé, contenu déjà traité.", icon: CheckCircle2 }
   ];
   const [choice, setChoice] = useState(dossier.status === "CLOSED" ? "" : "act");

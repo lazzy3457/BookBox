@@ -13,6 +13,7 @@ Fonctions actuelles :
 - bibliothèque, favoris, statuts et date d’ajout ;
 - journal daté avec lectures, relectures et progression par page, pourcentage ou chapitre ;
 - reviews, commentaires, réactions, follows, listes et feed ;
+- groupes de lecture façon clubs Strava (`src/server/services/groups.ts`) : discussions typées avec niveau de spoiler, sondages, lecture commune, défi et classement hebdomadaire ; les groupes sur invitation ne sont visibles que des membres et invités ;
 - recommandations personnalisées explicables ;
 - import Goodreads et CSV BookBox ;
 - blocage, signalement, modération et suspension ;

@@ -19,6 +19,10 @@ import { BlockButton } from "@/components/community/BlockButton";
 import { formatBadgeCount } from "@/lib/progression";
 import { PublicReadingEntries } from "@/components/library/PublicReadingEntries";
 import { ReviewLikeButton } from "@/components/reviews/ReviewLikeButton";
+import { GroupEmblem } from "@/components/groups/GroupEmblem";
+import { ShowcaseEditor } from "@/components/profile/ShowcaseEditor";
+import { QuoteCard } from "@/components/books/QuoteCard";
+import { getQuotes } from "@/server/services/quotes";
 
 export type ProfileTab = "apercu" | "annee" | "avis" | "listes" | "badges";
 
@@ -38,7 +42,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   const isOwn = viewerId === userId;
   await syncBadges(userId);
 
-  const [user, libraryCount, reviewCount, followerCount, followingCount, library, reviews, lists, badges, stats, publicEntries, progress] = await Promise.all([
+  const [user, libraryCount, reviewCount, followerCount, followingCount, library, reviews, lists, badges, stats, publicEntries, progress, groupMemberships] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId, suspendedAt: null } }),
     prisma.userBook.count({ where: { userId } }),
     prisma.review.count({ where: { userId, hiddenAt: null } }),
@@ -49,7 +53,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       orderBy: { updatedAt: "desc" },
       include: {
         book: { select: { id: true, title: true, authors: true, thumbnailUrl: true, pageCount: true, genres: true } },
-        readingPeriods: { orderBy: { createdAt: "desc" }, take: 1, include: { entries: { orderBy: { entryDate: "desc" }, take: 1 } } }
+        readingPeriods: { orderBy: { createdAt: "desc" }, take: 1, include: { entries: { where: { kind: "NOTE" }, orderBy: { entryDate: "desc" }, take: 1 } } }
       }
     }),
     prisma.review.findMany({
@@ -72,15 +76,23 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
     getEarnedBadges(userId),
     prisma.userStats.findUnique({ where: { userId }, select: { xpTotal: true } }),
     prisma.readingEntry.findMany({
-      where: { isPublic: true, period: { userBook: { userId } } },
+      where: { isPublic: true, kind: "NOTE", period: { userBook: { userId } } },
       include: { period: { include: { userBook: { include: { book: true } } } } },
       orderBy: { entryDate: 'desc' },
       take: 6
     }),
-    isOwn ? getProgressSummary(userId) : Promise.resolve(null)
+    isOwn ? getProgressSummary(userId) : Promise.resolve(null),
+    // Les groupes sur invitation restent privés : on ne les montre que sur son propre profil.
+    prisma.groupMember.findMany({
+      where: { userId, ...(isOwn ? {} : { group: { visibility: "PUBLIC" } }) },
+      orderBy: { joinedAt: "desc" },
+      take: 4,
+      select: { group: { select: { slug: true, name: true, emblem: true, _count: { select: { members: true } } } } }
+    })
   ]);
 
   if (!user) return null;
+  const quotes = await getQuotes({ userId }, viewerId, [], 4);
 
   const level = levelProgress(stats?.xpTotal ?? 0);
   const year = new Date().getFullYear();
@@ -97,7 +109,10 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   const current = library.find((entry) => entry.status === ReadingStatus.READING);
   const currentEntry = current?.readingPeriods[0]?.entries[0];
   const currentPercent = currentEntry?.percentage ?? (currentEntry?.page && current?.book.pageCount ? Math.round((currentEntry.page / current.book.pageCount) * 100) : null);
-  const favorites = library.filter((entry) => entry.isFavorite).slice(0, 4);
+  // Vitrine choisie par le lecteur ; sinon, ses 4 derniers coups de cœur.
+  const allFavorites = library.filter((entry) => entry.isFavorite);
+  const showcased = allFavorites.filter((entry) => entry.showcaseRank != null).sort((a, b) => (a.showcaseRank ?? 0) - (b.showcaseRank ?? 0));
+  const favorites = (showcased.length ? showcased : allFavorites).slice(0, 4);
   const name = user.name ?? user.username ?? "Lecteur BooksBox";
   const possessive = isOwn ? "Mon" : "Son";
 
@@ -242,7 +257,12 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} {favorites.length > 1 ? `${favorites.length} livres préférés` : "livres préférés"}</h2>
-                {isOwn ? <Link href="/library" className="text-[13px] font-extrabold text-mint hover:underline">Modifier</Link> : null}
+                {isOwn ? (
+                  <ShowcaseEditor
+                    favorites={allFavorites.map((entry) => ({ bookId: entry.bookId, title: entry.book.title, author: entry.book.authors[0] ?? null, thumbnailUrl: entry.book.thumbnailUrl }))}
+                    selected={showcased.map((entry) => entry.bookId)}
+                  />
+                ) : null}
               </div>
               {favorites.length ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -262,6 +282,14 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
               <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} derniers avis</h2>
               {reviews.length ? reviews.slice(0, 2).map(reviewItem) : <p className="bb-card-flat p-5 text-sm text-muted">Aucun avis publié pour le moment.</p>}
             </section>
+            {quotes.length ? (
+              <section className="flex flex-col gap-4">
+                <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} citations</h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {quotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSignedIn={Boolean(viewerId)} />)}
+                </div>
+              </section>
+            ) : null}
             <PublicReadingEntries entries={publicEntries} />
           </div>
           <aside className="flex flex-col gap-5">
@@ -282,6 +310,27 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
                 ))
               ) : (
                 <p className="text-sm text-muted">Pas encore de badge.</p>
+              )}
+            </section>
+            <section className="bb-card flex flex-col gap-3 p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="bb-h3">{isOwn ? "Mes" : "Ses"} groupes</h2>
+                {isOwn ? <Link href="/commu?tab=groupes" className="text-xs font-extrabold text-mint hover:underline">Tous les groupes</Link> : null}
+              </div>
+              {groupMemberships.length ? (
+                groupMemberships.map(({ group }) => (
+                  <Link key={group.slug} href={`/groups/${group.slug}`} className="group flex items-center gap-3">
+                    <GroupEmblem emblem={group.emblem} size={34} className="!bg-ink !shadow-none" />
+                    <span className="min-w-0">
+                      <span className="block truncate font-display text-sm font-semibold text-paper group-hover:text-mint">{group.name}</span>
+                      <span className="block text-[11px] text-muted">{plural(group._count.members, "membre")}</span>
+                    </span>
+                  </Link>
+                ))
+              ) : isOwn ? (
+                <Link href="/commu?tab=groupes" className="text-[13px] font-extrabold text-mint hover:underline">+ Rejoindre ou créer un groupe</Link>
+              ) : (
+                <p className="text-sm text-muted">Aucun groupe public.</p>
               )}
             </section>
             <section className="bb-card flex flex-col gap-3 p-5">

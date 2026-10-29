@@ -44,7 +44,7 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
       },
       include: {
         userBook: { select: { bookId: true, book: { select: { title: true, thumbnailUrl: true, pageCount: true } } } },
-        entries: { orderBy: { entryDate: "asc" } }
+        entries: { orderBy: { entryDate: "asc" }, include: { likes: { select: { userId: true } } } }
       }
     }),
     prisma.userBook.findMany({
@@ -55,7 +55,7 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
         status: true,
         bookId: true,
         book: { select: { title: true, thumbnailUrl: true, pageCount: true } },
-        readingPeriods: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, entries: { where: { page: { not: null } }, orderBy: { entryDate: "desc" }, take: 1, select: { page: true } } } }
+        readingPeriods: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, entries: { where: { page: { not: null }, kind: "NOTE" }, orderBy: { entryDate: "desc" }, take: 1, select: { page: true } } } }
       }
     }),
     getProgressSummary(userId)
@@ -88,7 +88,10 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
           percentage: entry.percentage,
           chapter: entry.chapter,
           note: entry.note,
-          isPublic: entry.isPublic
+          kind: entry.kind,
+          isPublic: entry.isPublic,
+          likes: entry.likes.length,
+          likedByMe: entry.likes.some((like) => like.userId === userId)
         }))
       }))}
       books={library.map((entry) => ({

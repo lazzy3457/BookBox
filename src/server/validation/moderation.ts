@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const reportTargetTypeSchema = z.enum(["USER", "REVIEW", "COMMENT"]);
+export const reportTargetTypeSchema = z.enum(["USER", "REVIEW", "COMMENT", "GROUP_THREAD", "GROUP_POST"]);
 export const reportReasonSchema = z.enum([
   "SPAM",
   "HARASSMENT",

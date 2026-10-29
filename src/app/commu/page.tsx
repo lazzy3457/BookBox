@@ -13,6 +13,8 @@ import { BookCover } from "@/components/books/BookCover";
 import { StarRating } from "@/components/reviews/StarRating";
 import { FollowButton } from "@/components/community/FollowButton";
 import { ReaderGrid } from "@/components/community/ReaderGrid";
+import { GroupsTab } from "@/components/groups/GroupsTab";
+import { getGroupDirectory } from "@/server/services/groupDirectory";
 import { daysAgo, plural, timeAgo } from "@/lib/format";
 import { genreLabel } from "@/lib/genres";
 
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
   title: "Communauté"
 };
 
-type Tab = "cercle" | "suggestions" | "abonnements" | "abonnes";
+type Tab = "cercle" | "groupes" | "suggestions" | "abonnements" | "abonnes";
 
 type CommunityPageProps = {
   searchParams: Promise<{ tab?: string; q?: string }>;
@@ -56,12 +58,16 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
             <Link href="/login?callbackUrl=/commu" className="bb-btn-outline">Connexion</Link>
           </div>
         </div>
-        <ReaderGrid readers={readers} canFollow={false} variant="following" />
+        {params.tab === "groupes" ? (
+          <GroupsTab {...(await getGroupDirectory(null))} isSignedIn={false} />
+        ) : (
+          <ReaderGrid readers={readers} canFollow={false} variant="following" />
+        )}
       </div>
     );
   }
 
-  const tab: Tab = (["cercle", "suggestions", "abonnements", "abonnes"] as const).includes(params.tab as Tab) ? (params.tab as Tab) : params.q ? "suggestions" : "cercle";
+  const tab: Tab = (["cercle", "groupes", "suggestions", "abonnements", "abonnes"] as const).includes(params.tab as Tab) ? (params.tab as Tab) : params.q ? "suggestions" : "cercle";
   const blocked = await getBlockedUserIds(viewerId);
   const [following, followers] = await Promise.all([
     prisma.follow.findMany({
@@ -75,17 +81,23 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     })
   ]);
   const followingIds = new Set(following.map((follow) => follow.followingId));
-  const suggestedIds = await getSuggestedReaderIds(viewerId, followingIds);
+  const [suggestedIds, myGroupCount] = await Promise.all([
+    getSuggestedReaderIds(viewerId, followingIds),
+    prisma.groupMember.count({ where: { userId: viewerId } })
+  ]);
 
   const tabs: Array<{ id: Tab; label: string; count?: number }> = [
     { id: "cercle", label: "Mon cercle" },
+    { id: "groupes", label: "Groupes", count: myGroupCount },
     { id: "suggestions", label: "Suggestions", count: suggestedIds.length },
     { id: "abonnements", label: "Abonnements", count: followingIds.size },
     { id: "abonnes", label: "Abonnés", count: followers.length }
   ];
 
   let content: React.ReactNode;
-  if (tab === "suggestions") {
+  if (tab === "groupes") {
+    content = <GroupsTab {...(await getGroupDirectory(viewerId))} isSignedIn />;
+  } else if (tab === "suggestions") {
     content = <ReaderGrid readers={await getReaderCards(viewerId, suggestedIds, followingIds)} canFollow variant="suggestions" initialQuery={params.q ?? ""} />;
   } else if (tab === "abonnements") {
     content = <ReaderGrid readers={await getReaderCards(viewerId, [...followingIds], followingIds)} canFollow variant="following" />;

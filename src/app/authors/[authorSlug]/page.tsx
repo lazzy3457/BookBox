@@ -120,7 +120,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           select: {
             bookId: true,
             status: true,
-            readingPeriods: { orderBy: { createdAt: "desc" }, take: 1, select: { entries: { orderBy: { entryDate: "desc" }, take: 1, select: { page: true, percentage: true } } } }
+            readingPeriods: { orderBy: { createdAt: "desc" }, take: 1, select: { entries: { where: { kind: "NOTE" }, orderBy: { entryDate: "desc" }, take: 1, select: { page: true, percentage: true } } } }
           }
         })
       : []

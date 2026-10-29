@@ -33,17 +33,29 @@ export default async function ModerationPage() {
   const [reports, legalNotices] = await Promise.all([listModerationReports(), listLegalNotices()]);
   const ids = (type: string) => [...new Set(reports.filter((report) => report.targetType === type).map((report) => report.targetId))];
   const ownerSelect = { id: true, name: true, username: true, createdAt: true, suspendedAt: true } as const;
-  const [users, reviews, comments] = await Promise.all([
+  const [users, reviews, comments, groupThreads, groupPosts] = await Promise.all([
     prisma.user.findMany({ where: { id: { in: ids("USER") } }, select: { ...ownerSelect, bio: true } }),
     prisma.review.findMany({ where: { id: { in: ids("REVIEW") } }, select: { id: true, body: true, rating: true, hiddenAt: true, createdAt: true, bookId: true, book: { select: { title: true } }, user: { select: ownerSelect } } }),
-    prisma.reviewComment.findMany({ where: { id: { in: ids("COMMENT") } }, select: { id: true, body: true, hiddenAt: true, createdAt: true, review: { select: { bookId: true, book: { select: { title: true } } } }, user: { select: ownerSelect } } })
+    prisma.reviewComment.findMany({ where: { id: { in: ids("COMMENT") } }, select: { id: true, body: true, hiddenAt: true, createdAt: true, review: { select: { bookId: true, book: { select: { title: true } } } }, user: { select: ownerSelect } } }),
+    prisma.groupThread.findMany({ where: { id: { in: ids("GROUP_THREAD") } }, select: { id: true, title: true, body: true, hiddenAt: true, createdAt: true, group: { select: { slug: true, name: true } }, author: { select: ownerSelect } } }),
+    prisma.groupPost.findMany({ where: { id: { in: ids("GROUP_POST") } }, select: { id: true, body: true, hiddenAt: true, createdAt: true, thread: { select: { id: true, title: true, group: { select: { slug: true, name: true } } } }, author: { select: ownerSelect } } })
   ]);
   const userMap = new Map(users.map((user) => [user.id, user]));
   const reviewMap = new Map(reviews.map((review) => [review.id, review]));
   const commentMap = new Map(comments.map((comment) => [comment.id, comment]));
+  const threadMap = new Map(groupThreads.map((thread) => [thread.id, thread]));
+  const postMap = new Map(groupPosts.map((post) => [post.id, post]));
 
   const ownerOf = (type: string, targetId: string): Owner | null =>
-    type === "USER" ? userMap.get(targetId) ?? null : type === "REVIEW" ? reviewMap.get(targetId)?.user ?? null : commentMap.get(targetId)?.user ?? null;
+    type === "USER"
+      ? userMap.get(targetId) ?? null
+      : type === "REVIEW"
+        ? reviewMap.get(targetId)?.user ?? null
+        : type === "GROUP_THREAD"
+          ? threadMap.get(targetId)?.author ?? null
+          : type === "GROUP_POST"
+            ? postMap.get(targetId)?.author ?? null
+            : commentMap.get(targetId)?.user ?? null;
 
   const ownerIds = [...new Set(reports.map((report) => ownerOf(report.targetType, report.targetId)?.id).filter((id): id is string => Boolean(id)))];
   const [reviewCounts, hiddenCounts] = await Promise.all([
@@ -69,6 +81,8 @@ export default async function ModerationPage() {
     const review = first.targetType === "REVIEW" ? reviewMap.get(first.targetId) : null;
     const comment = first.targetType === "COMMENT" ? commentMap.get(first.targetId) : null;
     const user = first.targetType === "USER" ? userMap.get(first.targetId) : null;
+    const groupThread = first.targetType === "GROUP_THREAD" ? threadMap.get(first.targetId) : null;
+    const groupPost = first.targetType === "GROUP_POST" ? postMap.get(first.targetId) : null;
     const handle = owner?.username ? `@${owner.username}` : owner?.name ?? "compte supprimé";
     return {
       kind: "report" as const,
@@ -76,12 +90,12 @@ export default async function ModerationPage() {
       targetType: first.targetType,
       reason,
       status: statusGroup(items.map((item) => item.status)),
-      title: review ? `Avis sur « ${review.book.title} »` : comment ? `Commentaire sur « ${comment.review.book.title} »` : user ? `Profil ${handle}` : "Contenu supprimé",
-      heading: review ? `Avis de ${handle} sur « ${review.book.title} »` : comment ? `Commentaire de ${handle} sur « ${comment.review.book.title} »` : `Profil de ${handle}`,
-      href: review ? `/books/${review.bookId}#avis` : comment ? `/books/${comment.review.bookId}#avis` : user ? `/profile/${user.id}` : null,
-      content: review?.body ?? comment?.body ?? user?.bio ?? null,
-      contentMeta: review ? `★ ${review.rating}/5 · publié le ${review.createdAt.toLocaleDateString("fr-FR")}` : comment ? `publié le ${comment.createdAt.toLocaleDateString("fr-FR")}` : "bio du profil",
-      isHidden: Boolean(review?.hiddenAt ?? comment?.hiddenAt ?? user?.suspendedAt),
+      title: review ? `Avis sur « ${review.book.title} »` : comment ? `Commentaire sur « ${comment.review.book.title} »` : groupThread ? `Discussion « ${groupThread.title} »` : groupPost ? `Message dans « ${groupPost.thread.title} »` : user ? `Profil ${handle}` : "Contenu supprimé",
+      heading: review ? `Avis de ${handle} sur « ${review.book.title} »` : comment ? `Commentaire de ${handle} sur « ${comment.review.book.title} »` : groupThread ? `Discussion de ${handle} dans « ${groupThread.group.name} »` : groupPost ? `Message de ${handle} dans « ${groupPost.thread.group.name} »` : `Profil de ${handle}`,
+      href: review ? `/books/${review.bookId}#avis` : comment ? `/books/${comment.review.bookId}#avis` : groupThread ? `/groups/${groupThread.group.slug}/threads/${groupThread.id}` : groupPost ? `/groups/${groupPost.thread.group.slug}/threads/${groupPost.thread.id}` : user ? `/profile/${user.id}` : null,
+      content: review?.body ?? comment?.body ?? (groupThread ? [groupThread.title, groupThread.body].filter(Boolean).join("\n\n") : null) ?? groupPost?.body ?? user?.bio ?? null,
+      contentMeta: review ? `★ ${review.rating}/5 · publié le ${review.createdAt.toLocaleDateString("fr-FR")}` : comment ? `publié le ${comment.createdAt.toLocaleDateString("fr-FR")}` : groupThread ? `publié le ${groupThread.createdAt.toLocaleDateString("fr-FR")}` : groupPost ? `publié le ${groupPost.createdAt.toLocaleDateString("fr-FR")}` : "bio du profil",
+      isHidden: Boolean(review?.hiddenAt ?? comment?.hiddenAt ?? groupThread?.hiddenAt ?? groupPost?.hiddenAt ?? user?.suspendedAt),
       owner: owner
         ? {
             handle,

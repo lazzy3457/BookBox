@@ -31,6 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ en
         percentage,
         chapter: input.chapter || null,
         note: input.note || null,
+        ...(input.kind ? { kind: input.kind } : {}),
         isPublic: input.isPublic
       }
     });

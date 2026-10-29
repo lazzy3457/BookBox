@@ -4,7 +4,7 @@ import { Flag, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Toast } from "@/components/ui/Toast";
 
-type TargetType = "USER" | "REVIEW" | "COMMENT";
+type TargetType = "USER" | "REVIEW" | "COMMENT" | "GROUP_THREAD" | "GROUP_POST";
 
 const reasons = [
   ["SPAM", "Spam ou publicité"],

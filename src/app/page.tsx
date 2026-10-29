@@ -12,6 +12,7 @@ import { BookCover } from "@/components/books/BookCover";
 import { StarRating } from "@/components/reviews/StarRating";
 import { CurrentReadCard } from "@/components/home/CurrentReadCard";
 import { FriendActivity, type FriendActivityItem } from "@/components/activity/FriendActivity";
+import { ShowMore } from "@/components/ui/ShowMore";
 import { daysSince, greeting, plural, timeAgo } from "@/lib/format";
 import { GENRES, genreLabel } from "@/lib/genres";
 
@@ -52,19 +53,19 @@ export default async function HomePage() {
     prisma.userBook.findMany({
       where: { userId, status: ReadingStatus.READING },
       orderBy: { updatedAt: "desc" },
-      take: 4,
+      take: 20,
       include: {
         book: true,
         readingPeriods: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          include: { entries: { where: { page: { not: null } }, orderBy: { entryDate: "desc" }, take: 1 } }
+          include: { entries: { where: { page: { not: null }, kind: "NOTE" }, orderBy: { entryDate: "desc" }, take: 1 } }
         }
       }
     })
   ]);
 
-  const activityItems: FriendActivityItem[] = activity.slice(0, 8).map((item) =>
+  const activityItems: FriendActivityItem[] = activity.slice(0, 30).map((item) =>
     item.type === "review"
       ? {
           id: item.id,
@@ -117,7 +118,8 @@ export default async function HomePage() {
             <span className="text-sm font-bold text-muted">{plural(currentReads.length, "livre")} en cours</span>
           </div>
           {currentReads.length ? (
-            currentReads.map((item) => {
+            <ShowMore initial={2} className="flex flex-col gap-4">
+            {currentReads.map((item) => {
               const period = item.readingPeriods[0];
               const entry = period?.entries[0];
               const startedAt = period?.startedAt ?? item.updatedAt;
@@ -136,7 +138,8 @@ export default async function HomePage() {
                   percentage={entry?.percentage ?? null}
                 />
               );
-            })
+            })}
+            </ShowMore>
           ) : (
             <div className="bb-card flex flex-col items-start gap-3 p-6">
               <p className="bb-h3">Aucune lecture en cours</p>
@@ -171,7 +174,9 @@ export default async function HomePage() {
       <section aria-labelledby="amis" className="flex min-w-0 flex-col gap-3">
         <SectionHeader as="h2" eyebrow="Social" title="Du côté de tes amis" />
         {activityItems.length ? (
-          activityItems.map((item) => <FriendActivity key={item.id} item={item} />)
+          <ShowMore initial={5}>
+            {activityItems.map((item) => <FriendActivity key={item.id} item={item} />)}
+          </ShowMore>
         ) : (
           <div className="bb-card-flat flex flex-col items-start gap-3 p-6 text-sm text-muted">
             Aucune activité pour l&apos;instant : suis des lecteurs pour voir ce qu&apos;ils lisent.

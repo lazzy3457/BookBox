@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       include: { userBook: { include: { book: { select: { pageCount: true } } } } }
     });
     if (!period) throw notFound("Période de lecture introuvable.");
-    const computedPercentage = input.percentage ?? (
+    const computedPercentage = input.kind === "QUOTE" ? null : input.percentage ?? (
       input.page && period.userBook.book.pageCount
         ? Math.min(100, Math.round((input.page / period.userBook.book.pageCount) * 100))
         : null
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
         percentage: computedPercentage,
         chapter: input.chapter || null,
         note: input.note || null,
+        kind: input.kind === "QUOTE" && input.note ? "QUOTE" : "NOTE",
         isPublic: input.isPublic
       }
     });

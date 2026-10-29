@@ -28,6 +28,7 @@ import { AddToListModal } from "@/components/lists/AddToListModal";
 import { toggleFavorite } from "@/server/actions/favorites";
 import { genreLabel } from "@/lib/genres";
 import { daysSince, plural, timeAgo } from "@/lib/format";
+import { useConfirm } from "@/components/ui/useConfirm";
 
 export type LibraryItem = {
   id: string;
@@ -127,6 +128,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
   const [listBookId, setListBookId] = useState<string | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<{ item: LibraryItem; timer: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
 
   const [prevItems, setPrevItems] = useState(items);
   if (items !== prevItems) {
@@ -224,7 +226,8 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
   }
 
   // Le retrait n'est envoyé qu'après le délai d'annulation : « Annuler » ne perd donc ni journal ni progression.
-  function remove(item: LibraryItem) {
+  async function remove(item: LibraryItem) {
+    if (!(await confirm({ title: `Retirer « ${item.book.title} » de ta bibliothèque ?`, message: "Son journal de lecture sera aussi supprimé. Tu auras quelques secondes pour annuler.", confirmLabel: "Retirer" }))) return;
     if (pendingRemoval) {
       window.clearTimeout(pendingRemoval.timer);
       void commitRemoval(pendingRemoval.item);
@@ -248,7 +251,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
     onStatus: changeStatus,
     onFavorite: switchFavorite,
     onList: (item: LibraryItem) => setListBookId(item.book.id),
-    onRemove: remove
+    onRemove: (item: LibraryItem) => void remove(item)
   };
 
   const tabs: Array<{ id: Tab; label: string }> = [
@@ -279,6 +282,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {confirmDialog}
       <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Ma bibliothèque</h1>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
