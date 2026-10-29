@@ -58,11 +58,11 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
   const genre = filterGenres.includes(params.genre ?? "") ? params.genre! : null;
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Tendances</h1>
-          <p className="mt-1 text-sm text-muted">Le top des livres qui circulent dans la communauté</p>
+          <h1 className="bb-page-title">Tendances</h1>
+          <p className="mt-1 text-[13px] text-muted sm:text-sm">Le top des livres qui circulent dans la communauté</p>
         </div>
         <div className="flex w-fit rounded-full border border-line bg-panel p-1" role="group" aria-label="Période">
           {(Object.keys(periodLabels) as TrendPeriod[]).map((value) => {
@@ -81,7 +81,7 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
         </div>
       </div>
 
-      <nav aria-label="Vue des tendances" className="flex gap-7 border-b border-line">
+      <nav aria-label="Vue des tendances" className="bb-scroll-row gap-6 border-b border-line sm:gap-7">
         <Link href={href({ periode: periodParam })} aria-current={tab === "communaute" ? "page" : undefined} className={`bb-tab ${tab === "communaute" ? "bb-tab-active font-extrabold text-paper" : ""}`}>
           Toute la communauté
         </Link>
@@ -113,7 +113,7 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
+      <div className="bb-scroll-row sm:flex-wrap">
         <Link href={href({ periode: periodParam })} className={`bb-chip ${!genre ? "bb-chip-active" : ""}`}>Tous les genres</Link>
         {filterGenres.map((slug) => (
           <Link key={slug} href={href({ periode: periodParam, genre: slug })} className={`bb-chip ${genre === slug ? "bb-chip-active" : ""}`}>{genreLabel(slug)}</Link>
@@ -124,26 +124,27 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
         <div className="bb-card-flat p-6 text-sm text-muted">Pas encore assez d&apos;activité sur cette période. Les tendances apparaîtront dès que la communauté lira et notera des livres.</div>
       ) : (
         <>
-          <section className="bb-card p-5 sm:p-6">
-            <h2 className="mb-5 flex items-center gap-2.5 bb-h3 text-xl">
+          <section className="bb-card p-4 sm:p-6">
+            <h2 className="mb-4 flex items-center gap-2.5 bb-h3 sm:mb-5 sm:text-xl">
               <Trophy size={20} aria-hidden className="text-amber" />
               {podiumTitle[period]}
             </h2>
-            <div className="grid gap-6 md:grid-cols-3">
+            {/* Mobile : podium en 3 couvertures côte à côte ; l'explication apparaît à partir de 768px. */}
+            <div className="grid grid-cols-3 gap-3 md:gap-6">
               {podium.map((book) => (
-                <div key={book.id} className="flex gap-4">
-                  <div className="flex w-[115px] shrink-0 flex-col gap-1.5">
+                <div key={book.id} className="flex min-w-0 gap-4">
+                  <div className="flex w-full min-w-0 flex-col gap-1.5 md:w-[115px] md:shrink-0">
                     <Link href={`/books/${book.id}`} className="relative block">
-                      <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[172px] w-[115px] shadow-poster" iconSize={0} />
-                      <span className="absolute bottom-0 left-2 font-display text-6xl font-semibold leading-none text-ink drop-shadow">{book.rank}</span>
+                      <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="aspect-[2/3] w-full shadow-poster md:aspect-auto md:h-[172px] md:w-[115px]" iconSize={0} />
+                      <span className="absolute bottom-0 left-2 font-display text-4xl font-semibold leading-none text-ink drop-shadow md:text-6xl">{book.rank}</span>
                     </Link>
-                    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[11px] font-bold text-coral">
-                      <Flame size={11} aria-hidden />+{book.tally.added + book.tally.finished} lecteurs
+                    <span className="inline-flex w-fit max-w-full items-center gap-1 truncate rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-bold text-coral sm:text-[11px]">
+                      <Flame size={11} aria-hidden className="shrink-0" />+{book.tally.added + book.tally.finished}<span className="hidden sm:inline"> lecteurs</span>
                     </span>
-                    <Link href={`/books/${book.id}`} className="truncate font-display text-[15px] font-semibold text-paper hover:text-mint">{book.title}</Link>
+                    <Link href={`/books/${book.id}`} className="truncate font-display text-[13px] font-semibold text-paper hover:text-mint sm:text-[15px]">{book.title}</Link>
                     <span className="truncate text-[11px] text-muted">{book.authors[0]}</span>
                   </div>
-                  <div className="flex min-w-0 flex-col justify-end gap-2 pb-6">
+                  <div className="hidden min-w-0 flex-col justify-end gap-2 pb-6 md:flex">
                     <p className="bb-label text-muted">Pourquoi ce livre ?</p>
                     <p className="text-[13px] leading-relaxed text-paper">{trendReason(book)}</p>
                     <div><AddToReadButton bookId={book.id} isSignedIn={Boolean(viewerId)} initiallyAdded={owned.has(book.id)} variant="primary" /></div>
@@ -156,15 +157,15 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
           <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div className="flex min-w-0 flex-col gap-3">
               {rest.map((book) => (
-                <article key={book.id} className="bb-card-flat flex items-center gap-4 p-3 pr-4">
-                  <div className="flex w-12 shrink-0 flex-col items-center gap-1">
-                    <span className="font-display text-[26px] font-semibold leading-none text-paper">{book.rank}</span>
+                <article key={book.id} className="bb-card-flat flex items-center gap-3 p-3 sm:gap-4 sm:pr-4">
+                  <div className="flex w-8 shrink-0 flex-col items-center gap-1 sm:w-12">
+                    <span className="font-display text-[22px] font-semibold leading-none text-paper sm:text-[26px]">{book.rank}</span>
                     <Movement book={book} />
                   </div>
-                  <Link href={`/books/${book.id}`}><BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[84px] w-14" iconSize={0} /></Link>
+                  <Link href={`/books/${book.id}`} className="shrink-0"><BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[72px] w-12 sm:h-[84px] sm:w-14" iconSize={0} /></Link>
                   <div className="min-w-0 flex-1">
-                    <Link href={`/books/${book.id}`} className="block truncate font-display text-lg font-semibold text-paper hover:text-mint">{book.title}</Link>
-                    <p className="truncate text-[13px] text-muted">{[book.authors[0], book.genres[0] ? genreLabel(book.genres[0]) : null].filter(Boolean).join(" · ")}</p>
+                    <Link href={`/books/${book.id}`} className="block truncate font-display text-base font-semibold text-paper hover:text-mint sm:text-lg">{book.title}</Link>
+                    <p className="truncate text-xs text-muted sm:text-[13px]">{[book.authors[0], book.genres[0] ? genreLabel(book.genres[0]) : null].filter(Boolean).join(" · ")}</p>
                     <p className="mt-1 flex items-center gap-1 truncate text-xs font-bold text-coral"><Flame size={12} aria-hidden />{signal(book)}</p>
                   </div>
                   {book.averageRating ? (
@@ -184,7 +185,7 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
             </div>
 
             <aside className="flex flex-col gap-5">
-              <section className="bb-card-flat flex flex-col gap-3 p-5">
+              <section className="bb-card-flat hidden flex-col gap-3 p-5 lg:flex">
                 <h2 className="bb-h3">Comment on calcule ?</h2>
                 <p className="text-xs text-muted">Chaque livre gagne des points sur la période choisie :</p>
                 {[
@@ -200,7 +201,7 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
                 ))}
               </section>
               {risers.length ? (
-                <section className="bb-card-flat flex flex-col gap-3 p-5">
+                <section className="bb-card-flat hidden flex-col gap-3 p-5 lg:flex">
                   <h2 className="flex items-center gap-2 bb-h3"><TrendingUp size={17} aria-hidden className="text-[#4f7a4f]" />Monte en flèche</h2>
                   {risers.map((book) => (
                     <Link key={book.id} href={`/books/${book.id}`} className="group flex items-center gap-4 py-1">
@@ -300,7 +301,7 @@ async function ForYou({ viewerId, period }: { viewerId: string; period: TrendPer
   const lookalikePicks = [...lookalikeBooks.values()].sort((a, b) => b.names.length - a.names.length).slice(0, 6);
 
   return (
-    <div className="flex flex-col gap-9">
+    <div className="flex flex-col gap-7 sm:gap-9">
       <ForYouSection icon={UsersRound} title="Dans ton cercle" caption="Les livres que les gens que tu suis lisent en ce moment">
         {circleBooks.length ? (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -309,8 +310,8 @@ async function ForYou({ viewerId, period }: { viewerId: string; period: TrendPer
               const reading = group.readers.length - finished;
               const quote = quotes.find((item) => item.bookId === group.book.id);
               return (
-                <article key={group.book.id} className="bb-card flex gap-4 p-4">
-                  <Link href={`/books/${group.book.id}`}><BookCover title={group.book.title} thumbnailUrl={group.book.thumbnailUrl} className="h-[104px] w-[70px]" iconSize={14} /></Link>
+                <article key={group.book.id} className="bb-card flex gap-3 p-3.5 sm:gap-4 sm:p-4">
+                  <Link href={`/books/${group.book.id}`} className="shrink-0"><BookCover title={group.book.title} thumbnailUrl={group.book.thumbnailUrl} className="h-[84px] w-14 sm:h-[104px] sm:w-[70px]" iconSize={14} /></Link>
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <Link href={`/books/${group.book.id}`} className="bb-h3 hover:text-mint">{group.book.title}</Link>
                     <div className="flex items-center gap-2">
@@ -363,7 +364,7 @@ function ForYouSection({ icon: Icon, title, caption, action, children }: { icon:
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-mint/[0.08] text-mint"><Icon size={18} aria-hidden /></span>
+        <span className="hidden h-10 w-10 shrink-0 place-items-center rounded-full bg-mint/[0.08] text-mint sm:grid"><Icon size={18} aria-hidden /></span>
         <div className="min-w-0 flex-1">
           <h2 className="bb-h2">{title}</h2>
           <p className="text-xs text-muted">{caption}</p>
@@ -378,14 +379,14 @@ function ForYouSection({ icon: Icon, title, caption, action, children }: { icon:
 function PickGrid({ picks }: { picks: Array<{ id: string; title: string; authors: string[]; thumbnailUrl: string | null; badge: string; tone: "coral" | "green" }> }) {
   if (!picks.length) return <p className="bb-card-flat p-5 text-sm text-muted">Rien à te proposer pour l&apos;instant : reviens quand la communauté aura un peu plus lu.</p>;
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 lg:grid-cols-6">
       {picks.map((book) => (
         <Link key={book.id} href={`/books/${book.id}`} className="group flex min-w-0 flex-col gap-1.5">
           <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} showTitle className="aspect-[2/3] w-full shadow-poster transition group-hover:-translate-y-1" iconSize={0} />
           <span className={`mt-1 inline-flex w-fit max-w-full items-center gap-1 truncate rounded-full px-2 py-0.5 text-[11px] font-bold ${book.tone === "green" ? "bg-[#4f7a4f]/10 text-[#4f7a4f]" : "bg-coral/10 text-coral"}`}>
             {book.badge}
           </span>
-          <span className="truncate font-display text-[15px] font-semibold text-paper">{book.title}</span>
+          <span className="truncate font-display text-[13px] font-semibold text-paper sm:text-[15px]">{book.title}</span>
           <span className="-mt-1 truncate text-xs text-muted">{book.authors[0]}</span>
         </Link>
       ))}

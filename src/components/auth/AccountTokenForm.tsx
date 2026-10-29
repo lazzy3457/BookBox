@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
           Retour à la connexion
         </Link>
         <div>
-          <h1 className="font-display text-[34px] font-semibold leading-tight text-paper">Mot de passe oublié</h1>
+          <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[34px]">Mot de passe oublié</h1>
           <p className="mt-2 text-sm text-muted">
             {sent ? "Si un compte correspond à cette adresse, un lien vient d’être envoyé." : "Indique ton adresse e-mail, on t’envoie un lien pour en choisir un nouveau."}
           </p>
@@ -68,7 +68,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <AuthShell panelTitle="Un nouveau départ pour tes lectures.">
       <form onSubmit={submit} className="flex flex-col gap-5">
-        <h1 className="font-display text-[34px] font-semibold leading-tight text-paper">Nouveau mot de passe</h1>
+        <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[34px]">Nouveau mot de passe</h1>
         <AuthField label="Mot de passe" hint="Au moins 8 caractères.">
           <input required name="password" type="password" minLength={8} maxLength={120} autoComplete="new-password" className="bb-input h-12" />
         </AuthField>
@@ -83,7 +83,7 @@ function AuthMessage({ title, message, panelTitle }: { title: string; message: s
     <AuthShell panelTitle={panelTitle}>
       <div role="status" className="flex flex-col gap-5">
         <span className="grid h-14 w-14 place-items-center rounded-full bg-panelSoft text-mint"><MailCheck size={22} aria-hidden /></span>
-        <h1 className="font-display text-[34px] font-semibold leading-tight text-paper">{title}</h1>
+        <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[34px]">{title}</h1>
         <p className="text-sm text-muted">{message}</p>
         <Link href="/login" className="bb-btn-primary w-full py-3.5 text-sm">Aller à la connexion</Link>
       </div>

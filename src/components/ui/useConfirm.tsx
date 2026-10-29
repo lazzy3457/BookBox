@@ -47,7 +47,7 @@ function ConfirmDialog({ options, onClose }: { options: ConfirmOptions; onClose:
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center p-4">
       <button type="button" aria-label="Annuler" onClick={() => onClose(false)} className="absolute inset-0 bg-paper/35 backdrop-blur-[2px]" />
-      <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className="bb-card relative flex w-full max-w-md flex-col gap-4 p-6">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className="bb-card relative flex w-full max-w-md flex-col gap-4 p-5 sm:p-6">
         <div className="flex items-start gap-3">
           {danger ? (
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-coral/10 text-coral"><TriangleAlert size={18} aria-hidden /></span>

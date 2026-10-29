@@ -29,7 +29,7 @@ export function NewListForm() {
   }
 
   return (
-    <div className="space-y-5 rounded border border-line bg-panel/80 p-7 shadow-poster">
+    <div className="space-y-5 rounded border border-line bg-panel/80 p-5 shadow-poster sm:p-7">
       {/* Titre */}
       <div>
         <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">

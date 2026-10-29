@@ -109,7 +109,7 @@ export function ReaderGrid({ readers, canFollow, variant, initialQuery = "" }: R
           {searching ? <span className="text-xs text-muted">…</span> : null}
         </form>
         {variant === "suggestions" ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="bb-scroll-row sm:flex-wrap">
             {(Object.keys(filterLabels) as Filter[]).map((key) => (
               <button key={key} type="button" onClick={() => { setFilter(key); setRemote(null); }} className={`bb-chip ${filter === key ? "bb-chip-active" : ""}`}>
                 {filterLabels[key]}

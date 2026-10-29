@@ -442,7 +442,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
       <form
         onSubmit={submit}
         role="search"
-        className={`flex items-center gap-3 rounded-full border bg-panel py-1.5 pl-5 pr-1.5 shadow-poster transition ${
+        className={`flex items-center gap-2 rounded-full border bg-panel py-1.5 pl-4 pr-1.5 shadow-poster transition sm:gap-3 sm:pl-5 ${
           dropdownOpen ? "border-mint ring-1 ring-mint" : "border-line"
         }`}
       >
@@ -484,7 +484,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
             <X size={14} />
           </button>
         ) : null}
-        <button type="submit" disabled={isSearching} className="bb-btn-primary px-5 py-2.5 text-sm">
+        <button type="submit" disabled={isSearching} className="bb-btn-primary px-4 py-2.5 text-sm sm:px-5">
           {isSearching ? "Recherche…" : "Rechercher"}
         </button>
       </form>
@@ -556,19 +556,19 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
       {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
 
       {!hasResults ? (
-        <div className="mx-auto flex max-w-[880px] flex-col items-center gap-8 pb-10 pt-6">
+        <div className="mx-auto flex max-w-[880px] flex-col items-center gap-6 pb-6 pt-2 sm:gap-8 sm:pb-10 sm:pt-6">
           <div className="text-center">
-            <h1 className="font-display text-4xl font-semibold leading-tight text-paper sm:text-[44px]">Trouve ton prochain livre</h1>
-            <p className="mt-3 text-sm text-muted">Titre, auteur ou ISBN. Les livres déjà sur BooksBox apparaissent en premier.</p>
+            <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[44px]">Trouve ton prochain livre</h1>
+            <p className="mt-2 text-[13px] text-muted sm:mt-3 sm:text-sm">Titre, auteur ou ISBN. Les livres déjà sur BooksBox apparaissent en premier.</p>
           </div>
           {searchBox}
           {status ? <p className="w-full text-sm font-bold text-coral">{status}</p> : null}
 
-          <div className="flex w-full flex-col gap-7">
+          <div className="flex w-full flex-col gap-6 sm:gap-7">
             {history.length ? (
               <section className="flex flex-col gap-3">
                 <h2 className="bb-h3">Tes recherches récentes</h2>
-                <div className="flex flex-wrap gap-2">
+                <div className="bb-scroll-row sm:flex-wrap">
                   {history.slice(0, 6).map((item) => (
                     <button key={item} type="button" onClick={() => void runSearch(item)} className="bb-chip">{item}</button>
                   ))}
@@ -579,10 +579,10 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
             {recentBooks.length ? (
               <section className="flex flex-col gap-3">
                 <h2 className="bb-h3">Consultés récemment</h2>
-                <div className="flex flex-wrap gap-3">
+                <div className="bb-scroll-row gap-3 sm:flex-wrap">
                   {recentBooks.map((book) => (
                     <Link key={book.id} href={`/books/${book.id}`} title={book.title} className="transition hover:-translate-y-1">
-                      <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[104px] w-[70px]" iconSize={0} />
+                      <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[90px] w-[60px] sm:h-[104px] sm:w-[70px]" iconSize={0} />
                     </Link>
                   ))}
                 </div>
@@ -609,10 +609,10 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6">
           {searchBox}
 
-          <ol className="flex flex-wrap items-center gap-3 text-[13px] font-bold">
+          <ol className="hidden flex-wrap items-center gap-3 text-[13px] font-bold sm:flex">
             {["Trouve le livre", "Choisis l'édition", "Ajoute-le avec un statut"].map((label, index) => {
               const done = index + 1 <= step;
               return (
@@ -630,7 +630,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
               {lastQuery.trim() ? (
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h1 className="bb-h3">{groups.length} livre{groups.length > 1 ? "s" : ""} trouvé{groups.length > 1 ? "s" : ""}</h1>
-                  <span className="text-xs text-muted">pour « {lastQuery} » · {Math.max(totalItems, items.length)} éditions regroupées</span>
+                  <span className="hidden text-xs text-muted sm:inline">pour « {lastQuery} » · {Math.max(totalItems, items.length)} éditions regroupées</span>
                 </div>
               ) : null}
               {status ? <p className="text-sm font-bold text-coral">{status}</p> : null}
@@ -640,14 +640,14 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
                 const saved = savedKeys.get(group.key);
                 const genre = group.main.genres?.[0];
                 return (
-                  <article key={group.key} className={`bb-card-flat flex flex-col gap-4 p-3 sm:flex-row sm:items-center ${isSelected ? "border-mint ring-1 ring-mint" : ""}`}>
-                    <div className="flex min-w-0 flex-1 items-center gap-4">
-                      <BookCover title={group.main.title} thumbnailUrl={group.main.thumbnailUrl} className="h-[96px] w-16" iconSize={0} />
+                  <article key={group.key} className={`bb-card-flat flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 ${isSelected ? "border-mint ring-1 ring-mint" : ""}`}>
+                    <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                      <BookCover title={group.main.title} thumbnailUrl={group.main.thumbnailUrl} className="h-[84px] w-14 sm:h-[96px] sm:w-16" iconSize={0} />
                       <div className="min-w-0 flex-1">
-                        <button type="button" onClick={() => void openExternal(group.main)} className="block max-w-full truncate text-left font-display text-lg font-semibold text-paper hover:text-mint">
+                        <button type="button" onClick={() => void openExternal(group.main)} className="block max-w-full truncate text-left font-display text-base font-semibold text-paper hover:text-mint sm:text-lg">
                           {group.main.title}
                         </button>
-                        <p className="truncate text-sm text-muted">
+                        <p className="truncate text-xs text-muted sm:text-sm">
                           {[group.main.authors.join(", ") || "Auteur inconnu", year(group.main.publishedDate), genre ? genreLabel(genre) : null].filter(Boolean).join(" · ")}
                         </p>
                         <button type="button" onClick={() => selectGroup(group)} className="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-mint hover:underline">
@@ -656,7 +656,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
                         </button>
                       </div>
                     </div>
-                    <div className="flex shrink-0 rounded-full bg-ink p-1" role="group" aria-label={`Ranger ${group.main.title}`}>
+                    <div className="flex w-full shrink-0 rounded-full bg-ink p-1 sm:w-auto" role="group" aria-label={`Ranger ${group.main.title}`}>
                       {(Object.keys(statusLabels) as Status[]).map((value) => (
                         <button
                           key={value}
@@ -664,7 +664,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
                           disabled={busyKey === group.key}
                           onClick={() => void addWithStatus(group.main, value, group.key)}
                           aria-pressed={saved === value}
-                          className={`rounded-full px-3 py-1.5 text-xs font-extrabold transition ${saved === value ? "bg-mint text-ink" : "text-paper hover:bg-panel"}`}
+                          className={`flex-1 rounded-full px-3 py-1.5 text-xs font-extrabold transition sm:flex-none ${saved === value ? "bg-mint text-ink" : "text-paper hover:bg-panel"}`}
                         >
                           {statusLabels[value]}
                         </button>
@@ -680,7 +680,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
                 </button>
               ) : null}
 
-              <form onSubmit={createManual} className="mt-2 flex flex-col gap-3 rounded bg-panelSoft/70 p-5">
+              <form onSubmit={createManual} className="mt-2 flex flex-col gap-3 rounded bg-panelSoft/70 p-4 sm:p-5">
                 <h2 className="bb-h3">Ton livre n&apos;est pas dans la liste ?</h2>
                 <p className="text-[13px] text-muted">Ajoute-le avec juste le titre et l&apos;auteur, tu compléteras le reste plus tard.</p>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -694,12 +694,16 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
             </div>
 
             {selectedGroup && selectedEdition ? (
-              <aside className="bb-card flex h-fit flex-col gap-5 p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain" aria-label="Choisir l'édition">
-                <div className="flex gap-4">
-                  <BookCover title={selectedGroup.main.title} thumbnailUrl={selectedEdition.thumbnailUrl} className="h-[130px] w-[88px]" iconSize={0} />
+              <button type="button" aria-label="Fermer" onClick={() => setSelectedGroupKey(null)} className="fixed inset-0 z-40 bg-paper/30 backdrop-blur-[2px] lg:hidden" />
+            ) : null}
+            {selectedGroup && selectedEdition ? (
+              // Sous 1024px, le choix d'édition s'ouvre en panneau par-dessus les résultats au lieu d'atterrir tout en bas de la liste.
+              <aside className="bb-card fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col gap-4 overflow-y-auto overscroll-contain rounded-b-none p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-5 sm:p-5 lg:sticky lg:inset-auto lg:top-24 lg:z-auto lg:h-fit lg:max-h-[calc(100vh-7rem)] lg:rounded-b" aria-label="Choisir l'édition">
+                <div className="flex gap-3 sm:gap-4">
+                  <BookCover title={selectedGroup.main.title} thumbnailUrl={selectedEdition.thumbnailUrl} className="h-[96px] w-16 sm:h-[130px] sm:w-[88px]" iconSize={0} />
                   <div className="min-w-0 flex-1">
                     <p className="bb-label text-coral">Étape 2 sur 3</p>
-                    <h2 className="font-display text-2xl font-semibold text-paper">{selectedGroup.main.title}</h2>
+                    <h2 className="font-display text-xl font-semibold leading-snug text-paper sm:text-2xl">{selectedGroup.main.title}</h2>
                     <p className="text-sm text-muted">{[selectedGroup.main.authors[0], year(selectedGroup.main.publishedDate)].filter(Boolean).join(" · ")}</p>
                   </div>
                   <button type="button" onClick={() => setSelectedGroupKey(null)} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-muted hover:text-paper" aria-label="Fermer">

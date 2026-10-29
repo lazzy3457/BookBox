@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, LogOut, Route, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { BookOpen, ChevronDown, LogOut, Route, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -74,6 +74,15 @@ export function UserMenu({ user, isAdmin = false }: UserMenuProps) {
           >
             <UserRound size={16} />
             Profil
+          </Link>
+          <Link
+            role="menuitem"
+            href="/trending"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-muted transition hover:bg-ink hover:text-paper lg:hidden"
+          >
+            <BookOpen size={16} />
+            Tendances
           </Link>
           <Link
             role="menuitem"

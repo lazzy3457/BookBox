@@ -30,8 +30,8 @@ export function FriendActivity({ item }: { item: FriendActivityItem }) {
   const isReview = Boolean(item.review);
 
   return (
-    <article className={`bb-card-flat flex gap-4 px-5 ${isReview ? "items-start py-4" : "items-center py-3"}`}>
-      <Link href={`/profile/${item.userId}`} aria-label={`Profil de ${item.userName}`}>
+    <article className={`bb-card-flat flex gap-3 px-4 sm:gap-4 sm:px-5 ${isReview ? "items-start py-3.5 sm:py-4" : "items-center py-3"}`}>
+      <Link href={`/profile/${item.userId}`} aria-label={`Profil de ${item.userName}`} className="shrink-0">
         <Avatar name={item.userName} image={item.userImage} size={40} />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -44,7 +44,7 @@ export function FriendActivity({ item }: { item: FriendActivityItem }) {
         {item.review ? (
           <>
             <StarRating value={item.review.rating} />
-            {item.review.excerpt ? <p className="text-sm italic leading-relaxed text-paper">« {item.review.excerpt} »</p> : null}
+            {item.review.excerpt ? <p className="line-clamp-3 text-sm italic leading-relaxed text-paper sm:line-clamp-none">« {item.review.excerpt} »</p> : null}
             <div className="flex gap-3.5 pt-1 text-xs font-bold text-muted">
               <ReviewLikeButton reviewId={item.review.id} count={item.review.likes} initiallyLiked={item.review.liked} isSignedIn />
               <Link href={`/books/${item.bookId}#avis`} className="inline-flex items-center gap-1 hover:text-mint"><MessageCircle size={14} aria-hidden />{item.review.comments}</Link>
@@ -52,11 +52,11 @@ export function FriendActivity({ item }: { item: FriendActivityItem }) {
           </>
         ) : null}
       </div>
-      <Link href={`/books/${item.bookId}`} aria-label={item.bookTitle}>
+      <Link href={`/books/${item.bookId}`} aria-label={item.bookTitle} className="shrink-0">
         <BookCover
           title={item.bookTitle}
           thumbnailUrl={item.bookThumbnail}
-          className={isReview ? "h-[108px] w-[72px]" : "h-[60px] w-10"}
+          className={isReview ? "h-[84px] w-14 sm:h-[108px] sm:w-[72px]" : "h-[60px] w-10"}
           iconSize={14}
         />
       </Link>

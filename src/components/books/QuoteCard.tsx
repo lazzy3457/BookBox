@@ -60,9 +60,9 @@ export function QuoteLikeButton({ entryId, count, initiallyLiked, isSignedIn, si
 export function QuoteCard({ quote, isSignedIn }: { quote: QuoteView; isSignedIn: boolean }) {
 
   return (
-    <figure className="bb-card flex flex-col gap-3 p-5">
+    <figure className="bb-card flex flex-col gap-3 p-4 sm:p-5">
       <Quote size={20} aria-hidden className="text-coral" />
-      <blockquote className="font-display text-lg italic leading-snug text-paper">{quote.text}</blockquote>
+      <blockquote className="font-display text-base italic leading-snug text-paper sm:text-lg">{quote.text}</blockquote>
       {quote.book ? <Link href={`/books/${quote.book.id}`} className="text-xs font-extrabold text-mint hover:underline">{quote.book.title}</Link> : null}
       <figcaption className="mt-auto flex items-center gap-2 text-[11px] text-muted">
         {quote.page ? <span className="font-extrabold text-coral">p. {quote.page}</span> : null}

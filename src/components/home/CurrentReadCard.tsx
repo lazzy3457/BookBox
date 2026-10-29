@@ -90,15 +90,15 @@ export function CurrentReadCard(props: CurrentReadCardProps) {
   }
 
   return (
-    <article className="bb-card flex gap-5 p-5">
-      <Link href={`/books/${props.bookId}`} aria-label={props.title}>
-        <BookCover title={props.title} thumbnailUrl={props.thumbnailUrl} className="h-[126px] w-[84px]" />
+    <article className="bb-card flex gap-4 p-4 sm:gap-5 sm:p-5">
+      <Link href={`/books/${props.bookId}`} aria-label={props.title} className="shrink-0">
+        <BookCover title={props.title} thumbnailUrl={props.thumbnailUrl} className="h-24 w-16 sm:h-[126px] sm:w-[84px]" />
       </Link>
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1 sm:gap-1.5">
         <div className="bb-label text-coral">{props.sinceLabel}</div>
         <Link href={`/books/${props.bookId}`} className="bb-h3 truncate hover:text-mint">{props.title}</Link>
-        <div className="truncate text-sm text-muted">{props.author}</div>
-        <div className="flex flex-col gap-1.5 pt-2">
+        <div className="truncate text-xs text-muted sm:text-sm">{props.author}</div>
+        <div className="flex flex-col gap-1.5 pt-1 sm:pt-2">
           <div className="bb-track" role="progressbar" aria-label="Progression" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full rounded-full bg-mint" style={{ width: `${percent}%` }} />
           </div>
@@ -115,19 +115,19 @@ export function CurrentReadCard(props: CurrentReadCardProps) {
               value={page}
               onChange={(event) => setPage(event.target.value)}
               placeholder="Page"
-              className="bb-input w-28 py-2"
+              className="bb-input w-24 py-2 sm:w-28"
               autoFocus
             />
             <button type="submit" disabled={busy} className="bb-btn-primary">Enregistrer</button>
             <button type="button" onClick={() => setIsNoting(false)} className="bb-btn-ghost">Annuler</button>
           </form>
         ) : (
-          <div className="flex flex-wrap gap-2 pt-2">
-            <button type="button" onClick={() => setIsNoting(true)} className="bb-btn-soft">
+          <div className="flex gap-2 pt-1.5 sm:pt-2">
+            <button type="button" onClick={() => setIsNoting(true)} className="bb-btn-soft px-3 sm:px-4">
               <PencilLine size={16} aria-hidden />
               Noter ma page
             </button>
-            <button type="button" onClick={finish} disabled={busy} className="bb-btn-primary">
+            <button type="button" onClick={finish} disabled={busy} className="bb-btn-primary px-3 sm:px-4">
               <Check size={16} aria-hidden />
               J&apos;ai fini
             </button>

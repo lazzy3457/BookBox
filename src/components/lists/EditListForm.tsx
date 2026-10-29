@@ -176,7 +176,7 @@ export function EditListForm({ list }: Props) {
     <div className="space-y-5">
       {confirmDialog}
       {/* Infos de la liste */}
-      <div className="space-y-5 rounded border border-line bg-panel/80 p-7 shadow-poster">
+      <div className="space-y-5 rounded border border-line bg-panel/80 p-5 shadow-poster sm:p-7">
         <div>
           <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.16em] text-muted">
             Titre <span className="text-coral">*</span>
@@ -275,7 +275,7 @@ export function EditListForm({ list }: Props) {
       </div>
 
       {/* Livres de la liste */}
-      <div className="rounded border border-line bg-panel/80 p-7 shadow-poster">
+      <div className="rounded border border-line bg-panel/80 p-5 shadow-poster sm:p-7">
         <h2 className="mb-1 text-sm font-extrabold uppercase tracking-[0.16em] text-muted">
           Livres dans la liste ({entries.length})
         </h2>

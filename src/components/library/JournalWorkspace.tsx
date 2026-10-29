@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReadingStatus } from "@prisma/client";
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flame, Lock, MoreHorizontal, Quote, Trash2, UsersRound, X } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
@@ -87,6 +87,16 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
   const [drawer, setDrawer] = useState<{ date: string; bookId: string | null } | null>(null);
   const [confirm, confirmDialog] = useConfirm();
   const [entries, setEntries] = useState(periods);
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Sur petit écran, le calendrier défile : on l'ouvre sur les semaines récentes plutôt que sur janvier.
+  useEffect(() => {
+    const calendar = calendarRef.current;
+    const day = calendar?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!calendar || !day || calendar.scrollWidth <= calendar.clientWidth) return;
+    const offset = day.getBoundingClientRect().left - calendar.getBoundingClientRect().left;
+    calendar.scrollLeft += offset - calendar.clientWidth + 48;
+  }, [year]);
 
   const [prevPeriods, setPrevPeriods] = useState(periods);
   if (periods !== prevPeriods) {
@@ -210,14 +220,14 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
   });
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
       {confirmDialog}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Mon journal de lecture</h1>
-          <p className="mt-1 text-sm text-muted">Chaque case est un jour : plus elle est foncée, plus tu as lu.</p>
+          <h1 className="bb-page-title">Mon journal de lecture</h1>
+          <p className="mt-1 text-[13px] text-muted sm:text-sm">Chaque case est un jour : plus elle est foncée, plus tu as lu.</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Link href={`/diary?annee=${year - 1}`} aria-label="Année précédente" className="text-muted hover:text-paper"><ChevronLeft size={18} /></Link>
             <span className="font-display text-2xl font-semibold text-paper">{year}</span>
@@ -227,39 +237,39 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
               <Link href={`/diary?annee=${year + 1}`} aria-label="Année suivante" className="text-muted hover:text-paper"><ChevronRight size={18} /></Link>
             )}
           </div>
-          <button type="button" onClick={() => setDrawer({ date: isCurrentYear ? today : selected, bookId: reading[0]?.bookId ?? books[0]?.bookId ?? null })} className="bb-btn-primary px-5 py-2.5 text-sm">
+          <button type="button" onClick={() => setDrawer({ date: isCurrentYear ? today : selected, bookId: reading[0]?.bookId ?? books[0]?.bookId ?? null })} className="bb-btn-primary px-4 py-2.5 text-sm sm:px-5">
             Écrire dans mon journal
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
         {[
           [String(stats.days), stats.days > 1 ? "jours de lecture" : "jour de lecture"],
           [`${stats.longest} j`, "plus longue série"],
           [`${stats.perDay} p.`, "par jour de lecture"],
           [String(stats.notes), stats.notes > 1 ? "notes et citations" : "note ou citation"]
         ].map(([value, label]) => (
-          <div key={label} className="bb-card-flat p-4 sm:p-5">
-            <div className="font-display text-[30px] font-semibold leading-tight text-mint">{value}</div>
-            <div className="text-xs text-muted">{label}</div>
+          <div key={label} className="bb-card-flat px-1.5 py-2.5 text-center sm:p-5 sm:text-left">
+            <div className="font-display text-xl font-semibold leading-tight text-mint sm:text-[30px]">{value}</div>
+            <div className="text-[10px] leading-tight text-muted sm:text-xs">{label}</div>
           </div>
         ))}
       </div>
 
-      <section className="bb-card p-5" aria-label={`Calendrier de lecture ${year}`}>
-        <div className="overflow-x-auto pb-1">
+      <section className="bb-card p-4 sm:p-5" aria-label={`Calendrier de lecture ${year}`}>
+        <div ref={calendarRef} className="overflow-x-auto pb-1">
           <div className="inline-flex min-w-full flex-col gap-1.5">
-            <div className="flex gap-[5px] pl-0 text-[11px] text-muted">
+            <div className="flex gap-[3px] pl-0 text-[11px] text-muted sm:gap-[5px]">
               {weeks.map((_, index) => (
-                <span key={index} className="w-[16px] shrink-0 overflow-visible whitespace-nowrap">{monthStarts[index] ? monthShort[monthStarts[index]!.month] : ""}</span>
+                <span key={index} className="w-[13px] shrink-0 overflow-visible whitespace-nowrap sm:w-[16px]">{monthStarts[index] ? monthShort[monthStarts[index]!.month] : ""}</span>
               ))}
             </div>
-            <div className="flex gap-[5px]">
+            <div className="flex gap-[3px] sm:gap-[5px]">
               {weeks.map((column, index) => (
-                <div key={index} className="flex flex-col gap-[5px]">
+                <div key={index} className="flex flex-col gap-[3px] sm:gap-[5px]">
                   {column.map((day, row) => {
-                    if (!day) return <span key={row} className="h-[16px] w-[16px]" />;
+                    if (!day) return <span key={row} className="h-[13px] w-[13px] sm:h-[16px] sm:w-[16px]" />;
                     const items = filteredDay(day);
                     const pages = items.reduce((total, entry) => total + entry.pagesRead, 0);
                     const tone = level(pages, items.length);
@@ -273,7 +283,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
                         title={`${new Date(`${day}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} · ${items.length ? `${pages} pages` : "rien noté"}`}
                         aria-label={`${new Date(`${day}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}, ${items.length ? `${pages} pages` : "rien noté"}`}
                         aria-pressed={selected === day}
-                        className={`h-[16px] w-[16px] rounded-[4px] transition hover:ring-2 hover:ring-mint/40 disabled:opacity-40 ${levelClasses[tone]} ${selected === day ? "ring-2 ring-paper" : ""}`}
+                        className={`h-[13px] w-[13px] rounded-[3px] sm:h-[16px] sm:w-[16px] sm:rounded-[4px] transition hover:ring-2 hover:ring-mint/40 disabled:opacity-40 ${levelClasses[tone]} ${selected === day ? "ring-2 ring-paper" : ""}`}
                       />
                     );
                   })}
@@ -299,8 +309,8 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
         </div>
       </section>
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_350px]">
-        <section className="bb-card flex flex-col gap-4 p-5">
+      <div className="grid min-w-0 gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_350px]">
+        <section className="bb-card flex flex-col gap-4 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="bb-label text-coral">{selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}</p>
@@ -335,7 +345,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
           ) : null}
         </section>
 
-        <aside className="bb-card flex h-fit flex-col gap-4 p-5">
+        <aside className="bb-card flex h-fit flex-col gap-4 p-4 sm:p-5">
           <h2 className="bb-h3">En cours</h2>
           {reading.length ? (
             reading.map((book) => {
@@ -386,11 +396,11 @@ function EntryCard({ entry, onToggleVisibility, onDelete }: { entry: DayEntry; o
   const [menuOpen, setMenuOpen] = useState(false);
   const quote = isQuote(entry);
   return (
-    <article className={`flex flex-col gap-2.5 rounded-xl p-4 ${quote ? "bg-panelSoft/50" : "bg-ink"}`}>
-      <div className="flex items-center gap-3">
+    <article className={`flex flex-col gap-2.5 rounded-xl p-3.5 sm:p-4 ${quote ? "bg-panelSoft/50" : "bg-ink"}`}>
+      <div className="flex items-center gap-2 sm:gap-3">
         <BookCover title={entry.period.title} thumbnailUrl={entry.period.thumbnailUrl} className="h-7 w-5 rounded" iconSize={0} />
         <Link href={`/books/${entry.period.bookId}`} className="truncate text-xs font-extrabold text-paper hover:text-mint">{entry.period.title}</Link>
-        <span className="truncate text-[11px] text-muted">
+        <span className="hidden truncate text-[11px] text-muted min-[400px]:inline">
           {[entry.page ? `p. ${entry.page}` : null, entry.percentage != null && !entry.page ? `${entry.percentage} %` : null, entry.chapter ? `chap. ${entry.chapter}` : null].filter(Boolean).map((part) => `· ${part}`).join(" ")}
         </span>
         <button type="button" onClick={onToggleVisibility} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-panel px-2.5 py-1 text-[11px] font-bold text-muted hover:text-paper" title="Changer la visibilité">
@@ -413,7 +423,7 @@ function EntryCard({ entry, onToggleVisibility, onDelete }: { entry: DayEntry; o
       </div>
       {entry.note ? (
         quote ? (
-          <p className="flex gap-2 font-display text-lg font-semibold text-paper"><Quote size={16} aria-hidden className="mt-1 shrink-0 text-coral" />« {entry.note} »</p>
+          <p className="flex gap-2 font-display text-base font-semibold text-paper sm:text-lg"><Quote size={16} aria-hidden className="mt-1 shrink-0 text-coral" />« {entry.note} »</p>
         ) : (
           <p className="text-[13px] leading-relaxed text-paper">{entry.note}</p>
         )
@@ -495,7 +505,7 @@ function JournalDrawer({ date, initialBookId, books, onClose, onSaved }: { date:
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <button type="button" aria-label="Fermer" onClick={onClose} className="absolute inset-0 bg-paper/30 backdrop-blur-[2px]" />
-      <form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="journal-drawer-title" className="relative flex h-full w-full max-w-[520px] flex-col gap-5 overflow-y-auto bg-panel p-7 shadow-poster">
+      <form onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="journal-drawer-title" className="relative flex h-full w-full max-w-[520px] flex-col gap-4 overflow-y-auto bg-panel p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-poster sm:gap-5 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="bb-label text-coral">Journal · {isToday ? "aujourd'hui" : "le"} {label}</p>
@@ -526,7 +536,7 @@ function JournalDrawer({ date, initialBookId, books, onClose, onSaved }: { date:
 
         <div className="flex w-fit rounded-full border border-line p-1" role="radiogroup" aria-label="Type d'entrée">
           {([["note", "Note"], ["citation", "Citation"], ["page", "Juste ma page"]] as const).map(([value, text]) => (
-            <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)} className={`rounded-full px-4 py-2 text-[13px] font-extrabold transition ${mode === value ? "bg-mint text-ink" : "text-paper"}`}>
+            <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)} className={`rounded-full px-3 py-2 text-[13px] font-extrabold transition sm:px-4 ${mode === value ? "bg-mint text-ink" : "text-paper"}`}>
               {text}
             </button>
           ))}
@@ -546,7 +556,7 @@ function JournalDrawer({ date, initialBookId, books, onClose, onSaved }: { date:
         {mode !== "page" ? (
           <label className="flex flex-col gap-2 text-xs font-extrabold text-paper">
             {mode === "citation" ? "Le passage" : "Ta note"}
-            <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={6} maxLength={2000} className="bb-input resize-y bg-panel" placeholder={mode === "citation" ? "Recopie la phrase qui t'a marqué…" : "Une impression, un moment, une question…"} />
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={5} maxLength={2000} className="bb-input resize-y bg-panel" placeholder={mode === "citation" ? "Recopie la phrase qui t'a marqué…" : "Une impression, un moment, une question…"} />
           </label>
         ) : null}
 

@@ -18,7 +18,7 @@ import {
   UserX
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Toast } from "@/components/ui/Toast";
 import { Avatar } from "@/components/ui/Avatar";
 import { ThemeId, themes } from "@/lib/themes";
@@ -90,6 +90,11 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
   const [password, setPassword] = useState({ currentPassword: "", newPassword: "", confirmation: "" });
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
+
+  // Sur mobile, la rubrique active peut être hors champ dans la rangée de puces : on la ramène au centre.
+  useEffect(() => {
+    document.querySelector<HTMLElement>("[aria-label=\"Rubriques des paramètres\"] [aria-current=\"page\"]")?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [section]);
 
   const activeNotifications = notificationRows.filter(([key]) => notifications[key]).length;
   const dirtyFields = (Object.keys(profile) as Array<keyof typeof profile>).filter((key) => profile[key] !== baseline[key]).length;
@@ -203,7 +208,7 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
   if (section === "profil") {
     content = (
       <form onSubmit={saveProfile} className="flex flex-col gap-5">
-        <div className="bb-card flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
+        <div className="bb-card flex flex-col gap-5 p-4 sm:p-6 sm:flex-row sm:items-center">
           <Avatar name={profile.name || "?"} image={profile.image || null} size={76} className="border-2 border-line font-display text-2xl" />
           <div className="min-w-0 flex-1">
             <p className="bb-h3">Photo de profil</p>
@@ -214,7 +219,7 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
           </div>
           {profile.image ? <button type="button" onClick={() => setProfile({ ...profile, image: "" })} className="bb-btn-ghost text-paper">Retirer</button> : null}
         </div>
-        <div className="bb-card grid gap-5 p-6 sm:grid-cols-2">
+        <div className="bb-card grid gap-5 p-4 sm:p-6 sm:grid-cols-2">
           <label className={label}>Nom affiché<input required minLength={2} maxLength={80} autoComplete="name" className={field} value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} /></label>
           <label className={label}>Pseudo
             <input required minLength={3} maxLength={32} autoComplete="username" className={field} value={profile.username} onChange={(e) => setProfile({ ...profile, username: e.target.value.toLowerCase() })} />
@@ -226,7 +231,7 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
           </label>
         </div>
         {dirtyFields ? (
-          <div className="sticky bottom-24 z-10 flex items-center gap-3 rounded bg-paper px-5 py-3.5 text-ink shadow-poster lg:bottom-6">
+          <div className="sticky bottom-24 z-10 flex items-center gap-3 rounded bg-paper px-4 py-3 sm:px-5 sm:py-3.5 text-ink shadow-poster lg:bottom-6">
             <span aria-hidden className="h-2 w-2 rounded-full bg-coral" />
             <span className="text-[13px] font-extrabold">{dirtyFields} modification{dirtyFields > 1 ? "s" : ""} non enregistrée{dirtyFields > 1 ? "s" : ""}</span>
             <button type="button" onClick={() => setProfile(baseline)} className="ml-auto text-[13px] font-extrabold text-ink/75 hover:text-ink">Annuler</button>
@@ -238,7 +243,7 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
   } else if (section === "securite") {
     content = (
       <div className="flex flex-col gap-5">
-        <div className="bb-card flex flex-wrap items-center gap-3 p-6 text-sm">
+        <div className="bb-card flex flex-wrap items-center gap-3 p-4 sm:p-6 text-sm">
           <span className="font-extrabold text-paper">{initialProfile.email}</span>
           {initialProfile.emailVerified ? (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-mint"><CheckCircle2 size={14} aria-hidden />E-mail vérifié</span>
@@ -247,7 +252,7 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
           )}
           <p className="w-full text-xs text-muted">L’adresse du compte n’est pas modifiable dans cette version.</p>
         </div>
-        <form onSubmit={changePassword} className="bb-card grid gap-4 p-6 sm:grid-cols-2">
+        <form onSubmit={changePassword} className="bb-card grid gap-4 p-4 sm:p-6 sm:grid-cols-2">
           <h2 className="bb-h3 sm:col-span-2">Changer de mot de passe</h2>
           <label className={`${label} sm:col-span-2`}>Mot de passe actuel<input type="password" required autoComplete="current-password" className={field} value={password.currentPassword} onChange={(e) => setPassword({ ...password, currentPassword: e.target.value })} /></label>
           <label className={label}>Nouveau mot de passe<input type="password" required minLength={10} autoComplete="new-password" className={field} value={password.newPassword} onChange={(e) => setPassword({ ...password, newPassword: e.target.value })} /></label>
@@ -259,11 +264,11 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
   } else if (section === "lecture") {
     content = (
       <div className="flex flex-col gap-5">
-        <div className="bb-card flex items-center justify-between gap-4 p-6">
+        <div className="bb-card flex items-center justify-between gap-4 p-4 sm:p-6">
           <div className="flex gap-3"><EyeOff size={18} aria-hidden className="mt-0.5 text-mint" /><div><h2 className="text-[15px] font-extrabold text-paper">Masquer les spoilers</h2><p className="mt-1 text-xs text-muted">Cache les avis signalés comme sensibles jusqu’à ce que tu les révèles.</p></div></div>
           <Switch checked={hideSpoilers} label="Masquer les spoilers" onChange={toggleSpoilers} />
         </div>
-        <div className="bb-card p-6">
+        <div className="bb-card p-4 sm:p-6">
           <h2 className="bb-h3">Apparence</h2>
           <p className="mt-1 text-xs text-muted">Choisis l’ambiance de ta bibliothèque.</p>
           <div role="radiogroup" aria-label="Thème" className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -289,11 +294,11 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
   } else if (section === "notifications") {
     content = (
       <div className="flex flex-col gap-5">
-        <div className="bb-card flex items-center justify-between gap-4 p-6">
+        <div className="bb-card flex items-center justify-between gap-4 p-4 sm:p-6">
           <div className="flex gap-3"><Bell size={18} aria-hidden className="mt-0.5 text-muted" /><div><h2 className="text-[15px] font-extrabold text-paper">Toutes les notifications</h2><p className="mt-1 text-xs text-muted">Coupe ou réactive tout d’un coup.</p></div></div>
           <Switch checked={notifications.enabled} disabled={pendingNotification !== null} label="Toutes les notifications" onChange={() => toggleNotification("enabled")} />
         </div>
-        <div className="bb-card p-6">
+        <div className="bb-card p-4 sm:p-6">
           <h2 className="bb-h3 border-b border-line pb-3">Social</h2>
           <div className="divide-y divide-line">
             {notificationRows.map(([key, title, description]) => (
@@ -308,7 +313,7 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
     );
   } else if (section === "confidentialite") {
     content = (
-      <div className="bb-card flex flex-col gap-4 p-6 text-sm leading-relaxed text-paper">
+      <div className="bb-card flex flex-col gap-4 p-4 sm:p-6 text-sm leading-relaxed text-paper">
         <p>Ton profil, tes avis et tes listes publiques sont visibles par la communauté. Les entrées de ton journal sont <strong>privées par défaut</strong> : tu choisis entrée par entrée celles que tu partages.</p>
         <p className="text-muted">Sur ton profil public, seuls ton niveau et tes badges apparaissent ; ton XP détaillée, ta série et ton calendrier d’activité restent privés.</p>
         <div className="flex flex-wrap gap-3">
@@ -327,31 +332,32 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
 
   return (
     <>
-      <div className="grid items-start gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
-          <h1 className="font-display text-4xl font-semibold text-paper">Paramètres</h1>
-          <nav aria-label="Rubriques des paramètres" className="flex flex-col gap-4">
+      <div className="grid items-start gap-5 sm:gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+        {/* Mobile : les rubriques deviennent une rangée de puces défilante au-dessus du contenu. */}
+        <aside className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-24">
+          <h1 className="bb-page-title">Paramètres</h1>
+          <nav aria-label="Rubriques des paramètres" className="bb-scroll-row lg:mx-0 lg:flex-col lg:gap-4 lg:overflow-visible lg:px-0">
             {groups.map((group) => (
-              <div key={group.label} className="flex flex-col gap-1">
-                <p className="bb-label pb-1 text-coral">{group.label}</p>
+              <div key={group.label} className="contents lg:flex lg:flex-col lg:gap-1">
+                <p className="bb-label hidden pb-1 text-coral lg:block">{group.label}</p>
                 {group.items.map((item) => {
                   const active = item.id === section;
                   return (
                     <Link key={item.id} href={`/settings?rubrique=${item.id}`} aria-current={active ? "page" : undefined}
-                      className={`flex items-center gap-3 rounded-xl px-2.5 py-2 transition ${active ? "bg-panel shadow-poster" : "hover:bg-panel/60"}`}>
-                      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${active ? "bg-mint text-ink" : "bg-panelSoft/70 text-paper"}`}><item.icon size={15} aria-hidden /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-extrabold text-paper">{item.label}</span>
-                        <span className={`block truncate text-[11px] ${item.alert ? "font-bold text-coral" : "text-muted"}`}>{item.hint}</span>
+                      className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 transition lg:gap-3 lg:rounded-xl lg:border-0 lg:px-2.5 lg:py-2 ${active ? "border-mint bg-mint text-ink lg:bg-panel lg:shadow-poster" : "border-line bg-panel hover:bg-panel/60 lg:bg-transparent"}`}>
+                      <span className={`hidden h-8 w-8 shrink-0 place-items-center rounded-lg lg:grid ${active ? "bg-mint text-ink" : "bg-panelSoft/70 text-paper"}`}><item.icon size={15} aria-hidden /></span>
+                      <span className="min-w-0 lg:flex-1">
+                        <span className={`block whitespace-nowrap text-[13px] font-extrabold ${active ? "text-ink lg:text-paper" : "text-paper"}`}>{item.label}</span>
+                        <span className={`hidden truncate text-[11px] lg:block ${item.alert ? "font-bold text-coral" : "text-muted"}`}>{item.hint}</span>
                       </span>
-                      {active ? <ChevronRight size={15} aria-hidden className="text-paper" /> : item.alert ? <span aria-hidden className="h-2 w-2 rounded-full bg-coral" /> : null}
+                      {active ? <ChevronRight size={15} aria-hidden className="hidden text-paper lg:block" /> : item.alert ? <span aria-hidden className="h-2 w-2 rounded-full bg-coral" /> : null}
                     </Link>
                   );
                 })}
               </div>
             ))}
           </nav>
-          <div className="flex flex-col gap-3 rounded bg-panelSoft/60 p-4">
+          <div className="hidden flex-col gap-3 rounded bg-panelSoft/60 p-4 lg:flex">
             <p className="bb-label text-muted">Réglages rapides</p>
             <div className="flex items-center justify-between gap-3 text-xs font-extrabold text-paper">
               <span className="inline-flex items-center gap-2"><EyeOff size={14} aria-hidden />Masquer les spoilers</span>
@@ -362,17 +368,17 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
               <Switch checked={notifications.enabled} disabled={pendingNotification !== null} label="Notifications" onChange={() => toggleNotification("enabled")} />
             </div>
           </div>
-          <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="inline-flex w-fit items-center gap-2 px-2 text-[13px] font-extrabold text-coral hover:underline">
+          <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="hidden w-fit items-center gap-2 px-2 text-[13px] font-extrabold text-coral hover:underline lg:inline-flex">
             <LogOut size={15} aria-hidden />
             Se déconnecter
           </button>
         </aside>
 
-        <section className="flex min-w-0 flex-col gap-5">
+        <section className="flex min-w-0 flex-col gap-4 sm:gap-5">
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-bold text-muted">Paramètres <ChevronRight size={13} aria-hidden /> <span className="text-paper">{current.label}</span></p>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-paper">{current.label}</h2>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+            <p className="hidden items-center gap-1.5 text-xs font-bold text-muted lg:flex">Paramètres <ChevronRight size={13} aria-hidden /> <span className="text-paper">{current.label}</span></p>
+            <h2 className="font-display text-2xl font-semibold text-paper sm:text-3xl lg:mt-3">{current.label}</h2>
+            <p className="mt-1 flex items-center gap-1.5 text-[13px] text-muted sm:text-sm">
               {section === "notifications" ? <CheckCircle2 size={14} aria-hidden className="text-mint" /> : null}
               {descriptions[section]}
             </p>

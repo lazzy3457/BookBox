@@ -173,9 +173,9 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-8">
-      <section className="bb-card grid gap-6 p-6 sm:p-7 md:grid-cols-[150px_minmax(0,1fr)_auto]">
-        <div className="grid h-[150px] w-[150px] place-items-center overflow-hidden rounded-full bg-panelSoft text-muted">
+    <div className="flex min-w-0 flex-col gap-6 sm:gap-8">
+      <section className="bb-card grid grid-cols-[72px_minmax(0,1fr)] gap-x-4 gap-y-4 p-4 sm:gap-6 sm:p-7 md:grid-cols-[150px_minmax(0,1fr)_auto]">
+        <div className="grid h-[72px] w-[72px] place-items-center overflow-hidden rounded-full bg-panelSoft text-muted sm:h-[150px] sm:w-[150px]">
           {authorSummary.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={authorSummary.image} alt="" className="h-full w-full object-cover" />
@@ -185,16 +185,16 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         </div>
         <div className="flex min-w-0 flex-col gap-3">
           <p className="bb-label text-coral">Auteur</p>
-          <h1 className="font-display text-4xl font-semibold leading-tight text-paper sm:text-[44px]">{authorName}</h1>
+          <h1 className="font-display text-[26px] font-semibold leading-tight text-paper sm:text-[44px]">{authorName}</h1>
           <ExpandableDescription text={authorSummary.bio ?? `Les livres de ${authorName} présents sur BooksBox, avec les notes et discussions de la communauté.`} />
-          <div className="flex flex-wrap items-center gap-x-7 gap-y-3 pt-1">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1 sm:gap-x-7">
             {averageRating ? (
               <span className="flex items-center gap-2 text-[13px] font-extrabold text-paper">
                 <StarRating value={Math.round(averageRating)} />
                 {averageRating.toFixed(1).replace(".", ",")} de moyenne
               </span>
             ) : null}
-            <dl className="flex gap-6">
+            <dl className="flex gap-5 sm:gap-6">
               {[
                 [books.length, "livres"],
                 [allReviews.length, "avis"],
@@ -209,7 +209,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           </div>
         </div>
         {hasRead ? (
-          <div className="flex h-fit flex-col gap-2 rounded-xl bg-ink p-5 md:w-[260px]">
+          <div className="col-span-2 flex h-fit flex-col gap-2 rounded-xl bg-ink p-4 sm:p-5 md:col-span-1 md:w-[260px]">
             <p className="bb-h3 text-base">Toi et {authorName}</p>
             <p className="text-xs text-muted">{plural(readCount, "livre lu", "livres lus")} sur {books.length}{readingCount ? ` · ${readingCount} en cours` : ""}</p>
             <div className="bb-track bg-panelSoft"><div className="h-full rounded-full bg-mint" style={{ width: `${Math.round((readCount / Math.max(1, books.length)) * 100)}%` }} /></div>
@@ -221,14 +221,14 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
       </section>
 
       {starter ? (
-        <section className="grid items-center gap-7 rounded bg-gradient-to-r from-mint to-[#9a4a3e] p-7 text-ink sm:grid-cols-[150px_minmax(0,1fr)] sm:p-9">
+        <section className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-4 rounded bg-gradient-to-r from-mint to-[#9a4a3e] p-4 text-ink sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-7 sm:p-9">
           <Link href={`/books/${starter.id}`}>
-            <BookCover title={starter.title} thumbnailUrl={starter.thumbnailUrl} showTitle className="h-[220px] w-[150px] shadow-poster" iconSize={16} />
+            <BookCover title={starter.title} thumbnailUrl={starter.thumbnailUrl} showTitle className="h-[132px] w-[88px] shadow-poster sm:h-[220px] sm:w-[150px]" iconSize={16} />
           </Link>
           <div className="flex flex-col items-start gap-3">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#f0b48f]">Par où commencer ?</p>
-            <h2 className="font-display text-3xl font-semibold leading-tight">Commence par {starter.title}</h2>
-            <p className="max-w-2xl text-sm text-ink/85">
+            <h2 className="font-display text-xl font-semibold leading-tight sm:text-3xl">Commence par {starter.title}</h2>
+            <p className="hidden max-w-2xl text-sm text-ink/85 sm:block">
               C&apos;est le livre de {authorName} le plus lu sur BooksBox ({plural(starter.libraries.length, "lecteur")}){starterRating ? ` et l'un des mieux notés (${starterRating.toFixed(1).replace(".", ",")})` : ""}.
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
@@ -243,13 +243,13 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         <div className="flex min-w-0 flex-col gap-5">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="bb-h2">Ses livres</h2>
-            <span className="text-xs text-muted">{plural(books.length, "livre")} · du premier au dernier</span>
+            <span className="text-right text-xs text-muted">{plural(books.length, "livre")}<span className="hidden sm:inline"> · du premier au dernier</span></span>
           </div>
 
           {cycles.map((cycle) => {
             const readInCycle = cycle.books.filter((entry) => statusByBook.get(entry.book.id)?.status === ReadingStatus.READ).length;
             return (
-              <section key={cycle.name} className="bb-card p-5">
+              <section key={cycle.name} className="bb-card p-4 sm:p-5">
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <div>
                     <h3 className="bb-h3 text-xl">{cycle.name}</h3>
@@ -259,9 +259,9 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
                 </div>
                 <ol className="divide-y divide-line">
                   {cycle.books.map((entry) => (
-                    <li key={entry.book.id} className="flex items-center gap-4 py-3">
+                    <li key={entry.book.id} className="flex items-center gap-3 py-3 sm:gap-4">
                       <span className="w-6 text-center font-display text-2xl font-semibold text-mint">{entry.number}</span>
-                      <Link href={`/books/${entry.book.id}`}><BookCover title={entry.book.title} thumbnailUrl={entry.book.thumbnailUrl} className="h-12 w-8 rounded-md" iconSize={0} /></Link>
+                      <Link href={`/books/${entry.book.id}`} className="shrink-0"><BookCover title={entry.book.title} thumbnailUrl={entry.book.thumbnailUrl} className="h-12 w-8 rounded-md" iconSize={0} /></Link>
                       <div className="min-w-0 flex-1">
                         <Link href={`/books/${entry.book.id}`} className="block truncate font-display text-[15px] font-semibold text-paper hover:text-mint">{entry.book.title}</Link>
                         <p className="text-[11px] text-muted">{year(entry.book.publishedDate)}</p>
@@ -275,9 +275,9 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           })}
 
           {others.length ? (
-            <section className="bb-card p-5">
+            <section className="bb-card p-4 sm:p-5">
               <h3 className="bb-h3 mb-4 text-xl">{cycles.length ? "Autres romans" : "Bibliographie"}</h3>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 xl:grid-cols-4">
                 {others.map((book) => {
                   const entry = statusByBook.get(book.id);
                   const progress = entry?.readingPeriods[0]?.entries[0];
@@ -289,7 +289,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
                       {entry?.status === ReadingStatus.READING && progress?.percentage != null ? (
                         <div className="bb-track mt-1 h-1"><div className="h-full rounded-full bg-mint" style={{ width: `${progress.percentage}%` }} /></div>
                       ) : null}
-                      <Link href={`/books/${book.id}`} className="line-clamp-2 pt-1 font-display text-sm font-semibold text-paper hover:text-mint">{book.title}</Link>
+                      <Link href={`/books/${book.id}`} className="line-clamp-2 pt-1 font-display text-[13px] font-semibold text-paper hover:text-mint sm:text-sm">{book.title}</Link>
                       <span className="text-[11px] text-muted">{year(book.publishedDate)}</span>
                       <div className="pt-1">{bookStatus(book.id)}</div>
                     </div>

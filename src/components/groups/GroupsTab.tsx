@@ -40,7 +40,7 @@ export function GroupsTab({ mine, discover, isSignedIn }: { mine: DirectoryGroup
   }, [discover, filter, query]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 sm:gap-8">
       {isSignedIn ? (
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -82,7 +82,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
       <div className="fixed inset-0 z-40 bg-ink/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-md -translate-y-1/2 overflow-hidden rounded border border-line bg-panel shadow-poster">
+      <div className="fixed inset-x-4 top-1/2 z-50 mx-auto max-h-[calc(100vh-2rem)] max-w-md -translate-y-1/2 overflow-y-auto rounded border border-line bg-panel shadow-poster">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div className="flex items-center gap-2">

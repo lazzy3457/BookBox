@@ -69,7 +69,7 @@ export default async function JourneyPage() {
       <section aria-label="Résumé" className="mb-8 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded border border-line bg-panel/80 p-5 shadow-poster">
           <div className="flex items-center gap-2 text-sm text-muted"><Flame size={16} className={progress.streak ? "text-coral" : ""} aria-hidden />Série en cours</div>
-          <div className="mt-2 text-3xl font-extrabold tabular-nums text-paper">{progress.streak} {progress.streak > 1 ? "jours" : "jour"}</div>
+          <div className="mt-2 text-2xl font-extrabold tabular-nums text-paper sm:text-3xl">{progress.streak} {progress.streak > 1 ? "jours" : "jour"}</div>
           <p className="mt-1 text-xs text-muted">
             {!started ? "Démarre ton parcours pour lancer ta série." : progress.validatedToday ? "Journée validée, à demain !" : progress.streakAtRisk ? "Valide aujourd’hui pour garder ta série." : `Record : ${progress.longestStreak} jours.`}
           </p>
@@ -83,12 +83,12 @@ export default async function JourneyPage() {
         </div>
         <div className="rounded border border-line bg-panel/80 p-5 shadow-poster">
           <div className="flex items-center gap-2 text-sm text-muted"><Sparkles size={16} aria-hidden />XP totale</div>
-          <div className="mt-2 text-3xl font-extrabold tabular-nums text-paper">{progress.xpTotal.toLocaleString("fr-FR")}</div>
+          <div className="mt-2 text-2xl font-extrabold tabular-nums text-paper sm:text-3xl">{progress.xpTotal.toLocaleString("fr-FR")}</div>
           <p className="mt-1 text-xs text-muted">{progress.journeyDays} {progress.journeyDays > 1 ? "jours validés" : "jour validé"} au total.</p>
         </div>
         <div className="rounded border border-line bg-panel/80 p-5 shadow-poster">
           <div className="flex items-center gap-2 text-sm text-muted"><Snowflake size={16} className="text-sky" aria-hidden />Gels de série</div>
-          <div className="mt-2 text-3xl font-extrabold tabular-nums text-paper">{progress.streakFreezes} / 2</div>
+          <div className="mt-2 text-2xl font-extrabold tabular-nums text-paper sm:text-3xl">{progress.streakFreezes} / 2</div>
           <p className="mt-1 text-xs text-muted">Un gel sauve un jour manqué. Tu en gagnes un tous les 7 jours de série.</p>
         </div>
       </section>
@@ -110,7 +110,7 @@ export default async function JourneyPage() {
         </section>
       ) : null}
 
-      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+      <div className="grid min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
         <section aria-labelledby="chemin" className="min-w-0 overflow-hidden rounded border border-line bg-panel/60 p-5 shadow-poster sm:p-7">
           <h2 id="chemin" className="text-xl font-extrabold text-paper">Le chemin</h2>
           <p className="mt-1 text-sm text-muted">Chaque étape se débloque avec les jours validés, même s’ils ne se suivent pas.</p>

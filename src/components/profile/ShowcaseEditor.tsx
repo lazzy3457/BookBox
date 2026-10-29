@@ -66,7 +66,7 @@ function ShowcaseDialog({ favorites, selected, onClose }: { favorites: Favorite[
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4">
       <button type="button" aria-label="Fermer" onClick={onClose} className="fixed inset-0 bg-paper/35 backdrop-blur-[2px]" />
-      <div role="dialog" aria-modal="true" aria-labelledby="showcase-title" className="bb-card relative flex max-h-[90vh] w-full max-w-[620px] flex-col gap-5 p-6">
+      <div role="dialog" aria-modal="true" aria-labelledby="showcase-title" className="bb-card relative flex max-h-[90vh] w-full max-w-[620px] flex-col gap-4 overflow-y-auto p-5 sm:gap-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="showcase-title" className="font-display text-2xl font-semibold text-paper">Livres préférés du profil</h2>

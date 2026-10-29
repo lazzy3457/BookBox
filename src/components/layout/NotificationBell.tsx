@@ -84,12 +84,12 @@ export function NotificationBell() {
         ) : null}
       </button>
       {open ? (
-        <div role="dialog" aria-label="Notifications" className="bb-card absolute right-0 mt-3 flex w-[min(92vw,360px)] flex-col overflow-hidden">
+        <div role="dialog" aria-label="Notifications" className="bb-card fixed inset-x-3 top-16 z-50 flex flex-col overflow-hidden sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-[360px]">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <p className="bb-h3 text-base">Notifications</p>
             {unread ? <button type="button" onClick={() => void markAllRead()} className="text-xs font-extrabold text-mint hover:underline">Tout marquer comme lu</button> : null}
           </div>
-          <div className="max-h-[420px] overflow-y-auto">
+          <div className="max-h-[min(420px,65vh)] overflow-y-auto">
             {items.length ? (
               items.map((item) => {
                 const content = (

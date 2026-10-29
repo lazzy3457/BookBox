@@ -242,7 +242,7 @@ export function ModerationWorkspace({ dossiers }: { dossiers: Dossier[] }) {
       <aside className="flex flex-col gap-4">
         <div>
           <p className="bb-label text-coral">Administration</p>
-          <h1 className="font-display text-4xl font-semibold text-paper">Modération</h1>
+          <h1 className="bb-page-title">Modération</h1>
         </div>
         <div role="tablist" className="flex gap-5 border-b border-line">
           {([["OPEN", "À traiter"], ["REVIEWING", "En cours"], ["CLOSED", "Clôturés"]] as const).map(([id, label]) => (
@@ -297,7 +297,7 @@ export function ModerationWorkspace({ dossiers }: { dossiers: Dossier[] }) {
             }}
           />
         ) : (
-          <div className="bb-card-flat p-8 text-center text-sm text-muted">Rien à traiter pour l&apos;instant.</div>
+          <div className="bb-card-flat p-6 text-center text-sm text-muted sm:p-8">Rien à traiter pour l&apos;instant.</div>
         )}
       </div>
     </div>

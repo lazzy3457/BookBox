@@ -126,11 +126,11 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   const tabHref = (id: ProfileTab) => (id === "apercu" ? basePath : `${basePath}?tab=${id}`);
 
   const yearCard = (
-    <section className="grid gap-6 rounded bg-gradient-to-r from-mint to-[#9a4a3e] p-7 text-ink sm:p-8 lg:grid-cols-[minmax(0,1fr)_180px]">
-      <div className="flex flex-col gap-5">
+    <section className="grid gap-5 rounded bg-gradient-to-r from-mint to-[#9a4a3e] p-5 text-ink sm:gap-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_180px]">
+      <div className="flex flex-col gap-4 sm:gap-5">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#f0b48f]">{isOwn ? "Ton" : "Son"} année de lecture</p>
-        <h2 className="font-display text-4xl font-semibold">{year} en livres</h2>
-        <dl className="flex flex-wrap gap-x-10 gap-y-4">
+        <h2 className="font-display text-[26px] font-semibold sm:text-4xl">{year} en livres</h2>
+        <dl className="flex flex-wrap gap-x-6 gap-y-3 sm:gap-x-10 sm:gap-y-4">
           {[
             [String(readThisYear.length), readThisYear.length > 1 ? "livres lus" : "livre lu"],
             [pages.toLocaleString("fr-FR"), "pages"],
@@ -138,7 +138,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
             [yearAverage ? yearAverage.toFixed(1).replace(".", ",") : "—", "note moyenne"]
           ].map(([value, label]) => (
             <div key={label}>
-              <dd className="font-display text-[32px] font-semibold leading-tight">{value}</dd>
+              <dd className="font-display text-2xl font-semibold leading-tight sm:text-[32px]">{value}</dd>
               <dt className="text-xs text-ink/75">{label}</dt>
             </div>
           ))}
@@ -147,7 +147,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       {bookOfYear ? (
         <Link href={`/books/${bookOfYear.bookId}`} className="flex flex-col items-center gap-2 text-center">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#f0b48f]">{isOwn ? "Ton" : "Son"} livre de l&apos;année</p>
-          <BookCover title={bookOfYear.book.title} thumbnailUrl={bookOfYear.book.thumbnailUrl} className="h-[160px] w-[106px] border border-ink/30" iconSize={0} />
+          <BookCover title={bookOfYear.book.title} thumbnailUrl={bookOfYear.book.thumbnailUrl} className="h-[120px] w-20 border border-ink/30 sm:h-[160px] sm:w-[106px]" iconSize={0} />
           <span className="font-display text-base font-semibold">{bookOfYear.book.title}</span>
           <span className="text-[11px] text-ink/75">
             {[ratingByBook.get(bookOfYear.bookId) ? `noté ${ratingByBook.get(bookOfYear.bookId)}/5` : null, `lu en ${monthNames[finishedAt(bookOfYear).getMonth()].toLowerCase()}`].filter(Boolean).join(" · ")}
@@ -158,8 +158,8 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   );
 
   const reviewItem = (review: (typeof reviews)[number]) => (
-    <article key={review.id} className="bb-card flex gap-4 p-4">
-      <Link href={`/books/${review.bookId}#avis`}><BookCover title={review.book.title} thumbnailUrl={review.book.thumbnailUrl} className="h-20 w-14" iconSize={0} /></Link>
+    <article key={review.id} className="bb-card flex gap-3 p-3.5 sm:gap-4 sm:p-4">
+      <Link href={`/books/${review.bookId}#avis`} className="shrink-0"><BookCover title={review.book.title} thumbnailUrl={review.book.thumbnailUrl} className="h-20 w-14" iconSize={0} /></Link>
       <div className="min-w-0 flex-1">
         <Link href={`/books/${review.bookId}#avis`} className="block font-display text-[15px] font-semibold text-paper hover:text-mint">{review.book.title}</Link>
         <StarRating value={review.rating} />
@@ -181,12 +181,12 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       .filter((group) => group.books.length)
       .reverse();
     content = (
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6 sm:gap-8">
         {yearCard}
         <section className="flex flex-col gap-4">
           <h2 className="bb-h2">Mois par mois</h2>
           {months.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
               {months.map((group) => (
                 <div key={group.month} className="bb-card flex flex-col gap-3 p-4">
                   <div className="flex items-baseline justify-between">
@@ -210,7 +210,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
         {badges.length ? (
           <section className="flex flex-col gap-4">
             <h2 className="bb-h2">Étapes franchies</h2>
-            <div className="flex flex-wrap gap-x-10 gap-y-4">
+            <div className="grid gap-3 sm:flex sm:flex-wrap sm:gap-x-10 sm:gap-y-4">
               {badges.slice(0, 6).map((badge) => (
                 <div key={badge.slug} className="flex items-center gap-3">
                   <BadgeMedal icon={badge.icon} tier={badge.tier} size="sm" label={`${badge.name}, palier ${badge.tierName}`} />
@@ -250,10 +250,10 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
     );
   } else {
     content = (
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6 sm:gap-8">
         {yearCard}
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="flex min-w-0 flex-col gap-8">
+        <div className="grid min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6">
+          <div className="flex min-w-0 flex-col gap-6 sm:gap-8">
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} {favorites.length > 1 ? `${favorites.length} livres préférés` : "livres préférés"}</h2>
@@ -265,12 +265,12 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
                 ) : null}
               </div>
               {favorites.length ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="grid grid-cols-4 gap-2.5 sm:gap-4">
                   {favorites.map((entry) => (
                     <Link key={entry.id} href={`/books/${entry.bookId}`} className="group flex min-w-0 flex-col gap-1">
                       <BookCover title={entry.book.title} thumbnailUrl={entry.book.thumbnailUrl} showTitle className="aspect-[2/3] w-full shadow-poster transition group-hover:-translate-y-1" iconSize={16} />
-                      <span className="truncate pt-2 font-display text-sm font-semibold text-paper">{entry.book.title}</span>
-                      <span className="truncate text-[11px] text-muted">{entry.book.authors[0]}</span>
+                      <span className="truncate pt-1.5 font-display text-xs font-semibold text-paper sm:pt-2 sm:text-sm">{entry.book.title}</span>
+                      <span className="hidden truncate text-[11px] text-muted sm:block">{entry.book.authors[0]}</span>
                     </Link>
                   ))}
                 </div>
@@ -293,7 +293,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
             <PublicReadingEntries entries={publicEntries} />
           </div>
           <aside className="flex flex-col gap-5">
-            <section className="bb-card flex flex-col gap-3 p-5">
+            <section className="bb-card flex flex-col gap-3 p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <h2 className="bb-h3">Badges</h2>
                 {badges.length ? <Link href={tabHref("badges")} className="text-xs font-extrabold text-mint hover:underline">Voir les {badges.length}</Link> : null}
@@ -312,7 +312,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
                 <p className="text-sm text-muted">Pas encore de badge.</p>
               )}
             </section>
-            <section className="bb-card flex flex-col gap-3 p-5">
+            <section className="bb-card flex flex-col gap-3 p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <h2 className="bb-h3">{isOwn ? "Mes" : "Ses"} groupes</h2>
                 {isOwn ? <Link href="/commu?tab=groupes" className="text-xs font-extrabold text-mint hover:underline">Tous les groupes</Link> : null}
@@ -333,7 +333,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
                 <p className="text-sm text-muted">Aucun groupe public.</p>
               )}
             </section>
-            <section className="bb-card flex flex-col gap-3 p-5">
+            <section className="bb-card flex flex-col gap-3 p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <h2 className="bb-h3">{isOwn ? "Mes" : "Ses"} listes</h2>
                 {lists.length ? <Link href={tabHref("listes")} className="text-xs font-extrabold text-mint hover:underline">Voir les {lists.length}</Link> : null}
@@ -365,27 +365,27 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
       {preview ? (
-        <div role="status" className="sticky top-20 z-20 flex flex-wrap items-center gap-3 rounded bg-paper px-5 py-3 text-ink shadow-poster">
+        <div role="status" className="sticky top-16 z-20 flex flex-wrap items-center gap-3 rounded bg-paper px-4 py-3 text-ink shadow-poster sm:top-20 sm:px-5">
           <Eye size={16} aria-hidden />
           <span className="text-[13px] font-extrabold">Tu vois ton profil comme les autres lecteurs.</span>
           <Link href={tab === "apercu" ? "/profile" : `/profile?tab=${tab}`} className="bb-btn ml-auto bg-mint px-4 py-2 text-ink hover:bg-lime">Revenir à mon profil</Link>
         </div>
       ) : null}
       <section className="bb-card overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-mint to-coral sm:h-[120px]" />
-        <div className="flex flex-col gap-5 px-5 pb-6 sm:flex-row sm:px-8">
-          <div className="-mt-10 shrink-0 sm:-mt-12">
-            <Avatar name={name} image={user.image} size={116} className="border-4 border-panel font-display text-5xl font-semibold" />
+        <div className="h-16 bg-gradient-to-r from-mint to-coral sm:h-[120px]" />
+        <div className="flex flex-col gap-3 px-4 pb-5 sm:flex-row sm:gap-5 sm:px-8 sm:pb-6">
+          <div className="-mt-9 shrink-0 sm:-mt-12">
+            <Avatar name={name} image={user.image} size={116} className="!h-[76px] !w-[76px] border-4 border-panel font-display !text-3xl font-semibold sm:!h-[116px] sm:!w-[116px] sm:!text-5xl" />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-3 sm:pt-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:gap-3 sm:pt-4">
             <div className="flex flex-wrap items-baseline gap-x-3">
-              <h1 className="font-display text-4xl font-semibold text-paper">{name}</h1>
+              <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-4xl">{name}</h1>
               {user.username ? <span className="text-sm text-muted">@{user.username}</span> : null}
             </div>
             {user.bio ? <p className="text-sm text-paper">{user.bio}</p> : null}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 sm:gap-x-5">
               <span className="inline-flex items-center gap-2 rounded-full border border-line py-1 pl-1 pr-3 text-[13px] font-extrabold text-paper">
                 <span className="grid h-7 w-7 place-items-center rounded-full bg-mint text-[11px] text-ink">{level.level}</span>
                 {level.title}
@@ -397,7 +397,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
                 </span>
               ) : null}
               <span aria-hidden className="hidden h-8 w-px bg-line sm:block" />
-              <dl className="flex gap-6">
+              <dl className="grid w-full grid-cols-4 gap-2 sm:flex sm:w-auto sm:gap-6">
                 {[
                   [libraryCount, "livres"],
                   [reviewCount, "avis"],
@@ -405,14 +405,14 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
                   [followingCount, "abonnements"]
                 ].map(([value, label]) => (
                   <div key={label}>
-                    <dd className="font-display text-xl font-semibold leading-tight text-paper">{value}</dd>
+                    <dd className="font-display text-lg font-semibold leading-tight text-paper sm:text-xl">{value}</dd>
                     <dt className="text-[11px] text-muted">{label}</dt>
                   </div>
                 ))}
               </dl>
             </div>
           </div>
-          <div className="flex flex-col items-start gap-3 sm:items-end sm:pt-4">
+          <div className="flex flex-wrap items-center gap-3 sm:flex-col sm:flex-nowrap sm:items-end sm:pt-4">
             {isOwn ? (
               <>
                 <EditProfileButton user={{ name: user.name, bio: user.bio, image: user.image }} />
@@ -446,9 +446,9 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       </section>
 
       <div className="flex items-end justify-between gap-4 border-b border-line">
-        <nav aria-label="Sections du profil" className="flex gap-6 overflow-x-auto">
+        <nav aria-label="Sections du profil" className="bb-scroll-row min-w-0 gap-5 sm:gap-6">
           {tabs.map((item) => (
-            <Link key={item.id} href={tabHref(item.id)} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab text-[15px] ${tab === item.id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
+            <Link key={item.id} href={tabHref(item.id)} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab sm:text-[15px] ${tab === item.id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
               {item.label}
               {item.count != null ? <span className="rounded-full bg-panelSoft px-2 py-0.5 text-[11px] font-extrabold text-muted">{item.count}</span> : null}
             </Link>

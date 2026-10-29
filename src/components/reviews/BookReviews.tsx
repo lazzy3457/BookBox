@@ -67,12 +67,12 @@ export function BookReviews({ bookId, isSignedIn, hasUserReview, averageRating, 
       {composing ? <ReviewComposer bookId={bookId} hasUserReview={hasUserReview} /> : null}
 
       {featured ? (
-        <article className="flex flex-col gap-4 rounded border border-line bg-ink p-6">
+        <article className="flex flex-col gap-3 rounded border border-line bg-ink p-4 sm:gap-4 sm:p-6">
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-mint/10 px-2.5 py-1 text-[11px] font-extrabold text-mint">
             <Heart size={12} aria-hidden fill="currentColor" />
             L&apos;avis qui a le plus touché
           </span>
-          <blockquote className="font-display text-xl italic leading-relaxed text-paper">
+          <blockquote className="font-display text-lg italic leading-relaxed text-paper sm:text-xl">
             {featuredHidden ? "Cet avis contient des spoilers." : `« ${featured.body} »`}
           </blockquote>
           <div className="flex flex-wrap items-center gap-3">
@@ -104,7 +104,7 @@ export function BookReviews({ bookId, isSignedIn, hasUserReview, averageRating, 
           ) : null}
         </>
       ) : !featured ? (
-        <div className="bb-card-flat p-6 text-sm text-muted">Aucun avis pour ce livre. Le premier donnera le ton.</div>
+        <div className="bb-card-flat p-5 text-sm text-muted sm:p-6">Aucun avis pour ce livre. Le premier donnera le ton.</div>
       ) : null}
     </section>
   );

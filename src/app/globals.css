@@ -189,11 +189,16 @@ select {
   }
 
   .bb-h1 {
-    @apply font-display text-[30px] font-semibold leading-tight text-paper;
+    @apply font-display text-[26px] font-semibold leading-tight text-paper sm:text-[30px];
+  }
+
+  /* Titre de page : compact sur mobile pour laisser la place au contenu. */
+  .bb-page-title {
+    @apply font-display text-[28px] font-semibold leading-tight text-paper sm:text-4xl lg:text-[40px];
   }
 
   .bb-h2 {
-    @apply font-display text-2xl font-semibold leading-snug text-paper;
+    @apply font-display text-xl font-semibold leading-snug text-paper sm:text-2xl;
   }
 
   .bb-h3 {
@@ -250,5 +255,41 @@ select {
 
   .bb-track {
     @apply h-2 overflow-hidden rounded-full bg-panelSoft;
+  }
+
+  /*
+   * Rangée défilante (onglets, filtres) : sur mobile, une seule ligne qui défile
+   * jusqu'aux bords de l'écran au lieu d'empiler les puces sur plusieurs lignes.
+   */
+  .bb-scroll-row {
+    @apply -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0;
+    scrollbar-width: none;
+  }
+
+  .bb-scroll-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bb-scroll-row > * {
+    flex-shrink: 0;
+  }
+
+  /*
+   * Menu contextuel : panneau ancré en bas d'écran sur mobile (jamais coupé par
+   * les bords), menu déroulant classique à partir de 640px.
+   */
+  .bb-sheet {
+    @apply fixed inset-x-3 z-50 max-h-[70vh] overflow-y-auto;
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 640px) {
+    .bb-sheet {
+      position: absolute;
+      left: auto;
+      bottom: auto;
+      max-height: none;
+      overflow: visible;
+    }
   }
 }

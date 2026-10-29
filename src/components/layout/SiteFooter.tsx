@@ -14,19 +14,19 @@ const footerLinks = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-line/80 bg-ink/65">
-      <div className="mx-auto grid max-w-[1520px] gap-7 px-3 py-8 sm:px-5 md:grid-cols-[1fr_auto] md:items-end xl:px-10">
+      <div className="mx-auto grid max-w-[1520px] gap-5 px-4 py-6 sm:gap-7 sm:px-6 sm:py-8 md:grid-cols-[1fr_auto] md:items-end xl:px-10">
         <div className="max-w-xl">
           <Link href="/" className="font-display inline-flex items-center gap-2 font-extrabold text-paper">
             <BrandMark className="h-8 w-8" />
             BooksBox
           </Link>
-          <p className="mt-3 text-sm leading-6 text-muted">
+          <p className="mt-3 hidden text-sm leading-6 text-muted sm:block">
             Ton journal de lecture, tes recommandations et une communauté pour faire circuler les bonnes histoires.
           </p>
-          <p className="mt-4 text-xs text-muted/70">© {new Date().getFullYear()} BooksBox. Tous droits réservés.</p>
+          <p className="mt-2 text-xs text-muted/70 sm:mt-4">© {new Date().getFullYear()} BooksBox. Tous droits réservés.</p>
         </div>
 
-        <nav aria-label="Informations légales" className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-bold text-muted">
+        <nav aria-label="Informations légales" className="flex flex-wrap gap-x-4 gap-y-2 text-[13px] font-bold text-muted sm:gap-x-5 sm:gap-y-3 sm:text-sm">
           {footerLinks.map((link) => (
             <Link key={link.href} href={link.href} className="transition hover:text-mint">
               {link.label}

@@ -100,7 +100,7 @@ export default async function GroupPage({ params, searchParams }: { params: Prom
   } else if (tab === "apropos") {
     content = (
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <section className="bb-card flex flex-col gap-4 p-6 text-sm leading-relaxed text-paper">
+        <section className="bb-card flex flex-col gap-4 p-5 text-sm leading-relaxed text-paper sm:p-6">
           <h2 className="bb-h2">À propos</h2>
           <p>{group.description ?? "Pas encore de description."}</p>
           <dl className="grid gap-3 sm:grid-cols-2">
@@ -311,19 +311,19 @@ export default async function GroupPage({ params, searchParams }: { params: Prom
   }
 
   return (
-    <div className="-mt-6 flex min-w-0 flex-col gap-6 sm:-mt-7">
-      <section className={`-mx-4 bg-gradient-to-r px-4 pb-8 pt-6 text-ink sm:-mx-6 sm:px-6 xl:-mx-10 xl:px-10 ${style.banner}`}>
+    <div className="-mt-4 flex min-w-0 flex-col gap-5 sm:-mt-7 sm:gap-6">
+      <section className={`-mx-4 bg-gradient-to-r px-4 pb-6 pt-4 text-ink sm:pb-8 sm:pt-6 sm:-mx-6 sm:px-6 xl:-mx-10 xl:px-10 ${style.banner}`}>
         <Link href="/commu?tab=groupes" className="inline-flex items-center gap-1 text-xs font-bold text-ink/80 hover:text-ink">
           <ChevronLeft size={14} aria-hidden />
           Groupes
         </Link>
-        <div className="mt-4 flex flex-col gap-5 md:flex-row md:items-end">
-          <GroupEmblem emblem={group.emblem} size={88} className="!bg-ink" />
+        <div className="mt-3 flex flex-col gap-4 sm:mt-4 sm:gap-5 md:flex-row md:items-end">
+          <GroupEmblem emblem={group.emblem} size={88} className="!h-16 !w-16 !bg-ink sm:!h-[88px] sm:!w-[88px]" />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/80">
               Groupe {group.visibility === "PUBLIC" ? "public" : "sur invitation"} · {topicLabels[group.topic]}{group.book ? ` ${group.book.title}` : group.topicLabel && group.topic !== "FREE" ? ` ${group.topicLabel}` : ""}
             </p>
-            <h1 className="font-display text-4xl font-semibold leading-tight sm:text-[44px]">{group.name}</h1>
+            <h1 className="font-display text-[28px] font-semibold leading-tight sm:text-[44px]">{group.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-[13px]">
               <span className="flex -space-x-1.5">
                 {memberPreview.slice(0, 4).map((member) => <Avatar key={member.user.id} name={member.user.name} image={member.user.image} size={26} className="border-2 border-ink/60" />)}
@@ -342,9 +342,9 @@ export default async function GroupPage({ params, searchParams }: { params: Prom
         </div>
       </section>
 
-      <nav aria-label="Sections du groupe" className="-mx-4 -mt-6 flex gap-6 overflow-x-auto border-b border-line bg-panel px-4 sm:-mx-6 sm:px-6 xl:-mx-10 xl:px-10">
+      <nav aria-label="Sections du groupe" className="-mx-4 -mt-5 flex gap-5 overflow-x-auto border-b border-line bg-panel px-4 [scrollbar-width:none] sm:-mt-6 sm:gap-6 sm:-mx-6 sm:px-6 xl:-mx-10 xl:px-10">
         {tabs.map((item) => (
-          <Link key={item.id} href={item.id === "discussions" ? base : `${base}?tab=${item.id}`} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab pt-4 text-[15px] ${tab === item.id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
+          <Link key={item.id} href={item.id === "discussions" ? base : `${base}?tab=${item.id}`} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab shrink-0 pt-4 sm:text-[15px] ${tab === item.id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
             {item.label}
             {item.count != null ? <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${tab === item.id ? "bg-mint text-ink" : "bg-panelSoft text-muted"}`}>{item.count}</span> : null}
           </Link>

@@ -17,7 +17,7 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
   const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
   if (!session?.user?.id) {
     return (
-      <div className="bb-card mx-auto mt-6 flex max-w-xl flex-col items-start gap-3 p-8">
+      <div className="bb-card mx-auto mt-6 flex max-w-xl flex-col items-start gap-3 p-6 sm:p-8">
         <h1 className="bb-h1">Mon journal de lecture</h1>
         <p className="text-sm text-muted">Connecte-toi pour retrouver ton année de lecture jour après jour.</p>
         <Link href="/login?callbackUrl=/diary" className="bb-btn-primary px-5 py-2.5 text-sm">Connexion</Link>

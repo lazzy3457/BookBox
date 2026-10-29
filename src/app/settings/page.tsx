@@ -23,7 +23,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   if (!session?.user?.id) {
     return (
-      <div className="bb-card mx-auto mt-6 flex max-w-xl flex-col items-start gap-3 p-8">
+      <div className="bb-card mx-auto mt-6 flex max-w-xl flex-col items-start gap-3 p-6 sm:p-8">
         <h1 className="bb-h1">Paramètres</h1>
         <p className="text-sm text-muted">Connecte-toi pour accéder aux paramètres de ton compte.</p>
         <Link href="/login?callbackUrl=/settings" className="bb-btn-primary px-5 py-2.5 text-sm">Connexion</Link>

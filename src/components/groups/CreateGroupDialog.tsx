@@ -106,10 +106,10 @@ function CreateGroupDialog({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4">
       <button type="button" aria-label="Fermer" onClick={onClose} className="fixed inset-0 bg-paper/35 backdrop-blur-[2px]" />
-      <form ref={dialogRef} onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="create-group-title" className="bb-card relative flex w-full max-w-[580px] flex-col gap-5 p-7">
+      <form ref={dialogRef} onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="create-group-title" className="bb-card relative flex max-h-[calc(100vh-2rem)] w-full max-w-[580px] flex-col gap-4 overflow-y-auto p-5 sm:gap-5 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="create-group-title" className="font-display text-3xl font-semibold text-paper">Créer un groupe</h2>
+            <h2 id="create-group-title" className="font-display text-2xl font-semibold text-paper sm:text-3xl">Créer un groupe</h2>
             <p className="mt-1 text-xs text-muted">Rassemble des lecteurs autour d&apos;un livre, d&apos;un genre ou d&apos;un défi.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded-full bg-ink text-muted hover:text-paper"><X size={15} /></button>

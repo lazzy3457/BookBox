@@ -85,7 +85,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <div className="flex flex-col gap-5">
           <span className="grid h-14 w-14 place-items-center rounded-full bg-panelSoft text-mint"><Send size={22} aria-hidden /></span>
           <div>
-            <h1 className="font-display text-[34px] font-semibold leading-tight text-paper">Vérifie ta boîte mail</h1>
+            <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[34px]">Vérifie ta boîte mail</h1>
             <p className="mt-2 text-sm text-muted">On a envoyé un lien de confirmation à {verificationEmail}. Clique dessus pour activer ton compte.</p>
           </div>
           <div className="rounded-xl bg-ink p-4">
@@ -131,7 +131,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     <AuthShell panelTitle={mode === "signup" ? "Ton carnet de lecture, partagé avec d'autres lecteurs." : "Content de te revoir."}>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div className="mb-2">
-          <h1 className="font-display text-[34px] font-semibold leading-tight text-paper">{mode === "signup" ? "Créer un compte" : "Connexion"}</h1>
+          <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[34px]">{mode === "signup" ? "Créer un compte" : "Connexion"}</h1>
           <p className="mt-2 text-sm text-muted">{mode === "signup" ? "Commence ta bibliothèque sociale, c'est rapide." : "Retour à tes lectures."}</p>
         </div>
 

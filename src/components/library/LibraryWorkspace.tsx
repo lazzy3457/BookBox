@@ -281,25 +281,25 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
         : [];
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
       {confirmDialog}
-      <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Ma bibliothèque</h1>
+      <h1 className="bb-page-title">Ma bibliothèque</h1>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
         {statCards.map((card) => (
-          <div key={card.label} className="bb-card-flat flex items-center gap-3 p-4 sm:p-5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-mint/[0.08] text-mint">
+          <div key={card.label} className="bb-card-flat flex flex-col items-center gap-0.5 px-1.5 py-2.5 text-center sm:flex-row sm:gap-3 sm:p-5 sm:text-left">
+            <span className="hidden h-10 w-10 shrink-0 place-items-center rounded-full bg-mint/[0.08] text-mint sm:grid">
               <card.icon size={18} aria-hidden />
             </span>
             <div className="min-w-0">
-              <div className="font-display text-[26px] font-semibold leading-tight text-paper">{card.value}</div>
-              <div className="truncate text-xs text-muted">{card.label}</div>
+              <div className="font-display text-xl font-semibold leading-tight text-paper sm:text-[26px]">{card.value}</div>
+              <div className="text-[10px] leading-tight text-muted sm:truncate sm:text-xs">{card.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      <div role="tablist" aria-label="Rayons" className="flex gap-6 overflow-x-auto border-b border-line">
+      <div role="tablist" aria-label="Rayons" className="bb-scroll-row gap-5 border-b border-line sm:gap-6">
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -316,16 +316,28 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
       </div>
 
       {tab !== "LISTS" ? (
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <label className={`flex w-full items-center gap-2 rounded-full border bg-panel px-4 py-2 md:w-72 ${searching ? "border-mint" : "border-line"}`}>
-            <Search size={15} aria-hidden className="text-muted" />
-            <span className="sr-only">Rechercher dans ma bibliothèque</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Titre, auteur…" className="min-w-0 flex-1 bg-transparent text-sm text-paper outline-none placeholder:text-muted" />
-            {query ? (
-              <button type="button" onClick={() => setQuery("")} aria-label="Effacer" className="text-muted hover:text-paper"><X size={14} /></button>
-            ) : null}
-          </label>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2.5 sm:gap-3 md:flex-row md:items-center">
+          {/* Mobile : recherche et tri sur une ligne, genres en dessous ; desktop : tout sur une ligne. */}
+          <div className="flex items-center gap-2 md:contents">
+            <label className={`flex min-w-0 flex-1 items-center gap-2 rounded-full border bg-panel px-4 py-2 md:w-72 md:flex-none ${searching ? "border-mint" : "border-line"}`}>
+              <Search size={15} aria-hidden className="shrink-0 text-muted" />
+              <span className="sr-only">Rechercher dans ma bibliothèque</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Titre, auteur…" className="min-w-0 flex-1 bg-transparent text-sm text-paper outline-none placeholder:text-muted" />
+              {query ? (
+                <button type="button" onClick={() => setQuery("")} aria-label="Effacer" className="text-muted hover:text-paper"><X size={14} /></button>
+              ) : null}
+            </label>
+            <label className="relative shrink-0 md:order-last md:ml-auto">
+              <span className="sr-only">Trier</span>
+              <select value={sortKey} onChange={(event) => setSortKey(event.target.value as SortKey)} className="appearance-none rounded-full border border-line bg-panel py-2 pl-3.5 pr-8 text-[13px] font-extrabold text-paper outline-none sm:pl-4 sm:pr-10">
+                {(Object.keys(sortLabels) as SortKey[]).map((key) => (
+                  <option key={key} value={key}>{sortLabels[key]}</option>
+                ))}
+              </select>
+              <ChevronDown size={15} aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted sm:right-4" />
+            </label>
+          </div>
+          <div className="bb-scroll-row md:flex-wrap">
             <button type="button" onClick={() => setGenre("ALL")} className={`bb-chip ${genre === "ALL" ? "bb-chip-active" : ""}`}>Tout</button>
             {!searching
               ? topGenres.map((slug) => (
@@ -333,22 +345,13 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
                 ))
               : null}
           </div>
-          <label className="relative md:ml-auto">
-            <span className="sr-only">Trier</span>
-            <select value={sortKey} onChange={(event) => setSortKey(event.target.value as SortKey)} className="appearance-none rounded-full border border-line bg-panel py-2 pl-4 pr-10 text-[13px] font-extrabold text-paper outline-none">
-              {(Object.keys(sortLabels) as SortKey[]).map((key) => (
-                <option key={key} value={key}>{sortLabels[key]}</option>
-              ))}
-            </select>
-            <ChevronDown size={15} aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted" />
-          </label>
         </div>
       ) : null}
 
       {error ? <p role="alert" className="text-sm font-bold text-coral">{error}</p> : null}
 
       {searching ? (
-        <section className="flex flex-col gap-5">
+        <section className="flex flex-col gap-4 sm:gap-5">
           <p className="text-xs text-muted">{plural(gridItems.length, "livre")} pour « {query.trim()} » dans toute ta bibliothèque</p>
           <BookGrid items={gridItems} actions={cardActions} />
           <button type="button" onClick={() => setQuery("")} className="w-fit text-xs font-extrabold text-mint hover:underline">
@@ -356,9 +359,9 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
           </button>
         </section>
       ) : tab === "ALL" ? (
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-8 sm:gap-10">
           {libraryItems.length === 0 ? (
-            <div className="bb-card flex flex-col items-start gap-3 p-8">
+            <div className="bb-card flex flex-col items-start gap-3 p-6 sm:p-8">
               <p className="bb-h3">Ta bibliothèque est vide</p>
               <p className="text-sm text-muted">Lance une recherche pour ajouter ton premier livre.</p>
               <Link href="/search" className="bb-btn-primary">Trouver un livre</Link>
@@ -444,7 +447,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
           )}
         </section>
       ) : (
-        <section className="flex flex-col gap-5">
+        <section className="flex flex-col gap-4 sm:gap-5">
           <p className="text-xs text-muted">
             {plural(gridItems.length, "livre")} {tab === "FAVORITES" ? "coups de cœur" : statusLabels[tab as ReadingStatus].toLowerCase()} · triés par {sortLabels[sortKey].toLowerCase()}
           </p>
@@ -455,10 +458,10 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
       {listBookId ? <AddToListModal bookId={listBookId} onClose={() => setListBookId(null)} /> : null}
 
       {pendingRemoval ? (
-        <div role="status" className="fixed bottom-24 right-4 z-50 flex items-center gap-3 rounded-full bg-paper py-2 pl-4 pr-2 text-[13px] font-bold text-ink shadow-poster lg:bottom-6 lg:right-6">
-          <Check size={15} aria-hidden />
-          « {pendingRemoval.item.book.title} » retiré de ta bibliothèque
-          <button type="button" onClick={undoRemoval} className="inline-flex items-center gap-1 rounded-full bg-ink/15 px-3 py-1.5 text-xs font-extrabold hover:bg-ink/25">
+        <div role="status" className="fixed inset-x-3 bottom-24 z-50 flex items-center gap-3 rounded-full bg-paper py-2 pl-4 pr-2 text-[13px] font-bold text-ink shadow-poster sm:inset-x-auto sm:right-4 lg:bottom-6 lg:right-6">
+          <Check size={15} aria-hidden className="shrink-0" />
+          <span className="min-w-0 flex-1 truncate">« {pendingRemoval.item.book.title} » retiré de ta bibliothèque</span>
+          <button type="button" onClick={undoRemoval} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink/15 px-3 py-1.5 text-xs font-extrabold hover:bg-ink/25">
             <Undo2 size={13} aria-hidden />
             Annuler
           </button>
@@ -470,7 +473,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
 
 function ShelfSection({ title, count, action, children }: { title: string; count: number; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-5">
+    <section className="flex flex-col gap-4 sm:gap-5">
       <div className="flex items-center gap-3">
         <h2 className="bb-h2">{title}</h2>
         <span className="rounded-full bg-panelSoft px-2 py-0.5 text-[11px] font-extrabold text-muted">{count}</span>
@@ -511,7 +514,7 @@ type CardActions = {
 
 function BookGrid({ items, actions }: { items: LibraryItem[]; actions: CardActions }) {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+    <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 xl:grid-cols-6">
       {items.map((item) => <ShelfBook key={item.id} item={item} actions={actions} />)}
     </div>
   );
@@ -561,12 +564,12 @@ function ShelfBook({ item, actions }: { item: LibraryItem; actions: CardActions 
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={`Actions pour ${item.book.title}`}
-          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-panel text-paper shadow-poster transition hover:text-mint"
+          className="absolute right-1.5 top-1.5 grid h-8 w-8 place-items-center rounded-full bg-panel/95 text-paper shadow-poster transition hover:text-mint sm:right-2 sm:top-2 sm:h-7 sm:w-7"
         >
           <MoreHorizontal size={16} />
         </button>
         {open ? (
-          <div role="menu" className="bb-card absolute right-2 top-11 z-20 w-56 p-1.5">
+          <div role="menu" className="bb-card bb-sheet p-1.5 sm:right-2 sm:top-11 sm:z-20 sm:w-56">
             <div className="relative">
               <button type="button" role="menuitem" onClick={() => setStatusOpen((value) => !value)} className={`${menuItem} ${statusOpen ? "bg-ink" : ""}`}>
                 <BookOpenCheck size={15} aria-hidden />
@@ -608,10 +611,10 @@ function ShelfBook({ item, actions }: { item: LibraryItem; actions: CardActions 
           </div>
         ) : null}
       </div>
-      <Link href={`/books/${item.book.id}`} className="truncate pt-2 font-display text-[15px] font-semibold text-paper hover:text-mint">{item.book.title}</Link>
+      <Link href={`/books/${item.book.id}`} className="truncate pt-1.5 font-display text-[13px] font-semibold text-paper hover:text-mint sm:pt-2 sm:text-[15px]">{item.book.title}</Link>
       <p className="truncate text-xs text-muted">{item.book.authors[0] ?? "Auteur inconnu"}</p>
       {item.rating ? <StarRating value={item.rating} /> : null}
-      <p className="text-xs font-bold text-muted">{metaLine(item)}</p>
+      <p className="hidden text-xs font-bold text-muted sm:block">{metaLine(item)}</p>
     </article>
   );
 }

@@ -183,9 +183,9 @@ export function BookActionPanel(props: BookActionPanelProps) {
   }
 
   return (
-    <aside ref={panelRef} id="journal" className="bb-card flex flex-col gap-4 p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
+    <aside ref={panelRef} id="journal" className="bb-card flex scroll-mt-20 flex-col gap-4 p-4 sm:p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
       {confirmDialog}
-      <div className="mx-auto w-full max-w-[190px]">
+      <div className="mx-auto w-full max-w-[130px] sm:max-w-[190px]">
         <BookCover title={props.title} thumbnailUrl={props.thumbnailUrl} showTitle className="aspect-[2/3] w-full shadow-poster" iconSize={18} />
       </div>
 

@@ -145,44 +145,45 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   const period = userBook?.readingPeriods[0];
 
   return (
-    <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
-      <div className="flex min-w-0 flex-col gap-9 lg:order-1">
-        <header className="flex flex-col gap-3">
-          {book.genres.length ? (
-            <div className="flex flex-wrap gap-2">
-              {book.genres.slice(0, 3).map((genre) => (
-                <Link key={genre} href={`/search?genre=${genre}`} className="rounded-full border border-line bg-panel px-2.5 py-1 text-[11px] font-bold text-paper hover:border-mint/50">{genreLabel(genre)}</Link>
-              ))}
-            </div>
-          ) : null}
-          <h1 className="font-display text-4xl font-semibold leading-tight text-paper sm:text-5xl">{book.title}</h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            {book.authors.length ? (
-              book.authors.map((author) => (
-                <Link key={author} href={authorHref(author)} className="font-display text-lg font-semibold text-mint hover:underline">{author}</Link>
-              ))
-            ) : (
-              <span className="text-sm text-muted">Auteur inconnu</span>
-            )}
-            {averageRating ? (
-              <span className="flex items-center gap-2 text-xs font-bold text-muted">
-                <StarRating value={Math.round(averageRating)} />
-                {averageRating.toFixed(1).replace(".", ",")} · {plural(visibleReviews.length, "note")}
-              </span>
-            ) : null}
-          </div>
-          <nav aria-label="Sections de la fiche" className="flex flex-wrap gap-2 pt-1">
-            {anchors.map((anchor) => (
-              <a key={anchor.href} href={anchor.href} className="rounded-full border border-line bg-panel px-3 py-1 text-[11px] font-bold text-paper hover:border-mint/50">{anchor.label}</a>
+    // Mobile : titre, puis panneau d'actions, puis le détail. Desktop : panneau collant dans la colonne de droite.
+    <div className="grid min-w-0 gap-5 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-9">
+      <header className="order-1 flex min-w-0 flex-col gap-2.5 sm:gap-3 lg:order-none lg:col-start-1 lg:row-start-1">
+        {book.genres.length ? (
+          <div className="flex flex-wrap gap-2">
+            {book.genres.slice(0, 3).map((genre) => (
+              <Link key={genre} href={`/search?genre=${genre}`} className="rounded-full border border-line bg-panel px-2.5 py-1 text-[11px] font-bold text-paper hover:border-mint/50">{genreLabel(genre)}</Link>
             ))}
-          </nav>
-        </header>
+          </div>
+        ) : null}
+        <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-5xl">{book.title}</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {book.authors.length ? (
+            book.authors.map((author) => (
+              <Link key={author} href={authorHref(author)} className="font-display text-base font-semibold text-mint hover:underline sm:text-lg">{author}</Link>
+            ))
+          ) : (
+            <span className="text-sm text-muted">Auteur inconnu</span>
+          )}
+          {averageRating ? (
+            <span className="flex items-center gap-2 text-xs font-bold text-muted">
+              <StarRating value={Math.round(averageRating)} />
+              {averageRating.toFixed(1).replace(".", ",")} · {plural(visibleReviews.length, "note")}
+            </span>
+          ) : null}
+        </div>
+        <nav aria-label="Sections de la fiche" className="bb-scroll-row pt-1 sm:flex-wrap">
+          {anchors.map((anchor) => (
+            <a key={anchor.href} href={anchor.href} className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-bold text-paper hover:border-mint/50 sm:py-1 sm:text-[11px]">{anchor.label}</a>
+          ))}
+        </nav>
+      </header>
 
+      <div className="order-3 flex min-w-0 flex-col gap-8 sm:gap-9 lg:order-none lg:col-start-1 lg:row-start-2">
         <section id="a-propos" className="flex scroll-mt-24 flex-col gap-4">
           <h2 className="bb-h2">À propos du livre</h2>
           {book.description ? <ExpandableDescription text={book.description} /> : <p className="text-sm text-muted">Aucune description disponible pour ce livre.</p>}
           {details.length ? (
-            <dl className="flex flex-wrap gap-x-12 gap-y-3 pt-1">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 pt-1 sm:flex sm:flex-wrap sm:gap-x-12">
               {details.map((detail) => (
                 <div key={detail.label}>
                   <dt className="bb-label text-muted">{detail.label}</dt>
@@ -248,11 +249,11 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         {authorBooks.length ? (
           <section id="auteur" className="flex scroll-mt-24 flex-col gap-4">
             <h2 className="bb-h2">Du même auteur</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 xl:grid-cols-5">
               {authorBooks.map((entry) => (
                 <Link key={entry.id} href={`/books/${entry.id}`} className="group flex min-w-0 flex-col gap-1">
                   <BookCover title={entry.title} thumbnailUrl={entry.thumbnailUrl} showTitle className="aspect-[2/3] w-full shadow-poster transition group-hover:-translate-y-1" iconSize={16} />
-                  <span className="line-clamp-2 pt-2 font-display text-sm font-semibold text-paper">{entry.title}</span>
+                  <span className="line-clamp-2 pt-1.5 font-display text-[13px] font-semibold text-paper sm:pt-2 sm:text-sm">{entry.title}</span>
                   <span className="truncate text-[11px] text-muted">{entry.authors[0]}</span>
                 </Link>
               ))}
@@ -261,7 +262,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         ) : null}
       </div>
 
-      <div className="order-first lg:order-2">
+      <div className="order-2 min-w-0 lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1">
         <BookActionPanel
           bookId={book.id}
           title={book.title}

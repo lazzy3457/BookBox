@@ -47,10 +47,10 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Communauté</h1>
-          <p className="mt-1 text-sm text-muted">Des lecteurs, leurs lectures du moment et leurs avis.</p>
+          <h1 className="bb-page-title">Communauté</h1>
+          <p className="mt-1 text-[13px] text-muted sm:text-sm">Des lecteurs, leurs lectures du moment et leurs avis.</p>
         </div>
-        <div className="bb-card flex flex-col items-start gap-3 p-6">
+        <div className="bb-card flex flex-col items-start gap-3 p-5 sm:p-6">
           <p className="bb-h3">Rejoins le cercle</p>
           <p className="text-sm text-muted">Crée un compte pour suivre des lecteurs et voir ce qu&apos;ils lisent.</p>
           <div className="flex gap-2">
@@ -108,11 +108,11 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Communauté</h1>
-          <p className="mt-1 text-sm text-muted">Tu suis {plural(followingIds.size, "lecteur")} · {followers.length} te suivent</p>
+          <h1 className="bb-page-title">Communauté</h1>
+          <p className="mt-1 text-[13px] text-muted sm:text-sm">Tu suis {plural(followingIds.size, "lecteur")} · {followers.length} te suivent</p>
         </div>
         <form action="/commu" className="flex w-full items-center gap-2 rounded-full border border-line bg-panel px-4 py-2.5 sm:w-80">
           <input type="hidden" name="tab" value="suggestions" />
@@ -122,9 +122,9 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
         </form>
       </div>
 
-      <nav aria-label="Sections de la communauté" className="flex gap-7 overflow-x-auto border-b border-line">
+      <nav aria-label="Sections de la communauté" className="bb-scroll-row gap-5 border-b border-line sm:gap-7">
         {tabs.map((item) => (
-          <Link key={item.id} href={item.id === "cercle" ? "/commu" : `/commu?tab=${item.id}`} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab text-[15px] ${tab === item.id ? "bb-tab-active" : ""}`}>
+          <Link key={item.id} href={item.id === "cercle" ? "/commu" : `/commu?tab=${item.id}`} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab sm:text-[15px] ${tab === item.id ? "bb-tab-active" : ""}`}>
             <span className={tab === item.id ? "font-extrabold text-paper" : ""}>{item.label}</span>
             {item.count != null ? (
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${tab === item.id ? "bg-mint text-ink" : "bg-panelSoft text-muted"}`}>{item.count}</span>
@@ -208,8 +208,8 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
     .slice(0, 3);
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="bb-card p-5">
+    <div className="flex flex-col gap-6 sm:gap-8">
+      <section className="bb-card p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="bb-h3">Ton cercle</h2>
           {followingIds.length ? (
@@ -217,12 +217,12 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
           ) : null}
         </div>
         {circleSorted.length ? (
-          <div className="flex gap-4 overflow-x-auto pb-1">
+          <div className="flex gap-3 overflow-x-auto pb-1 sm:gap-4">
             {circleSorted.slice(0, 12).map((member) => {
               const last = member.library[0];
               const recent = last && last.updatedAt > twoDaysAgo;
               return (
-                <Link key={member.id} href={`/profile/${member.id}`} className="flex w-[88px] shrink-0 flex-col items-center gap-1 text-center">
+                <Link key={member.id} href={`/profile/${member.id}`} className="flex w-[76px] shrink-0 flex-col items-center gap-1 text-center sm:w-[88px]">
                   <span className={`rounded-full p-[3px] ${recent ? "ring-2 ring-coral" : ""}`}>
                     <Avatar name={member.name} image={member.image} size={54} className="border-0 font-display text-xl" />
                   </span>
@@ -240,7 +240,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
       </section>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="flex min-w-0 flex-col gap-8">
+        <div className="flex min-w-0 flex-col gap-6 sm:gap-8">
           <section className="flex flex-col gap-4">
             <h2 className="bb-h2">Ce que lit ton cercle</h2>
             {sharedBooks.length ? (
@@ -253,9 +253,9 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
                     ? group.readers.length > 1 ? `${group.readers.length} amis · tous l'ont terminé` : "1 ami · l'a terminé"
                     : [`${plural(group.readers.length, "ami")}`, reading ? `${reading} le ${reading > 1 ? "lisent" : "lit"}` : null, finished ? `${finished} l'${finished > 1 ? "ont" : "a"} terminé` : null].filter(Boolean).join(" · ");
                 return (
-                  <article key={group.book.id} className="bb-card flex gap-4 p-4">
+                  <article key={group.book.id} className="bb-card flex gap-3 p-3.5 sm:gap-4 sm:p-4">
                     <Link href={`/books/${group.book.id}`}>
-                      <BookCover title={group.book.title} thumbnailUrl={group.book.thumbnailUrl} className="h-[104px] w-[70px]" iconSize={14} />
+                      <BookCover title={group.book.title} thumbnailUrl={group.book.thumbnailUrl} className="h-[84px] w-14 sm:h-[104px] sm:w-[70px]" iconSize={14} />
                     </Link>
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
                       <Link href={`/books/${group.book.id}`} className="bb-h3 hover:text-mint">{group.book.title}</Link>
@@ -288,8 +288,8 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
               discussions.map((review) => {
                 const firstComment = review.comments[0];
                 return (
-                  <article key={review.id} className="bb-card flex flex-col gap-4 p-5">
-                    <div className="flex gap-4">
+                  <article key={review.id} className="bb-card flex flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+                    <div className="flex gap-3 sm:gap-4">
                       <Link href={`/books/${review.book.id}`}>
                         <BookCover title={review.book.title} thumbnailUrl={review.book.thumbnailUrl} className="h-20 w-[54px]" iconSize={0} />
                       </Link>
@@ -302,7 +302,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
                         <Link href={`/books/${review.book.id}`} className="bb-h3 hover:text-mint">{review.book.title}</Link>
                         <StarRating value={review.rating} />
                         {review.body ? (
-                          <p className="text-[15px] italic leading-relaxed text-paper">
+                          <p className="line-clamp-4 text-sm italic leading-relaxed text-paper sm:line-clamp-none sm:text-[15px]">
                             {review.spoiler ? "Cet avis contient des spoilers." : `« ${review.body.length > 260 ? `${review.body.slice(0, 260)}…` : review.body} »`}
                           </p>
                         ) : null}
@@ -335,7 +335,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
         </div>
 
         <aside className="flex flex-col gap-6">
-          <section className="bb-card flex flex-col gap-4 p-5">
+          <section className="bb-card flex flex-col gap-4 p-4 sm:p-5">
             <div>
               <h2 className="bb-h3">Lecteurs qui te ressemblent</h2>
               <p className="text-xs text-muted">D&apos;après les livres que vous avez en commun</p>
@@ -362,7 +362,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
           </section>
 
           {hottest.length ? (
-            <section className="bb-card flex flex-col gap-2 p-5">
+            <section className="bb-card hidden flex-col gap-2 p-5 lg:flex">
               <h2 className="bb-h3 pb-2">Livres dont on parle</h2>
               {hottest.map((book, index) => (
                 <Link key={book.id} href={`/books/${book.id}`} className="group flex items-center gap-4 py-2">
