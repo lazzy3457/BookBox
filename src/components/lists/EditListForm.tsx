@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Star, Trash2, X, GripVertical } from "lucide-react";
 import { updateList, deleteList, removeBookFromList, reorderList } from "@/server/actions/lists";
+import { useConfirm } from "@/components/ui/useConfirm";
 import {
   DndContext,
   closestCenter,
@@ -122,7 +123,7 @@ export function EditListForm({ list }: Props) {
   const [isPublic, setIsPublic] = useState(list.isPublic);
   const [hovered, setHovered] = useState<number | null>(null);
   const [entries, setEntries] = useState<Entry[]>(list.entries);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -154,14 +155,17 @@ export function EditListForm({ list }: Props) {
     });
   }
 
-  function handleRemoveBook(bookId: string) {
+  async function handleRemoveBook(bookId: string) {
+    const entry = entries.find((item) => item.bookId === bookId);
+    if (!(await confirm({ title: `Retirer ${entry ? `« ${entry.book.title} »` : "ce livre"} de la liste ?`, confirmLabel: "Retirer" }))) return;
     startTransition(async () => {
       setEntries((prev) => prev.filter((e) => e.bookId !== bookId));
       await removeBookFromList(list.id, bookId);
     });
   }
 
-  function handleDelete() {
+  async function handleDelete() {
+    if (!(await confirm({ title: "Supprimer cette liste ?", message: "La liste et son classement seront supprimés définitivement. Les livres restent dans ta bibliothèque.", confirmLabel: "Supprimer la liste" }))) return;
     startTransition(async () => {
       await deleteList(list.id);
       router.push("/profile");
@@ -170,6 +174,7 @@ export function EditListForm({ list }: Props) {
 
   return (
     <div className="space-y-5">
+      {confirmDialog}
       {/* Infos de la liste */}
       <div className="space-y-5 rounded border border-line bg-panel/80 p-7 shadow-poster">
         <div>
@@ -240,10 +245,14 @@ export function EditListForm({ list }: Props) {
             </div>
           </div>
           <button
+            type="button"
+            role="switch"
+            aria-checked={isPublic}
+            aria-label="Liste publique"
             onClick={() => setIsPublic((v) => !v)}
-            className={`relative h-7 w-12 rounded-full transition-colors ${isPublic ? "bg-mint" : "bg-line"}`}
+            className={`relative h-[26px] w-[46px] shrink-0 rounded-full border transition ${isPublic ? "border-mint bg-mint" : "border-line bg-panelSoft/60"}`}
           >
-            <span className={`absolute top-1 h-5 w-5 rounded-full bg-paper shadow transition-transform ${isPublic ? "translate-x-6" : "translate-x-1"}`} />
+            <span className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow transition-all ${isPublic ? "left-[23px]" : "left-[3px]"}`} />
           </button>
         </div>
 
@@ -293,39 +302,16 @@ export function EditListForm({ list }: Props) {
         )}
       </div>
 
-      {/* Danger zone */}
-      <div className="rounded border border-coral/20 bg-panel/80 p-7 shadow-poster">
-        <h2 className="mb-2 text-sm font-extrabold uppercase tracking-[0.16em] text-coral">
-          Zone de danger
-        </h2>
-        <p className="mb-4 text-sm text-muted">La suppression est définitive et irréversible.</p>
-        {!showConfirmDelete ? (
-          <button
-            onClick={() => setShowConfirmDelete(true)}
-            className="flex items-center gap-2 rounded border border-coral/40 px-4 py-2.5 text-sm font-extrabold text-coral transition hover:bg-coral/10"
-          >
-            <Trash2 size={15} />
-            Supprimer la liste
-          </button>
-        ) : (
-          <div className="flex items-center gap-3">
-            <p className="text-sm font-bold text-paper">Confirmer la suppression ?</p>
-            <button
-              onClick={handleDelete}
-              disabled={pending}
-              className="flex items-center gap-2 rounded-full bg-coral px-4 py-2 text-sm font-extrabold text-white transition hover:bg-coral/80 disabled:opacity-50"
-            >
-              {pending ? <Loader2 size={14} className="animate-spin" /> : null}
-              Oui, supprimer
-            </button>
-            <button
-              onClick={() => setShowConfirmDelete(false)}
-              className="text-sm text-muted hover:text-paper transition"
-            >
-              Annuler
-            </button>
-          </div>
-        )}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => void handleDelete()}
+          disabled={pending}
+          className="bb-btn border border-coral/40 px-4 py-2.5 text-sm text-coral hover:bg-coral/10"
+        >
+          {pending ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+          Supprimer la liste
+        </button>
       </div>
     </div>
   );

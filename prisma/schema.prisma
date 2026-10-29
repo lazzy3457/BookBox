@@ -27,6 +27,10 @@ enum NotificationType {
   FRIEND_REVIEW
   NEW_FOLLOWER
   BADGE_EARNED
+  GROUP_REPLY
+  GROUP_MENTION
+  GROUP_INVITE
+  GROUP_THREAD
 }
 
 enum XpReason {
@@ -44,6 +48,8 @@ enum ReportTargetType {
   USER
   REVIEW
   COMMENT
+  GROUP_THREAD
+  GROUP_POST
 }
 
 enum ReportReason {
@@ -122,6 +128,16 @@ model User {
   activityDays             ActivityDay[]
   stats                    UserStats?
   badges                   UserBadge[]
+  createdGroups            Group[]                   @relation("group_creator")
+  groupMemberships         GroupMember[]
+  groupInvites             GroupInvite[]             @relation("group_invitee")
+  sentGroupInvites         GroupInvite[]             @relation("group_inviter")
+  groupThreads             GroupThread[]
+  groupPosts               GroupPost[]
+  groupThreadReactions     GroupThreadReaction[]
+  groupPostReactions       GroupPostReaction[]
+  pollVotes                PollVote[]
+  readingEntryLikes        ReadingEntryLike[]
 }
 
 // Progression : chaque action ne rapporte de l'XP qu'une fois par source (anti-farm).
@@ -278,16 +294,19 @@ model Book {
   reviews                  Review[]
   listEntries              BookListEntry[]
   recommendationDismissals RecommendationDismissal[]
+  groups                   Group[]
+  groupThreads             GroupThread[]
 }
 
 model UserBook {
-  id         String        @id @default(cuid())
-  userId     String
-  bookId     String
-  status     ReadingStatus
-  isFavorite Boolean       @default(false)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  userId       String
+  bookId       String
+  status       ReadingStatus
+  isFavorite   Boolean       @default(false)
+  showcaseRank Int?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   book           Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
@@ -400,18 +419,20 @@ model ReadingPeriod {
 }
 
 model ReadingEntry {
-  id         String   @id @default(cuid())
+  id         String           @id @default(cuid())
   periodId   String
-  entryDate  DateTime @default(now())
+  entryDate  DateTime         @default(now())
   page       Int?
   percentage Int?
   chapter    String?
   note       String?
-  isPublic   Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isPublic   Boolean          @default(false)
+  kind       ReadingEntryKind @default(NOTE)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
-  period ReadingPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  period ReadingPeriod      @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  likes  ReadingEntryLike[]
 
   @@index([periodId, entryDate])
   @@index([isPublic, entryDate])
@@ -553,6 +574,7 @@ model NotificationPreference {
   commentsEnabled      Boolean  @default(true)
   friendReviewsEnabled Boolean  @default(true)
   followersEnabled     Boolean  @default(true)
+  groupsEnabled        Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -603,4 +625,218 @@ model BookListEntry {
   @@unique([listId, bookId])
   @@index([listId])
   @@index([bookId])
+}
+
+// Groupes de lecture, à la manière des clubs Strava : discussions typées, lecture commune, défi et classement.
+enum GroupVisibility {
+  PUBLIC
+  INVITE
+}
+
+enum GroupTopic {
+  BOOK
+  AUTHOR
+  GENRE
+  CHALLENGE
+  FREE
+}
+
+enum GroupRole {
+  MEMBER
+  MODERATOR
+}
+
+enum GroupThreadType {
+  DEBATE
+  POLL
+  READALONG
+  ANNOUNCEMENT
+}
+
+model Group {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  name            String
+  description     String?
+  visibility      GroupVisibility @default(PUBLIC)
+  topic           GroupTopic      @default(FREE)
+  // Auteur, genre ou intitulé du défi quand le groupe ne tourne pas autour d'un livre.
+  topicLabel      String?
+  bookId          String?
+  emblem          String          @default("book")
+  rules           String?
+  readalongBookId String?
+  readalongLabel  String?
+  challengeGoal   Int?
+  challengeEndsAt DateTime?
+  createdById     String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  createdBy User          @relation("group_creator", fields: [createdById], references: [id], onDelete: Cascade)
+  book      Book?         @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  members   GroupMember[]
+  invites   GroupInvite[]
+  threads   GroupThread[]
+
+  @@index([visibility, createdAt])
+}
+
+model GroupMember {
+  id        String    @id @default(cuid())
+  groupId   String
+  userId    String
+  role      GroupRole @default(MEMBER)
+  notifyAll Boolean   @default(false)
+  joinedAt  DateTime  @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model GroupInvite {
+  id          String   @id @default(cuid())
+  groupId     String
+  userId      String
+  invitedById String
+  createdAt   DateTime @default(now())
+
+  group     Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User  @relation("group_invitee", fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy User  @relation("group_inviter", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model GroupThread {
+  id           String          @id @default(cuid())
+  groupId      String
+  authorId     String
+  type         GroupThreadType @default(DEBATE)
+  title        String
+  body         String?
+  // Jusqu'où vont les spoilers (« tome 1 », « chapitre 8 ») ; vide = sans spoiler.
+  spoilerLevel String?
+  bookId       String?
+  pinned       Boolean         @default(false)
+  hiddenAt     DateTime?
+  hiddenReason String?
+  lastPostAt   DateTime        @default(now())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  group     Group                 @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  author    User                  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  book      Book?                 @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  posts     GroupPost[]
+  reactions GroupThreadReaction[]
+  poll      Poll?
+
+  @@index([groupId, lastPostAt])
+}
+
+model GroupPost {
+  id           String    @id @default(cuid())
+  threadId     String
+  authorId     String
+  parentId     String?
+  body         String
+  hiddenAt     DateTime?
+  hiddenReason String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  thread    GroupThread         @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author    User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    GroupPost?          @relation("group_post_replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   GroupPost[]         @relation("group_post_replies")
+  reactions GroupPostReaction[]
+
+  @@index([threadId, createdAt])
+  @@index([parentId])
+}
+
+model GroupThreadReaction {
+  id        String   @id @default(cuid())
+  threadId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  thread GroupThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+}
+
+model GroupPostReaction {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post GroupPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model Poll {
+  id       String    @id @default(cuid())
+  threadId String    @unique
+  question String
+  closesAt DateTime?
+
+  thread  GroupThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  options PollOption[]
+  votes   PollVote[]
+}
+
+model PollOption {
+  id       String @id @default(cuid())
+  pollId   String
+  label    String
+  position Int    @default(0)
+
+  poll  Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id        String   @id @default(cuid())
+  pollId    String
+  optionId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([optionId])
+}
+
+enum ReadingEntryKind {
+  NOTE
+  QUOTE
+}
+
+model ReadingEntryLike {
+  id        String   @id @default(cuid())
+  entryId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  entry ReadingEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, userId])
+  @@index([userId])
 }

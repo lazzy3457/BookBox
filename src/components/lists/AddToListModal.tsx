@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { X, Plus, List, Check, Loader2 } from "lucide-react";
 import { getUserLists, createList, addBookToList, removeBookFromList } from "@/server/actions/lists";
+import { useConfirm } from "@/components/ui/useConfirm";
 
 type BookList = {
   id: string;
@@ -22,6 +23,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
   const [view, setView] = useState<View>("lists");
   const [lists, setLists] = useState<BookList[]>([]);
   const [activeListIds, setActiveListIds] = useState<Set<string>>(new Set());
+  const [confirm, confirmDialog] = useConfirm();
   const [loading, setLoading] = useState(true);
   const [pending, startTransition] = useTransition();
 
@@ -47,7 +49,8 @@ export function AddToListModal({ bookId, onClose }: Props) {
     load();
   }, [bookId]);
 
-  function toggleList(listId: string) {
+  async function toggleList(listId: string) {
+    if (activeListIds.has(listId) && !(await confirm({ title: "Retirer ce livre de la liste ?", confirmLabel: "Retirer" }))) return;
     startTransition(async () => {
       if (activeListIds.has(listId)) {
         setActiveListIds((prev) => { const next = new Set(prev); next.delete(listId); return next; });
@@ -74,6 +77,7 @@ export function AddToListModal({ bookId, onClose }: Props) {
 
   return (
     <>
+      {confirmDialog}
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-ink/80 backdrop-blur-sm" onClick={onClose} />
 

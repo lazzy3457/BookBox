@@ -32,6 +32,7 @@ export const readingEntrySchema = z.object({
   percentage: z.number().int().min(0).max(100).optional().nullable(),
   chapter: z.string().trim().max(120).optional().nullable(),
   note: z.string().trim().max(2000).optional().nullable(),
+  kind: z.enum(["NOTE", "QUOTE"]).default("NOTE"),
   isPublic: z.boolean().default(false)
 }).refine(
   (value) => value.page != null || value.percentage != null || Boolean(value.chapter) || Boolean(value.note),
@@ -44,6 +45,7 @@ export const readingEntryUpdateSchema = z.object({
   percentage: z.number().int().min(0).max(100).optional().nullable(),
   chapter: z.string().trim().max(120).optional().nullable(),
   note: z.string().trim().max(2000).optional().nullable(),
+  kind: z.enum(["NOTE", "QUOTE"]).optional(),
   isPublic: z.boolean()
 }).refine(
   (value) => value.page != null || value.percentage != null || Boolean(value.chapter) || Boolean(value.note),

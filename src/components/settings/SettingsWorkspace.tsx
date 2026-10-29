@@ -29,7 +29,7 @@ type Profile = {
 };
 type Notifications = {
   enabled: boolean; likesEnabled: boolean; commentsEnabled: boolean;
-  friendReviewsEnabled: boolean; followersEnabled: boolean;
+  friendReviewsEnabled: boolean; followersEnabled: boolean; groupsEnabled: boolean;
 };
 export type SettingsSection = "profil" | "securite" | "lecture" | "notifications" | "confidentialite" | "bloques" | "importer" | "donnees";
 type Props = {
@@ -71,7 +71,8 @@ const notificationRows: Array<[keyof Notifications, string, string]> = [
   ["likesEnabled", "J'aime", "Quand on aime ton avis ou ton commentaire."],
   ["commentsEnabled", "Commentaires et réponses", "Les discussions sous tes avis."],
   ["friendReviewsEnabled", "Avis de tes amis", "Quand un compte suivi publie un avis."],
-  ["followersEnabled", "Nouveaux abonnés", "Quand quelqu'un te suit."]
+  ["followersEnabled", "Nouveaux abonnés", "Quand quelqu'un te suit."],
+  ["groupsEnabled", "Activité de mes groupes", "Réponses à tes messages, mentions et invitations. La cloche d'un groupe ajoute ses nouvelles discussions."]
 ];
 
 export function SettingsWorkspace({ section, profile: initialProfile, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications, blockedCount, slots }: Props) {

@@ -2,9 +2,10 @@ import { NotificationType, type NotificationPreference } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
 import { areUsersBlocked } from "@/server/services/blocks";
+import { extractMentions } from "@/lib/mentions";
 
 type PreferenceInput = Partial<
-  Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled">
+  Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled" | "groupsEnabled">
 >;
 
 type PushMessage = {
@@ -24,12 +25,13 @@ export const defaultNotificationPreferences = {
   likesEnabled: true,
   commentsEnabled: true,
   friendReviewsEnabled: true,
-  followersEnabled: true
+  followersEnabled: true,
+  groupsEnabled: true
 };
 
 export function allowsNotification(
   preferences:
-    | Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled">
+    | Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled" | "groupsEnabled">
     | null,
   type: NotificationType
 ) {
@@ -53,6 +55,15 @@ export function allowsNotification(
 
   if (type === NotificationType.NEW_FOLLOWER) {
     return effective.followersEnabled;
+  }
+
+  if (
+    type === NotificationType.GROUP_REPLY ||
+    type === NotificationType.GROUP_MENTION ||
+    type === NotificationType.GROUP_INVITE ||
+    type === NotificationType.GROUP_THREAD
+  ) {
+    return effective.groupsEnabled;
   }
 
   return true;
@@ -309,5 +320,87 @@ export async function notifyBadgeEarned(input: { userId: string; badgeName: stri
     title: `Nouveau badge : ${input.badgeName} (${input.tierName})`,
     message: "Retrouve tous tes badges sur ton profil.",
     targetUrl: "/profile#badges"
+  });
+}
+
+// Groupes : on ne prévient que des réponses qui nous concernent, des mentions et des invitations.
+// La cloche d'un groupe (notifyAll) ajoute les nouvelles discussions.
+async function mentionedMembers(groupId: string, text: string | null, excludeIds: string[]) {
+  const usernames = extractMentions(text);
+  if (!usernames.length) return [];
+  const members = await prisma.groupMember.findMany({
+    where: { groupId, userId: { notIn: excludeIds }, user: { username: { in: usernames }, suspendedAt: null } },
+    select: { userId: true }
+  });
+  return members.map((member) => member.userId);
+}
+
+export async function notifyGroupThread(input: { actorId: string; threadId: string }) {
+  const thread = await prisma.groupThread.findUnique({
+    where: { id: input.threadId },
+    include: { author: { select: { name: true, username: true } }, group: { select: { id: true, slug: true, name: true } } }
+  });
+  if (!thread) return;
+  const targetUrl = `/groups/${thread.group.slug}/threads/${thread.id}`;
+  const mentioned = await mentionedMembers(thread.group.id, [thread.title, thread.body].filter(Boolean).join(" "), [input.actorId]);
+  const subscribers = await prisma.groupMember.findMany({
+    where: { groupId: thread.group.id, notifyAll: true, userId: { notIn: [input.actorId, ...mentioned] } },
+    select: { userId: true }
+  });
+
+  await Promise.all([
+    ...mentioned.map((recipientId) =>
+      createNotification({ recipientId, actorId: input.actorId, type: NotificationType.GROUP_MENTION, title: `${displayName(thread.author)} t'a mentionné dans ${thread.group.name}`, message: thread.title, targetUrl })
+    ),
+    ...subscribers.map(({ userId }) =>
+      createNotification({ recipientId: userId, actorId: input.actorId, type: NotificationType.GROUP_THREAD, title: `Nouvelle discussion dans ${thread.group.name}`, message: thread.title, targetUrl })
+    )
+  ]);
+}
+
+export async function notifyGroupPost(input: { actorId: string; postId: string }) {
+  const post = await prisma.groupPost.findUnique({
+    where: { id: input.postId },
+    include: {
+      author: { select: { name: true, username: true } },
+      parent: { select: { authorId: true } },
+      thread: { select: { id: true, title: true, authorId: true, group: { select: { id: true, slug: true, name: true } } } }
+    }
+  });
+  if (!post) return;
+  const targetUrl = `/groups/${post.thread.group.slug}/threads/${post.thread.id}`;
+  const repliedTo = [...new Set([post.parent?.authorId, post.thread.authorId].filter((id): id is string => Boolean(id) && id !== input.actorId))];
+  const mentioned = await mentionedMembers(post.thread.group.id, post.body, [input.actorId, ...repliedTo]);
+
+  await Promise.all([
+    ...repliedTo.map((recipientId) =>
+      createNotification({
+        recipientId,
+        actorId: input.actorId,
+        type: NotificationType.GROUP_REPLY,
+        title: recipientId === post.parent?.authorId ? `${displayName(post.author)} t'a répondu` : `${displayName(post.author)} a répondu à ta discussion`,
+        message: post.thread.title,
+        targetUrl
+      })
+    ),
+    ...mentioned.map((recipientId) =>
+      createNotification({ recipientId, actorId: input.actorId, type: NotificationType.GROUP_MENTION, title: `${displayName(post.author)} t'a mentionné dans ${post.thread.group.name}`, message: post.thread.title, targetUrl })
+    )
+  ]);
+}
+
+export async function notifyGroupInvite(input: { actorId: string; groupId: string; recipientId: string }) {
+  const [group, actor] = await Promise.all([
+    prisma.group.findUnique({ where: { id: input.groupId }, select: { slug: true, name: true } }),
+    prisma.user.findUnique({ where: { id: input.actorId }, select: { name: true, username: true } })
+  ]);
+  if (!group || !actor) return null;
+  return createNotification({
+    recipientId: input.recipientId,
+    actorId: input.actorId,
+    type: NotificationType.GROUP_INVITE,
+    title: `${displayName(actor)} t'invite dans ${group.name}`,
+    message: "Rejoins le groupe pour participer aux discussions.",
+    targetUrl: `/groups/${group.slug}`
   });
 }

@@ -10,6 +10,7 @@ import { StarRating } from "@/components/reviews/StarRating";
 import { Toast } from "@/components/ui/Toast";
 import { ReportButton } from "@/components/moderation/ReportButton";
 import { useUserPreferences } from "@/components/settings/UserPreferencesProvider";
+import { useConfirm } from "@/components/ui/useConfirm";
 import { buildCommentTree, countVisibleComments, type CommentView } from "@/lib/commentThread";
 
 type ReviewCardProps = {
@@ -42,6 +43,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const commentTree = useMemo(() => buildCommentTree(comments), [comments]);
   const [body, setBody] = useState("");
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
   const [isSaving, setIsSaving] = useState(false);
 
   if (isDeleted) {
@@ -123,6 +125,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   }
 
   async function deleteComment(commentId: string) {
+    if (!(await confirm({ title: "Supprimer ce commentaire ?", message: "Cette action est définitive." }))) return;
     setToast(null);
     const response = await fetch(`/api/comments/${commentId}`, {
       method: "DELETE"
@@ -218,6 +221,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   }
 
   async function deleteReview() {
+    if (!(await confirm({ title: "Supprimer ton avis ?", message: "Ta note, ton texte et les commentaires reçus seront supprimés." }))) return;
     setToast(null);
     const response = await fetch(`/api/reviews/${review.id}`, { method: "DELETE" });
 
@@ -249,6 +253,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
   return (
     <article className="bb-card w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-5">
+      {confirmDialog}
       <div className="grid min-w-0 gap-3 sm:flex sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-start gap-3">
           {review.userId ? (

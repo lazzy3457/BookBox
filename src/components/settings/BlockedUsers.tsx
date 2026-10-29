@@ -3,6 +3,7 @@
 import { ShieldOff, UserRoundX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Toast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/useConfirm";
 
 type BlockedUser = {
   id: string;
@@ -17,6 +18,7 @@ export function BlockedUsers() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
 
   useEffect(() => {
     let active = true;
@@ -40,6 +42,7 @@ export function BlockedUsers() {
   }, []);
 
   async function unblock(user: BlockedUser) {
+    if (!(await confirm({ title: `Débloquer ${user.name ?? user.username ?? "ce compte"} ?`, message: "Vous pourrez de nouveau voir vos contenus et interagir.", confirmLabel: "Débloquer", tone: "default" }))) return;
     setBusyId(user.id);
     try {
       const response = await fetch(`/api/blocks?userId=${encodeURIComponent(user.id)}`, { method: "DELETE" });
@@ -57,6 +60,7 @@ export function BlockedUsers() {
 
   return (
     <>
+      {confirmDialog}
       <section className="mt-7 rounded border border-line bg-panel/80 p-5 shadow-poster">
         <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded border border-line bg-ink text-mint">

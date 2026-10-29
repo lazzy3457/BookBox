@@ -41,3 +41,8 @@ export function greeting(date = new Date()) {
 export function daysAgo(days: number) {
   return new Date(Date.now() - days * 86400000);
 }
+
+export function daysUntil(date: Date | string) {
+  const value = typeof date === "string" ? new Date(date) : date;
+  return Math.ceil((value.getTime() - Date.now()) / 86400000);
+}

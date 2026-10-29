@@ -34,7 +34,7 @@ export default async function LibraryPage() {
         readingPeriods: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          include: { entries: { orderBy: { entryDate: "desc" }, take: 1 } }
+          include: { entries: { where: { kind: "NOTE" }, orderBy: { entryDate: "desc" }, take: 1 } }
         }
       },
       orderBy: { createdAt: "desc" }

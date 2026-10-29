@@ -17,6 +17,8 @@ import { BookCover } from "@/components/books/BookCover";
 import { BookActionPanel } from "@/components/books/BookActionPanel";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
 import { Avatar } from "@/components/ui/Avatar";
+import { AddQuoteButton, QuoteCard } from "@/components/books/QuoteCard";
+import { getQuotes } from "@/server/services/quotes";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +68,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
     viewerId
       ? prisma.userBook.findUnique({
           where: { userId_bookId: { userId: viewerId, bookId: book.id } },
-          include: { readingPeriods: { include: { entries: { orderBy: { entryDate: "desc" } } }, orderBy: { createdAt: "desc" }, take: 1 } }
+          include: { readingPeriods: { include: { entries: { orderBy: { entryDate: "desc" }, include: { likes: { select: { userId: true } } } } }, orderBy: { createdAt: "desc" }, take: 1 } }
         })
       : null,
     book.authors.length
@@ -90,6 +92,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
       : []
   ]);
 
+  const quotes = await getQuotes({ bookId: book.id }, viewerId, [...blocked], 6);
   const averageRating = visibleReviews.length ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length : null;
   const counts = {
     read: book.libraries.filter((entry) => entry.status === ReadingStatus.READ).length,
@@ -133,6 +136,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
   const anchors = [
     { href: "#a-propos", label: "À propos" },
+    { href: "#citations", label: quotes.length ? `Citations (${quotes.length})` : "Citations" },
     friends.length ? { href: "#amis", label: "Tes amis" } : null,
     { href: "#avis", label: `Avis (${visibleReviews.length})` },
     authorBooks.length ? { href: "#auteur", label: "Du même auteur" } : null
@@ -187,6 +191,23 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
               ))}
             </dl>
           ) : null}
+        </section>
+
+        <section id="citations" className="flex scroll-mt-24 flex-col gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="bb-h2">Citations</h2>
+              <p className="text-xs text-muted">Les passages que les lecteurs ont relevés</p>
+            </div>
+            {viewerId ? <AddQuoteButton /> : <Link href={`/login?callbackUrl=/books/${book.id}`} className="text-[13px] font-extrabold text-mint hover:underline">+ Ajouter une citation</Link>}
+          </div>
+          {quotes.length ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {quotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSignedIn={Boolean(viewerId)} />)}
+            </div>
+          ) : (
+            <p className="bb-card-flat p-5 text-sm text-muted">Personne n&apos;a encore relevé de passage. Garde le premier !</p>
+          )}
         </section>
 
         {friends.length ? (
@@ -260,7 +281,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                     page: entry.page,
                     percentage: entry.percentage,
                     chapter: entry.chapter,
-                    note: entry.note
+                    note: entry.note,
+                    kind: entry.kind,
+                    likes: entry.likes.length,
+                    likedByMe: entry.likes.some((like) => like.userId === viewerId)
                   }))
                 }
               : null

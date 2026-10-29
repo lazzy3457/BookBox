@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ReadingStatus } from "@prisma/client";
-import { BookOpen, Check, ChevronDown, Heart, ListPlus, PencilLine, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Check, ChevronDown, Heart, ListPlus, PencilLine, Plus, Quote, Trash2 } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
 import { AddToListModal } from "@/components/lists/AddToListModal";
+import { QuoteLikeButton } from "@/components/books/QuoteCard";
 import { toggleFavorite } from "@/server/actions/favorites";
+import { useConfirm } from "@/components/ui/useConfirm";
 
 type JournalEntry = {
   id: string;
@@ -16,6 +18,9 @@ type JournalEntry = {
   percentage: number | null;
   chapter: string | null;
   note: string | null;
+  kind: "NOTE" | "QUOTE";
+  likes: number;
+  likedByMe: boolean;
 };
 
 type BookActionPanelProps = {
@@ -53,10 +58,14 @@ export function BookActionPanel(props: BookActionPanelProps) {
   const [favorite, setFavorite] = useState(props.isFavorite);
   const [listOpen, setListOpen] = useState(false);
   const [noting, setNoting] = useState(false);
+  const [mode, setMode] = useState<"page" | "quote">("page");
+  const [sharePublic, setSharePublic] = useState(true);
+  const panelRef = useRef<HTMLElement>(null);
   const [page, setPage] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
 
   // Resynchronise le statut quand la page serveur est rafraîchie.
   const [prevStatus, setPrevStatus] = useState(props.status);
@@ -74,7 +83,17 @@ export function BookActionPanel(props: BookActionPanelProps) {
     return () => document.removeEventListener("mousedown", close);
   }, [menuOpen]);
 
-  const latest = props.period?.entries.find((entry) => entry.page != null || entry.percentage != null) ?? null;
+  useEffect(() => {
+    function openQuote() {
+      setMode("quote");
+      setNoting(true);
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    window.addEventListener("booksbox:open-quote", openQuote);
+    return () => window.removeEventListener("booksbox:open-quote", openQuote);
+  }, []);
+
+  const latest = props.period?.entries.find((entry) => entry.kind !== "QUOTE" && (entry.page != null || entry.percentage != null)) ?? null;
   const percent = latest?.percentage ?? (latest?.page && props.pageCount ? Math.min(100, Math.round((latest.page / props.pageCount) * 100)) : 0);
 
   async function changeStatus(next: ReadingStatus) {
@@ -97,7 +116,7 @@ export function BookActionPanel(props: BookActionPanelProps) {
 
   async function removeBook() {
     setMenuOpen(false);
-    if (!window.confirm("Retirer ce livre de ta bibliothèque ? Ton journal de lecture pour ce livre sera supprimé.")) return;
+    if (!(await confirm({ title: "Retirer ce livre de ta bibliothèque ?", message: "Ton journal de lecture pour ce livre sera aussi supprimé.", confirmLabel: "Retirer" }))) return;
     const response = await fetch(`/api/library?bookId=${encodeURIComponent(props.bookId)}`, { method: "DELETE" });
     if (!response.ok) {
       setError("Ce livre n'a pas pu être retiré.");
@@ -124,6 +143,10 @@ export function BookActionPanel(props: BookActionPanelProps) {
       setError("Indique un numéro de page valide.");
       return;
     }
+    if (mode === "quote" && !note.trim()) {
+      setError("Recopie le passage à garder.");
+      return;
+    }
     if (value == null && !note.trim()) {
       setError("Ajoute une page ou une note.");
       return;
@@ -144,12 +167,13 @@ export function BookActionPanel(props: BookActionPanelProps) {
       const response = await fetch("/api/reading-journal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ periodId, entryDate: today(), page: value, note: note.trim() || null })
+        body: JSON.stringify({ periodId, entryDate: today(), page: value, note: note.trim() || null, kind: mode === "quote" ? "QUOTE" : "NOTE", isPublic: mode === "quote" && sharePublic })
       });
       if (!response.ok) throw new Error("L'entrée n'a pas pu être enregistrée.");
       setPage("");
       setNote("");
       setNoting(false);
+      setMode("page");
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Erreur inattendue.");
@@ -159,7 +183,8 @@ export function BookActionPanel(props: BookActionPanelProps) {
   }
 
   return (
-    <aside id="journal" className="bb-card flex flex-col gap-4 p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
+    <aside ref={panelRef} id="journal" className="bb-card flex flex-col gap-4 p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
+      {confirmDialog}
       <div className="mx-auto w-full max-w-[190px]">
         <BookCover title={props.title} thumbnailUrl={props.thumbnailUrl} showTitle className="aspect-[2/3] w-full shadow-poster" iconSize={18} />
       </div>
@@ -228,21 +253,49 @@ export function BookActionPanel(props: BookActionPanelProps) {
           {status ? (
             noting ? (
               <form onSubmit={savePage} className="flex flex-col gap-2 rounded-xl bg-ink p-3">
-                <label className="text-xs font-bold text-muted" htmlFor="panel-page">Page atteinte</label>
-                <input id="panel-page" type="number" min={1} max={props.pageCount ?? undefined} value={page} onChange={(event) => setPage(event.target.value)} className="bb-input" placeholder={latest?.page ? String(latest.page) : "Page"} autoFocus />
-                <label className="text-xs font-bold text-muted" htmlFor="panel-note">Une note (facultatif)</label>
-                <textarea id="panel-note" value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={2000} className="bb-input resize-y" placeholder="Un passage, une impression…" />
+                <div className="grid grid-cols-2 rounded-full bg-panel p-1" role="radiogroup" aria-label="Type d'entrée">
+                  {([["page", "Ma page"], ["quote", "Citation"]] as const).map(([value, label]) => (
+                    <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)} className={`rounded-full py-1.5 text-xs font-extrabold transition ${mode === value ? "bg-mint text-ink" : "text-paper"}`}>{label}</button>
+                  ))}
+                </div>
+                {mode === "quote" ? (
+                  <>
+                    <label className="text-xs font-bold text-muted" htmlFor="panel-note">Le passage</label>
+                    <textarea id="panel-note" value={note} onChange={(event) => setNote(event.target.value)} rows={3} maxLength={2000} className="bb-input resize-y font-display italic" placeholder="Recopie la phrase qui t'a marqué…" autoFocus />
+                    <label className="text-xs font-bold text-muted" htmlFor="panel-page">Page (facultatif)</label>
+                    <input id="panel-page" type="number" min={1} max={props.pageCount ?? undefined} value={page} onChange={(event) => setPage(event.target.value)} className="bb-input" />
+                    <label className="flex items-center gap-2 text-xs font-bold text-paper">
+                      <input type="checkbox" checked={sharePublic} onChange={(event) => setSharePublic(event.target.checked)} className="h-4 w-4 accent-[rgb(var(--c-mint))]" />
+                      Partager sur la fiche du livre et mon profil
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    <label className="text-xs font-bold text-muted" htmlFor="panel-page">Page atteinte</label>
+                    <input id="panel-page" type="number" min={1} max={props.pageCount ?? undefined} value={page} onChange={(event) => setPage(event.target.value)} className="bb-input" placeholder={latest?.page ? String(latest.page) : "Page"} autoFocus />
+                    <label className="text-xs font-bold text-muted" htmlFor="panel-note">Une note (facultatif)</label>
+                    <textarea id="panel-note" value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={2000} className="bb-input resize-y" placeholder="Une impression, un moment…" />
+                  </>
+                )}
                 <div className="flex gap-2">
                   <button type="submit" disabled={busy} className="bb-btn-primary flex-1">Enregistrer</button>
-                  <button type="button" onClick={() => setNoting(false)} className="bb-btn-ghost">Annuler</button>
+                  <button type="button" onClick={() => { setNoting(false); setMode("page"); }} className="bb-btn-ghost">Annuler</button>
                 </div>
               </form>
             ) : (
-              <button type="button" onClick={() => setNoting(true)} className="bb-btn-soft w-full py-2.5 text-sm">
-                <PencilLine size={16} aria-hidden />
-                Noter ma page
-              </button>
+              <div className="flex flex-col gap-2">
+                <button type="button" onClick={() => { setMode("page"); setNoting(true); }} className="bb-btn-soft w-full py-2.5 text-sm">
+                  <PencilLine size={16} aria-hidden />
+                  Noter ma page
+                </button>
+                <button type="button" onClick={() => { setMode("quote"); setNoting(true); }} className="inline-flex items-center justify-center gap-1.5 text-xs font-extrabold text-mint hover:underline">
+                  <Quote size={13} aria-hidden />
+                  Relever une citation
+                </button>
+              </div>
             )
+          ) : props.isSignedIn ? (
+            <p className="text-center text-[11px] text-muted">Ajoute ce livre à ta bibliothèque pour noter ta page ou relever une citation.</p>
           ) : null}
 
           {props.period ? (
@@ -258,9 +311,10 @@ export function BookActionPanel(props: BookActionPanelProps) {
                     <span className="w-12 shrink-0 text-muted">{shortDate(entry.entryDate)}</span>
                     <span className="min-w-0">
                       <span className="font-bold text-paper">
-                        {[entry.page ? `p. ${entry.page}` : null, entry.percentage != null ? `${entry.percentage} %` : null, entry.chapter].filter(Boolean).join(" · ") || "Note"}
+                        {entry.kind === "QUOTE" ? `Citation${entry.page ? ` · p. ${entry.page}` : ""}` : [entry.page ? `p. ${entry.page}` : null, entry.percentage != null ? `${entry.percentage} %` : null, entry.chapter].filter(Boolean).join(" · ") || "Note"}
                       </span>
-                      {entry.note ? <span className="mt-0.5 block italic text-muted">« {entry.note} »</span> : null}
+                      {entry.note ? <span className={`mt-0.5 block italic ${entry.kind === "QUOTE" ? "font-display text-paper" : "text-muted"}`}>{entry.kind === "QUOTE" ? `« ${entry.note} »` : entry.note}</span> : null}
+                      {entry.kind === "QUOTE" ? <span className="mt-1 block"><QuoteLikeButton entryId={entry.id} count={entry.likes} initiallyLiked={entry.likedByMe} isSignedIn size={12} /></span> : null}
                     </span>
                   </li>
                 ))}

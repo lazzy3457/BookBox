@@ -32,12 +32,29 @@ type AuthorExternalEditionsProps = {
 const PAGE_SIZE = 10;
 const LANGUAGE_OPTIONS = [
   { label: "Toutes", value: "all" },
-  { label: "Francais", value: "fr" },
+  { label: "Français", value: "fr" },
   { label: "Anglais", value: "en" },
   { label: "Espagnol", value: "es" },
   { label: "Italien", value: "it" },
-  { label: "Allemand", value: "de" }
+  { label: "Allemand", value: "de" },
+  { label: "Portugais", value: "pt" },
+  { label: "Japonais", value: "ja" }
 ];
+
+// Le champ accepte un nom (« français »), un code (« fr ») ou rien : on en déduit le code envoyé à l'API.
+function languageCode(input: string) {
+  const value = input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  if (!value) return "all";
+  const match = LANGUAGE_OPTIONS.find(
+    (option) => option.value === value || option.label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().startsWith(value)
+  );
+  if (match) return match.value;
+  return /^[a-z]{2,3}$/.test(value) ? value : "all";
+}
 
 function normalizeText(value: string) {
   return value
@@ -104,6 +121,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
   const [items, setItems] = useState<ExternalEdition[]>([]);
   const [source, setSource] = useState<SourceFilter>("all");
   const [language, setLanguage] = useState("all");
+  const [languageInput, setLanguageInput] = useState("");
   const [edition, setEdition] = useState<EditionFilter>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -180,6 +198,16 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
 
     return () => controller.abort();
   }, [authorSlug, currentPage, edition, language, source]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const code = languageCode(languageInput);
+      if (code !== language) updateFilters(source, code, edition);
+    }, 450);
+    return () => window.clearTimeout(timer);
+    // updateFilters relit l'état courant ; seule la saisie déclenche ce délai.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languageInput]);
 
   function updateFilters(nextSource = source, nextLanguage = language, nextEdition = edition) {
     setSource(nextSource);
@@ -323,16 +351,14 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
             Langue
             <input
               list="author-language-options"
-              value={language}
-              onChange={(event) => updateFilters(source, event.target.value.trim() || "all", edition)}
-              className="mt-2 h-11 w-full rounded border border-line bg-ink px-3 text-sm normal-case tracking-normal text-paper outline-none focus:border-mint"
-              placeholder="Toutes, Francais, Anglais..."
+              value={languageInput}
+              onChange={(event) => setLanguageInput(event.target.value)}
+              className="mt-2 h-11 w-full rounded-xl border border-line bg-panel px-3 text-sm normal-case tracking-normal text-paper outline-none focus:border-mint"
+              placeholder="Toutes, français, anglais…"
             />
             <datalist id="author-language-options">
-              {LANGUAGE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+              {LANGUAGE_OPTIONS.filter((option) => option.value !== "all").map((option) => (
+                <option key={option.value} value={option.label} />
               ))}
             </datalist>
           </label>

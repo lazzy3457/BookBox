@@ -7,6 +7,8 @@ import type { ReadingStatus } from "@prisma/client";
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flame, Lock, MoreHorizontal, Quote, Trash2, UsersRound, X } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
 import { plural } from "@/lib/format";
+import { QuoteLikeButton } from "@/components/books/QuoteCard";
+import { useConfirm } from "@/components/ui/useConfirm";
 
 type JournalEntry = {
   id: string;
@@ -15,7 +17,10 @@ type JournalEntry = {
   percentage: number | null;
   chapter: string | null;
   note: string | null;
+  kind: "NOTE" | "QUOTE";
   isPublic: boolean;
+  likes: number;
+  likedByMe: boolean;
 };
 
 type JournalPeriod = {
@@ -72,14 +77,15 @@ function level(pages: number, entries: number) {
   return 4;
 }
 
-function isQuote(note: string | null) {
-  return Boolean(note && note.trim().startsWith("«"));
+function isQuote(entry: { note: string | null; kind: "NOTE" | "QUOTE" }) {
+  return entry.kind === "QUOTE" && Boolean(entry.note);
 }
 
 export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }: JournalWorkspaceProps) {
   const router = useRouter();
   const [bookFilter, setBookFilter] = useState("ALL");
   const [drawer, setDrawer] = useState<{ date: string; bookId: string | null } | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
   const [entries, setEntries] = useState(periods);
 
   const [prevPeriods, setPrevPeriods] = useState(periods);
@@ -94,8 +100,9 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
     entries.forEach((period) => {
       let previous = 0;
       period.entries.forEach((entry) => {
-        const pagesRead = entry.page != null ? Math.max(0, entry.page - previous) : 0;
-        if (entry.page != null) previous = entry.page;
+        const counts = entry.page != null && entry.kind !== "QUOTE";
+        const pagesRead = counts ? Math.max(0, (entry.page ?? 0) - previous) : 0;
+        if (counts) previous = entry.page ?? previous;
         if (!entry.entryDate.startsWith(String(year))) return;
         const key = dayKey(entry.entryDate);
         map.set(key, [...(map.get(key) ?? []), { ...entry, pagesRead, period }]);
@@ -178,6 +185,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
         percentage: next.percentage,
         chapter: next.chapter,
         note: next.note,
+        kind: next.kind,
         isPublic: next.isPublic
       })
     });
@@ -189,7 +197,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
   }
 
   async function deleteEntry(entry: DayEntry) {
-    if (!window.confirm("Supprimer cette entrée de ton journal ?")) return;
+    if (!(await confirm({ title: "Supprimer cette entrée de ton journal ?", message: "Cette action est définitive." }))) return;
     const response = await fetch(`/api/reading-journal/${entry.id}`, { method: "DELETE" });
     if (response.ok) {
       setEntries((current) => current.map((period) => ({ ...period, entries: period.entries.filter((item) => item.id !== entry.id) })));
@@ -203,6 +211,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {confirmDialog}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-display text-4xl font-semibold text-paper sm:text-[40px]">Mon journal de lecture</h1>
@@ -375,7 +384,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
 
 function EntryCard({ entry, onToggleVisibility, onDelete }: { entry: DayEntry; onToggleVisibility: () => void; onDelete: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const quote = isQuote(entry.note);
+  const quote = isQuote(entry);
   return (
     <article className={`flex flex-col gap-2.5 rounded-xl p-4 ${quote ? "bg-panelSoft/50" : "bg-ink"}`}>
       <div className="flex items-center gap-3">
@@ -404,11 +413,12 @@ function EntryCard({ entry, onToggleVisibility, onDelete }: { entry: DayEntry; o
       </div>
       {entry.note ? (
         quote ? (
-          <p className="flex gap-2 font-display text-lg font-semibold text-paper"><Quote size={16} aria-hidden className="mt-1 shrink-0 text-coral" />{entry.note}</p>
+          <p className="flex gap-2 font-display text-lg font-semibold text-paper"><Quote size={16} aria-hidden className="mt-1 shrink-0 text-coral" />« {entry.note} »</p>
         ) : (
           <p className="text-[13px] leading-relaxed text-paper">{entry.note}</p>
         )
       ) : null}
+      {quote ? <div className="text-xs"><QuoteLikeButton entryId={entry.id} count={entry.likes} initiallyLiked={entry.likedByMe} isSignedIn /></div> : null}
     </article>
   );
 }
@@ -468,7 +478,8 @@ function JournalDrawer({ date, initialBookId, books, onClose, onSaved }: { date:
           entryDate: date,
           page: pageValue,
           chapter: chapter.trim() || null,
-          note: text ? (mode === "citation" && !text.startsWith("«") ? `« ${text} »` : text) : null,
+          note: text || null,
+          kind: mode === "citation" ? "QUOTE" : "NOTE",
           isPublic
         })
       });

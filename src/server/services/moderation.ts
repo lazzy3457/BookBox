@@ -29,7 +29,11 @@ async function ensureReportableTarget(reporterId: string, targetType: ReportTarg
     ? (await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } }))?.id
     : targetType === "REVIEW"
       ? (await prisma.review.findUnique({ where: { id: targetId }, select: { userId: true } }))?.userId
-      : (await prisma.reviewComment.findUnique({ where: { id: targetId }, select: { userId: true } }))?.userId;
+      : targetType === "GROUP_THREAD"
+        ? (await prisma.groupThread.findUnique({ where: { id: targetId }, select: { authorId: true } }))?.authorId
+        : targetType === "GROUP_POST"
+          ? (await prisma.groupPost.findUnique({ where: { id: targetId }, select: { authorId: true } }))?.authorId
+          : (await prisma.reviewComment.findUnique({ where: { id: targetId }, select: { userId: true } }))?.userId;
   if (!ownerId) throw notFound("Le contenu signalé n’existe plus.", "REPORT_TARGET_NOT_FOUND");
   if (ownerId === reporterId) {
     throw Object.assign(new Error("Tu ne peux pas signaler ton propre contenu."), {
@@ -100,7 +104,11 @@ export async function updateModerationReport(input: {
     ? await prisma.user.findUnique({ where: { id: report.targetId }, select: { email: true } })
     : report.targetType === "REVIEW"
       ? await prisma.review.findUnique({ where: { id: report.targetId }, select: { user: { select: { email: true } } } }).then((row) => row?.user ?? null)
-      : await prisma.reviewComment.findUnique({ where: { id: report.targetId }, select: { user: { select: { email: true } } } }).then((row) => row?.user ?? null);
+      : report.targetType === "GROUP_THREAD"
+        ? await prisma.groupThread.findUnique({ where: { id: report.targetId }, select: { author: { select: { email: true } } } }).then((row) => row?.author ?? null)
+        : report.targetType === "GROUP_POST"
+          ? await prisma.groupPost.findUnique({ where: { id: report.targetId }, select: { author: { select: { email: true } } } }).then((row) => row?.author ?? null)
+          : await prisma.reviewComment.findUnique({ where: { id: report.targetId }, select: { user: { select: { email: true } } } }).then((row) => row?.user ?? null);
 
   await prisma.$transaction(async (transaction) => {
     if (report.targetType === "USER" && input.action === "SUSPEND") {
@@ -111,6 +119,10 @@ export async function updateModerationReport(input: {
       await transaction.review.update({ where: { id: report.targetId }, data: input.action === "HIDE" ? { hiddenAt: now, hiddenReason: input.decisionReason } : { hiddenAt: null, hiddenReason: null } });
     } else if (report.targetType === "COMMENT" && (input.action === "HIDE" || input.action === "RESTORE")) {
       await transaction.reviewComment.update({ where: { id: report.targetId }, data: input.action === "HIDE" ? { hiddenAt: now, hiddenReason: input.decisionReason } : { hiddenAt: null, hiddenReason: null } });
+    } else if (report.targetType === "GROUP_THREAD" && (input.action === "HIDE" || input.action === "RESTORE")) {
+      await transaction.groupThread.update({ where: { id: report.targetId }, data: input.action === "HIDE" ? { hiddenAt: now, hiddenReason: input.decisionReason } : { hiddenAt: null, hiddenReason: null } });
+    } else if (report.targetType === "GROUP_POST" && (input.action === "HIDE" || input.action === "RESTORE")) {
+      await transaction.groupPost.update({ where: { id: report.targetId }, data: input.action === "HIDE" ? { hiddenAt: now, hiddenReason: input.decisionReason } : { hiddenAt: null, hiddenReason: null } });
     }
     await transaction.moderationReport.update({
       where: { id: input.id },

@@ -175,6 +175,14 @@ export async function buildAccountExport(userId: string) {
     prisma.userBadge.findMany({ where: { userId }, orderBy: { earnedAt: "asc" }, select: { badgeSlug: true, tier: true, earnedAt: true } })
   ]);
 
+  const [groupMemberships, groupThreads, groupPosts, pollVotes, quoteLikes] = await Promise.all([
+    prisma.groupMember.findMany({ where: { userId }, orderBy: { joinedAt: "asc" }, select: { role: true, joinedAt: true, group: { select: { id: true, name: true, visibility: true } } } }),
+    prisma.groupThread.findMany({ where: { authorId: userId }, orderBy: { createdAt: "asc" }, select: { id: true, type: true, title: true, body: true, spoilerLevel: true, createdAt: true, group: { select: { id: true, name: true } } } }),
+    prisma.groupPost.findMany({ where: { authorId: userId, deletedAt: null }, orderBy: { createdAt: "asc" }, select: { id: true, body: true, parentId: true, createdAt: true, thread: { select: { id: true, title: true } } } }),
+    prisma.pollVote.findMany({ where: { userId }, select: { createdAt: true, option: { select: { label: true } }, poll: { select: { question: true } } } }),
+    prisma.readingEntryLike.findMany({ where: { userId }, select: { createdAt: true, entryId: true } })
+  ]);
+
   return {
     format: "booksbox-account-export",
     version: 1,
@@ -183,9 +191,10 @@ export async function buildAccountExport(userId: string) {
     library,
     reviews,
     comments,
-    reactions: { reviews: reviewReactions, comments: commentReactions },
+    reactions: { reviews: reviewReactions, comments: commentReactions, quotes: quoteLikes },
     social: { following, followers, blockedUsers, blockedBy },
     lists,
+    groups: { memberships: groupMemberships, threads: groupThreads, posts: groupPosts, pollVotes },
     notifications,
     notificationPreferences,
     recommendationDismissals,

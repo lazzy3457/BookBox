@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { DesktopNav, MobileNav } from "@/components/layout/NavLinks";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { BrandMark } from "@/components/ui/BrandMark";
 
@@ -35,7 +36,10 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
               Ajouter un livre
             </Link>
             {user ? (
-              <UserMenu user={user} isAdmin={isAdmin} />
+              <>
+                <NotificationBell />
+                <UserMenu user={user} isAdmin={isAdmin} />
+              </>
             ) : (
               <div className="flex gap-2">
                 <Link className="bb-btn border border-line text-muted hover:text-paper" href="/login">

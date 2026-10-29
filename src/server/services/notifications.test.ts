@@ -26,5 +26,8 @@ describe("notification preferences", () => {
     expect(allowsNotification({ ...defaultNotificationPreferences, commentsEnabled: false }, NotificationType.COMMENT_REPLY)).toBe(false);
     expect(allowsNotification({ ...defaultNotificationPreferences, friendReviewsEnabled: false }, NotificationType.FRIEND_REVIEW)).toBe(false);
     expect(allowsNotification({ ...defaultNotificationPreferences, followersEnabled: false }, NotificationType.NEW_FOLLOWER)).toBe(false);
+    expect(allowsNotification({ ...defaultNotificationPreferences, groupsEnabled: false }, NotificationType.GROUP_REPLY)).toBe(false);
+    expect(allowsNotification({ ...defaultNotificationPreferences, groupsEnabled: false }, NotificationType.GROUP_MENTION)).toBe(false);
+    expect(allowsNotification({ ...defaultNotificationPreferences, groupsEnabled: false }, NotificationType.NEW_FOLLOWER)).toBe(true);
   });
 });
