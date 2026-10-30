@@ -1,14 +1,25 @@
 "use client";
 
-import { Download, Trash2, X } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { CheckCircle2, Download, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { signIn, signOut } from "next-auth/react";
 import { useState } from "react";
 import { Toast } from "@/components/ui/Toast";
 
-export function AccountDataControls() {
-  const [deletionOpen, setDeletionOpen] = useState(false);
+type Props = {
+  hasPassword: boolean;
+  email: string | null;
+  googleAvailable: boolean;
+  googleConfirmed: boolean;
+  reopenDeletion: boolean;
+};
+
+export function AccountDataControls({ hasPassword, email, googleAvailable, googleConfirmed, reopenDeletion }: Props) {
+  const [deletionOpen, setDeletionOpen] = useState(reopenDeletion);
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  // Sans mot de passe, la suppression attend une connexion Google de moins de 5 minutes.
+  const [needsGoogle, setNeedsGoogle] = useState(!hasPassword && !googleConfirmed);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
 
@@ -43,15 +54,25 @@ export function AccountDataControls() {
       const response = await fetch("/api/account", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, confirmation })
+        body: JSON.stringify(hasPassword ? { password, confirmation } : { confirmation })
       });
       const payload = await response.json();
+      if (payload.error?.code === "REAUTH_REQUIRED") setNeedsGoogle(true);
       if (!response.ok) throw new Error(payload.error?.message ?? "La suppression a échoué.");
       await signOut({ callbackUrl: "/" });
     } catch (error) {
       setToast({ tone: "error", message: error instanceof Error ? error.message : "La suppression a échoué." });
       setBusy(false);
     }
+  }
+
+  function confirmWithGoogle() {
+    setBusy(true);
+    void signIn(
+      "google",
+      { callbackUrl: "/settings?rubrique=donnees&suppression=google" },
+      { prompt: "select_account", ...(email ? { login_hint: email } : {}) }
+    );
   }
 
   return (
@@ -98,17 +119,43 @@ export function AccountDataControls() {
               <p className="text-sm leading-6 text-muted">
                 Bibliothèque, journal, reviews, commentaires, listes et relations sociales seront supprimés. Cette action est irréversible.
               </p>
-              <label className="block text-xs font-extrabold text-muted">
-                Mot de passe actuel
-                <input
-                  required
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="mt-2 h-11 w-full rounded border border-line bg-ink px-3 text-paper outline-none focus:border-coral"
-                />
-              </label>
+              {hasPassword ? (
+                <label className="block text-xs font-extrabold text-muted">
+                  Mot de passe actuel
+                  <input
+                    required
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="mt-2 h-11 w-full rounded border border-line bg-ink px-3 text-paper outline-none focus:border-coral"
+                  />
+                </label>
+              ) : !needsGoogle ? (
+                <p className="flex items-start gap-2 rounded border border-mint/40 p-3 text-sm leading-6 text-paper">
+                  <CheckCircle2 size={16} aria-hidden className="mt-1 shrink-0 text-mint" />
+                  Identité confirmée avec Google. Valide la suppression dans les 5 minutes qui suivent ta connexion.
+                </p>
+              ) : googleAvailable ? (
+                <div className="space-y-3 rounded border border-line p-3">
+                  <p className="text-sm leading-6 text-muted">
+                    Ton compte n’a pas de mot de passe. Pour confirmer que c’est bien toi, reconnecte-toi avec Google : tu reviendras ici et auras 5 minutes pour valider.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={confirmWithGoogle}
+                    className="rounded border border-line px-4 py-2.5 text-sm font-extrabold text-paper transition hover:border-mint hover:text-mint disabled:opacity-50"
+                  >
+                    Confirmer avec Google
+                  </button>
+                </div>
+              ) : (
+                <p className="rounded border border-line p-3 text-sm leading-6 text-muted">
+                  Ton compte n’a pas de mot de passe et la connexion Google est indisponible. Définis d’abord un mot de passe dans{" "}
+                  <Link href="/settings?rubrique=securite" className="font-extrabold text-paper underline">Connexion &amp; sécurité</Link>, puis reviens ici.
+                </p>
+              )}
               <label className="block text-xs font-extrabold text-muted">
                 Recopie SUPPRIMER MON COMPTE
                 <input
@@ -121,7 +168,7 @@ export function AccountDataControls() {
               <div className="flex justify-end gap-2 border-t border-line pt-4">
                 <button type="button" onClick={() => setDeletionOpen(false)} className="rounded px-4 py-2 text-sm font-bold text-muted">Annuler</button>
                 <button
-                  disabled={busy || confirmation !== "SUPPRIMER MON COMPTE" || !password}
+                  disabled={busy || confirmation !== "SUPPRIMER MON COMPTE" || (hasPassword ? !password : needsGoogle)}
                   className="rounded-full bg-coral px-5 py-2.5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {busy ? "Suppression…" : "Supprimer définitivement"}

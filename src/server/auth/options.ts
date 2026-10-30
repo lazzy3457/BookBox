@@ -3,7 +3,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/server/db/prisma";
 import { authorizeCredentials } from "@/server/auth/credentials";
-import { checkGoogleSignIn, createGoogleUser, googleProvider, isGoogleAuthEnabled } from "@/server/auth/google";
+import { checkGoogleSignIn, createGoogleUser, googleProvider, googleSignInTime, isGoogleAuthEnabled } from "@/server/auth/google";
 
 export const authOptions: NextAuthOptions = {
   adapter: { ...PrismaAdapter(prisma), createUser: createGoogleUser },
@@ -29,8 +29,9 @@ export const authOptions: NextAuthOptions = {
     async signIn({ account, profile }) {
       return account?.provider === "google" ? checkGoogleSignIn(account, profile) : true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       if (user) token.sessionVersion = user.sessionVersion ?? 0;
+      if (user && account) token.googleSignInAt = googleSignInTime(account, profile, user);
       return token;
     },
     async session({ session, token }) {
@@ -59,6 +60,7 @@ export const authOptions: NextAuthOptions = {
           session.user.image = user.image;
           session.user.name = user.name;
           session.user.role = user.role;
+          session.googleSignInAt = token.googleSignInAt;
         } else {
           session.user = undefined;
         }

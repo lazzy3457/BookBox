@@ -10,6 +10,7 @@ declare module "next-auth" {
       image?: string | null;
       role?: "USER" | "ADMIN";
     };
+    googleSignInAt?: number;
   }
 
   interface User {
@@ -20,5 +21,6 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     sessionVersion?: number;
+    googleSignInAt?: number;
   }
 }

@@ -19,7 +19,7 @@ vi.mock("@/server/db/prisma", () => ({
   }
 }));
 
-import { checkGoogleSignIn, createGoogleUser, googleProvider, googleSignupConsentCookie } from "@/server/auth/google";
+import { checkGoogleSignIn, createGoogleUser, googleProvider, googleSignInTime, googleSignupConsentCookie } from "@/server/auth/google";
 
 const account = { provider: "google", providerAccountId: "google-sub-1", type: "oauth" } as Account;
 
@@ -99,5 +99,18 @@ describe("connexion Google", () => {
     expect(data.email).toBe("lectrice@gmail.com");
     expect(data.emailVerified).toBeInstanceOf(Date);
     expect(data.legalAcceptances.create).toMatchObject({ source: "WEB", ageConfirmedAt: expect.any(Date) });
+  });
+
+  it("date une connexion Google faite avec l'adresse du compte, pour la ré-authentification", () => {
+    expect(googleSignInTime(account, googleProfile(), { email: "lectrice@example.com" }, 1_000)).toBe(1_000);
+  });
+
+  it("ne date pas une connexion Google d'une autre adresse, liée à une session déjà ouverte", () => {
+    expect(googleSignInTime(account, googleProfile({ email: "autre@gmail.com" }), { email: "lectrice@example.com" }, 1_000)).toBeUndefined();
+  });
+
+  it("ne date pas une connexion par mot de passe", () => {
+    const credentials = { provider: "credentials", providerAccountId: "user_1", type: "credentials" } as Account;
+    expect(googleSignInTime(credentials, undefined, { email: "lectrice@example.com" }, 1_000)).toBeUndefined();
   });
 });

@@ -61,6 +61,7 @@ Répartition des points d’entrée :
 - Un nouveau compte doit vérifier son e-mail avec un jeton haché valable 24 heures.
 - La connexion par mot de passe (`src/server/auth/credentials.ts`) compare toujours un hash bcrypt, même pour une adresse inconnue, et refuse un e-mail non vérifié avec le code `EMAIL_NOT_VERIFIED`, renvoyé seulement si le mot de passe est correct. Les autres erreurs sont ramenées à des codes génériques (`src/lib/authErrors.ts`).
 - La connexion Google (`src/server/auth/google.ts`) n’accepte qu’une adresse marquée vérifiée par Google et se lie automatiquement au compte de même e-mail. Si ce compte n’était pas vérifié, son mot de passe est supprimé avant la liaison (protection contre la pré-inscription d’une adresse). Une première connexion Google crée le compte seulement après l’âge et les conditions acceptés sur la page d’inscription (cookie de 10 minutes posé par `POST /api/auth/google-consent`).
+- Un compte sans mot de passe (créé via Google) définit son mot de passe par un lien envoyé à son adresse (`POST /api/settings/password`) et confirme la suppression du compte (`DELETE /api/account`) par une connexion Google de moins de 5 minutes faite avec l’adresse du compte, datée par le claim JWT `googleSignInAt` (NextAuth renouvelle `iat` à chaque lecture de session).
 - Un lien de réinitialisation de mot de passe est valable 30 minutes et utilisable une seule fois.
 - Les réponses de vérification et récupération ne révèlent pas l’existence d’un compte.
 - Les comptes existant avant la migration du lot 8 ont été considérés comme vérifiés.

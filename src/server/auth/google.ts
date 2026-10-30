@@ -90,6 +90,16 @@ export async function checkGoogleSignIn(account: Account, profile: Profile | und
   return (await readGoogleSignupConsent()) ? true : `/signup?error=${AUTH_ERRORS.GOOGLE_SIGNUP_CONSENT_REQUIRED}`;
 }
 
+// Heure d'une connexion Google, gardée dans le JWT comme preuve de ré-authentification :
+// NextAuth renouvelle `iat` à chaque lecture de session, il ne date donc pas la connexion.
+export function googleSignInTime(account: Account, profile: Profile | undefined, user: { email?: string | null }, now = Date.now()) {
+  if (account.provider !== "google") return undefined;
+  // Pendant une session ouverte, NextAuth lie au compte courant tout compte Google encore inconnu :
+  // seule l'adresse du compte BooksBox montre que c'est son titulaire qui vient de se reconnecter.
+  const email = profile?.email?.toLowerCase();
+  return email && email === user.email?.toLowerCase() ? now : undefined;
+}
+
 // Remplace `createUser` de l'adaptateur Prisma, qui n'est appelé que pour une première connexion Google :
 // l'inscription par mot de passe passe par /api/auth/signup.
 export async function createGoogleUser(data: Omit<AdapterUser, "id">) {

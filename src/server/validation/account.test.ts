@@ -15,4 +15,12 @@ describe("account deletion validation", () => {
       confirmation: "SUPPRIMER MON COMPTE"
     }).confirmation).toBe("SUPPRIMER MON COMPTE");
   });
+
+  it("accepts the confirmation alone for an account without password", () => {
+    expect(accountDeletionSchema.parse({ confirmation: "SUPPRIMER MON COMPTE" }).password).toBeUndefined();
+  });
+
+  it("rejects an empty password", () => {
+    expect(() => accountDeletionSchema.parse({ password: "", confirmation: "SUPPRIMER MON COMPTE" })).toThrow();
+  });
 });

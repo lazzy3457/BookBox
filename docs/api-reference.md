@@ -22,7 +22,7 @@ Les routes web protégées utilisent la session NextAuth. Les routes partagées 
 - `POST /api/auth/forgot-password` : récupération neutre.
 - `POST /api/auth/reset-password` : nouveau mot de passe.
 - `GET /api/account/export` : export JSON privé.
-- `DELETE /api/account` : suppression du compte.
+- `DELETE /api/account` : suppression du compte. Un compte sans mot de passe n'envoie que la confirmation et doit s'être connecté avec Google depuis moins de 5 minutes (sinon `403 REAUTH_REQUIRED`).
 
 L’ancien client mobile doit transmettre les nouveaux champs juridiques avant de pouvoir créer de nouveaux comptes. Les comptes existants peuvent continuer à se connecter.
 
@@ -74,6 +74,7 @@ Les routes spécifiques sous `/api/mobile` couvrent authentification, accueil, l
 - `GET|PATCH /api/settings/profile` : consulter et modifier nom, pseudo, bio et avatar.
 - `GET|PATCH /api/settings/preferences` : consulter et modifier les préférences privées, notamment le masquage des spoilers.
 - `PATCH /api/settings/password` : changer le mot de passe après vérification du mot de passe actuel. L’opération invalide les autres sessions.
+- `POST /api/settings/password` : compte sans mot de passe uniquement, envoie à son adresse un lien pour en définir un (`409 PASSWORD_ALREADY_SET` sinon).
 - `GET|PATCH /api/mobile/notification-preferences` : réglages détaillés des notifications, utilisés également par le web.
 
 Toutes ces routes exigent une session authentifiée. Le profil est enregistré explicitement ; les préférences et notifications sont enregistrées immédiatement.

@@ -37,6 +37,7 @@ export type SettingsSection = "profil" | "securite" | "lecture" | "notifications
 type Props = {
   section: SettingsSection;
   profile: Profile;
+  hasPassword: boolean;
   hideSpoilers: boolean;
   theme: ThemeId;
   notifications: Notifications;
@@ -77,7 +78,7 @@ const notificationRows: Array<[keyof Notifications, string, string]> = [
   ["groupsEnabled", "Activité de mes groupes", "Réponses à tes messages, mentions et invitations. La cloche d'un groupe ajoute ses nouvelles discussions."]
 ];
 
-export function SettingsWorkspace({ section, profile: initialProfile, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications, blockedCount, slots }: Props) {
+export function SettingsWorkspace({ section, profile: initialProfile, hasPassword, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications, blockedCount, slots }: Props) {
   const router = useRouter();
   const savedProfile = {
     name: initialProfile.name ?? "", username: initialProfile.username ?? "",
@@ -199,6 +200,17 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
     } catch (error) { setToast({ message: error instanceof Error ? error.message : "Une erreur est survenue.", tone: "error" }); setPasswordSaving(false); }
   }
 
+  async function requestPasswordSetup() {
+    setPasswordSaving(true);
+    try {
+      const response = await fetch("/api/settings/password", { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(errorMessage(payload, "Impossible d’envoyer le lien."));
+      setToast({ message: `Lien envoyé à ${initialProfile.email}. Il expire dans 30 minutes.`, tone: "success" });
+    } catch (error) { setToast({ message: error instanceof Error ? error.message : "Une erreur est survenue.", tone: "error" }); }
+    finally { setPasswordSaving(false); }
+  }
+
   const label = "flex flex-col gap-2 text-xs font-extrabold text-paper";
   const field = "bb-input bg-ink focus:bg-panel";
 
@@ -250,13 +262,21 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
           )}
           <p className="w-full text-xs text-muted">L’adresse du compte n’est pas modifiable dans cette version.</p>
         </div>
-        <form onSubmit={changePassword} className="bb-card grid gap-4 p-4 sm:p-6 sm:grid-cols-2">
-          <h2 className="bb-h3 sm:col-span-2">Changer de mot de passe</h2>
-          <label className={`${label} sm:col-span-2`}>Mot de passe actuel<input type="password" required autoComplete="current-password" className={field} value={password.currentPassword} onChange={(e) => setPassword({ ...password, currentPassword: e.target.value })} /></label>
-          <label className={label}>Nouveau mot de passe<input type="password" required minLength={10} autoComplete="new-password" className={field} value={password.newPassword} onChange={(e) => setPassword({ ...password, newPassword: e.target.value })} /></label>
-          <label className={label}>Confirmation<input type="password" required minLength={10} autoComplete="new-password" className={field} value={password.confirmation} onChange={(e) => setPassword({ ...password, confirmation: e.target.value })} /></label>
-          <div className="sm:col-span-2"><button disabled={passwordSaving} className="bb-btn-primary px-5 py-2.5 text-sm">{passwordSaving ? "Modification…" : "Changer le mot de passe"}</button></div>
-        </form>
+        {hasPassword ? (
+          <form onSubmit={changePassword} className="bb-card grid gap-4 p-4 sm:p-6 sm:grid-cols-2">
+            <h2 className="bb-h3 sm:col-span-2">Changer de mot de passe</h2>
+            <label className={`${label} sm:col-span-2`}>Mot de passe actuel<input type="password" required autoComplete="current-password" className={field} value={password.currentPassword} onChange={(e) => setPassword({ ...password, currentPassword: e.target.value })} /></label>
+            <label className={label}>Nouveau mot de passe<input type="password" required minLength={10} autoComplete="new-password" className={field} value={password.newPassword} onChange={(e) => setPassword({ ...password, newPassword: e.target.value })} /></label>
+            <label className={label}>Confirmation<input type="password" required minLength={10} autoComplete="new-password" className={field} value={password.confirmation} onChange={(e) => setPassword({ ...password, confirmation: e.target.value })} /></label>
+            <div className="sm:col-span-2"><button disabled={passwordSaving} className="bb-btn-primary px-5 py-2.5 text-sm">{passwordSaving ? "Modification…" : "Changer le mot de passe"}</button></div>
+          </form>
+        ) : (
+          <div className="bb-card flex flex-col items-start gap-3 p-4 sm:p-6">
+            <h2 className="bb-h3">Définir un mot de passe</h2>
+            <p className="text-sm text-muted">Ton compte se connecte avec Google et n’a pas encore de mot de passe. Reçois un lien par e-mail pour en choisir un : tu pourras ensuite te connecter aussi avec ton adresse.</p>
+            <button type="button" disabled={passwordSaving} onClick={requestPasswordSetup} className="bb-btn-primary px-5 py-2.5 text-sm">{passwordSaving ? "Envoi…" : "Recevoir le lien"}</button>
+          </div>
+        )}
       </div>
     );
   } else if (section === "lecture") {

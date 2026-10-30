@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth/options";
+import { isGoogleAuthEnabled } from "@/server/auth/google";
+import { isRecentGoogleSignIn } from "@/server/auth/session";
 import { SettingsWorkspace, type SettingsSection } from "@/components/settings/SettingsWorkspace";
 import { LibraryImport } from "@/components/settings/LibraryImport";
 import { AccountDataControls } from "@/components/settings/AccountDataControls";
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 
 const sections: SettingsSection[] = ["profil", "securite", "lecture", "notifications", "confidentialite", "bloques", "importer", "donnees"];
 
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ rubrique?: string }> }) {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ rubrique?: string; suppression?: string }> }) {
   const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
 
   if (!session?.user?.id) {
@@ -32,25 +34,37 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   }
 
   const section = sections.includes(params.rubrique as SettingsSection) ? (params.rubrique as SettingsSection) : "profil";
-  const [user, preference, notifications, blockedCount] = await Promise.all([
+  const [{ passwordHash, ...user }, preference, notifications, blockedCount] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: session.user.id },
-      select: { name: true, username: true, email: true, emailVerified: true, image: true, bio: true, createdAt: true }
+      select: { name: true, username: true, email: true, emailVerified: true, image: true, bio: true, createdAt: true, passwordHash: true }
     }),
     prisma.userPreference.findUnique({ where: { userId: session.user.id } }),
     getOrCreateNotificationPreferences(session.user.id),
     prisma.userBlock.count({ where: { blockerId: session.user.id } })
   ]);
+  // Un compte créé via Google n'a pas de mot de passe : ses actions sensibles passent par Google ou par un lien e-mail.
+  const hasPassword = Boolean(passwordHash);
+  const dataControls = (
+    <AccountDataControls
+      hasPassword={hasPassword}
+      email={user.email}
+      googleAvailable={isGoogleAuthEnabled()}
+      googleConfirmed={isRecentGoogleSignIn(session.googleSignInAt)}
+      reopenDeletion={params.suppression === "google"}
+    />
+  );
 
   return (
     <SettingsWorkspace
       section={section}
       profile={user}
+      hasPassword={hasPassword}
       hideSpoilers={preference?.hideSpoilers ?? true}
       theme={resolveTheme(preference?.theme)}
       notifications={notifications}
       blockedCount={blockedCount}
-      slots={{ blocked: <BlockedUsers />, importer: <LibraryImport />, data: <AccountDataControls /> }}
+      slots={{ blocked: <BlockedUsers />, importer: <LibraryImport />, data: dataControls }}
     />
   );
 }
