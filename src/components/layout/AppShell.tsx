@@ -17,7 +17,7 @@ type AppShellProps = {
 
 export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
   return (
-    <div className="min-h-screen pb-20 lg:pb-0">
+    <div className="flex min-h-screen flex-col pb-20 lg:pb-0">
       <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-20 rounded-full bg-mint px-4 py-2 font-extrabold text-ink transition focus:translate-y-0">Aller au contenu</a>
       <header className="sticky top-0 z-30 border-b border-line bg-ink/90 backdrop-blur">
         <div className="mx-auto flex min-h-14 max-w-[1440px] items-center gap-3 px-4 py-2 sm:min-h-16 sm:gap-4 sm:px-6 sm:py-3 xl:gap-5 xl:px-10">
@@ -55,7 +55,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="mx-auto min-h-screen max-w-[1440px] px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-7 xl:px-10">{children}</main>
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-7 xl:px-10">{children}</main>
       <SiteFooter />
       <MobileNav />
     </div>
