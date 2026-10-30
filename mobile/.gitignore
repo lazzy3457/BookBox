@@ -1,7 +1,0 @@
-.expo
-.npm-cache
-node_modules
-dist
-web-build
-*.log
-google-services.json

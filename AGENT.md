@@ -4,7 +4,7 @@ Dernière mise à jour : 26 octobre 2026
 
 ## Produit
 
-BooksBox est une application sociale de lecture francophone inspirée de Letterboxd, AniList et TV Time. Le web Next.js est le client principal ; le mobile Expo partage le backend.
+BooksBox est une application sociale de lecture francophone inspirée de Letterboxd, AniList et TV Time. Le web Next.js est le client principal ; le mobile Expo, maintenu dans le dépôt séparé ZeiMox/Bookbox_Mobile, partage le backend via `src/app/api/mobile/`.
 
 Fonctions actuelles :
 

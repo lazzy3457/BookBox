@@ -18,7 +18,7 @@ Services externes :
 Google Books · Open Library · Wikimedia · Expo Push · SMTP
 ```
 
-Le web est le client principal. Le mobile Expo consomme le même backend avec un jeton Bearer et ne possède pas de serveur séparé.
+Le web est le client principal. Le mobile Expo, maintenu dans le dépôt séparé https://github.com/ZeiMox/Bookbox_Mobile, consomme le même backend avec un jeton Bearer et ne possède pas de serveur séparé.
 
 ## Stack
 
@@ -45,7 +45,6 @@ src/server/validation/   schémas Zod
 prisma/                  schéma et migrations PostgreSQL
 scripts/                 préflight, administration et lancement
 docs/                    exploitation, conformité et sécurité
-mobile/                  application Expo
 ```
 
 Répartition des points d’entrée :

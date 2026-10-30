@@ -1,13 +1,13 @@
 # BooksBox
 
-BooksBox est une application de lecture sociale pour lecteurs francophones. Elle réunit bibliothèque, journal de lecture, reviews, recommandations personnalisées, import Goodreads/CSV, listes, communauté, ainsi qu’un parcours de lecture avec XP, niveaux, séries et badges. Le web Next.js est le client principal ; une application mobile Expo consomme le même backend.
+BooksBox est une application de lecture sociale pour lecteurs francophones. Elle réunit bibliothèque, journal de lecture, reviews, recommandations personnalisées, import Goodreads/CSV, listes, communauté, ainsi qu’un parcours de lecture avec XP, niveaux, séries et badges. Le web Next.js est le client principal ; une application mobile Expo, maintenue dans le dépôt [Bookbox_Mobile](https://github.com/ZeiMox/Bookbox_Mobile), consomme le même backend.
 
 Ce README est prevu pour une installation propre sur une autre machine, par exemple depuis un dossier Drive sans `node_modules`, sans `.next` et sans base de donnees locale.
 
 ## Sommaire
 
 - Installation web
-- Lancement mobile
+- Backend pour l'application mobile
 - Variables d'environnement
 - Architecture du projet
 - Scripts utiles
@@ -20,8 +20,6 @@ Ce README est prevu pour une installation propre sur une autre machine, par exem
 - Node.js 20 ou plus recent.
 - npm, installe avec Node.js.
 - Docker Desktop lance avant de demarrer PostgreSQL.
-- Expo Go sur le telephone pour tester l'application mobile.
-- Une development build Android/iOS est necessaire pour tester proprement les notifications push systeme. Expo Go affiche des avertissements et ne supporte plus completement les remote push Android depuis Expo SDK 53.
 - Git est optionnel si le projet est fourni en archive ou via Drive.
 
 ## Installation web
@@ -75,110 +73,17 @@ Une branche qui modifie le schéma peut utiliser sa propre base locale, copiée 
 
 La base de données est vide au premier lancement. Une nouvelle inscription doit recevoir un e-mail de vérification : configure les variables `SMTP_*` pour tester ce parcours. Sans SMTP en développement, le compte est créé mais aucun e-mail n’est envoyé.
 
-## Lancement mobile
+## Backend pour l'application mobile
 
-L'application mobile est dans le dossier `mobile/`. Elle n'est pas une WebView : elle consomme les routes API du backend Next.js.
+L'application mobile Expo est maintenue dans un dépôt séparé : https://github.com/ZeiMox/Bookbox_Mobile (installation, variables `EXPO_PUBLIC_*`, notifications push et builds EAS y sont documentées). Elle n'est pas une WebView : elle consomme les routes API de ce backend.
 
-Pour que le telephone puisse joindre le backend, lancer le serveur web depuis la racine avec :
+Pour qu'un telephone puisse joindre le backend en local, lancer le serveur web depuis la racine avec :
 
 ```bash
 npm run dev -- -H 0.0.0.0
 ```
 
-Trouver ensuite l'adresse IPv4 du PC sur le reseau Wi-Fi. Sous Windows :
-
-```bash
-ipconfig
-```
-
-Depuis le telephone, verifier que l'URL suivante s'ouvre dans Chrome ou Safari :
-
-```bash
-http://ADRESSE_IP_DU_PC:3000
-```
-
-Exemple :
-
-```bash
-http://192.168.1.54:3000
-```
-
-Installer les dependances mobiles :
-
-```bash
-cd mobile
-npm install
-```
-
-Creer le fichier `mobile/.env.local` :
-
-```bash
-copy .env.example .env.local
-```
-
-Sur macOS ou Linux :
-
-```bash
-cp .env.example .env.local
-```
-
-Modifier `mobile/.env.local` avec l'IP du PC :
-
-```bash
-EXPO_PUBLIC_API_URL=http://ADRESSE_IP_DU_PC:3000
-```
-
-Exemple :
-
-```bash
-EXPO_PUBLIC_API_URL=http://192.168.1.54:3000
-```
-
-Lancer Expo :
-
-```bash
-npx expo start --lan -c
-```
-
-Scanner le QR code avec Expo Go. Le PC et le telephone doivent etre sur le meme reseau Wi-Fi.
-
-### Notifications push mobile
-
-Le mobile supporte deux niveaux de notifications :
-
-- une inbox dans l'application, accessible depuis le profil ;
-- des notifications push systeme via Expo Notifications.
-
-Les notifications push demandent les dependances mobiles suivantes :
-
-```bash
-cd mobile
-npx expo install expo-notifications expo-constants
-```
-
-Le plugin `expo-notifications` doit rester declare dans `mobile/app.json`.
-
-Android demande aussi le fichier Firebase Android `mobile/google-services.json`, reference par
-`android.googleServicesFile` dans `mobile/app.json`. Ce fichier vient de Firebase Console >
-Project settings > Your apps > Android app `com.bookbox.mobile` > Download `google-services.json`.
-Ce n'est pas le fichier service account `firebase-adminsdk-...json` utilise dans EAS Credentials.
-Avant de reconstruire l'APK, verifier la configuration :
-
-```bash
-cd mobile
-npm run check:notifications
-```
-
-Avec Expo Go, les push Android affichent un avertissement et le rendu systeme reste limite. Pour tester le comportement reel sur telephone, utiliser une development build :
-
-```bash
-cd mobile
-npm run check:notifications
-npx eas build --profile development --platform android
-npx expo start --dev-client
-```
-
-Apres installation de la development build, se connecter une fois dans l'app pour enregistrer le token push du telephone. Les notifications creees ensuite par les likes, commentaires, nouveaux followers et reviews d'amis peuvent apparaitre dans la barre de notifications. Le clic sur une notification ouvre l'app et navigue vers la fiche livre ou le profil cible quand la notification contient un lien.
+Trouver ensuite l'adresse IPv4 du PC sur le reseau Wi-Fi (`ipconfig` sous Windows) et verifier depuis le telephone que `http://ADRESSE_IP_DU_PC:3000` s'ouvre dans le navigateur. C'est cette adresse que l'application mobile doit utiliser comme `EXPO_PUBLIC_API_URL`.
 
 ## Variables d'environnement
 
@@ -201,15 +106,11 @@ Variables cote web :
 
 Les droits de moderation sont stockes en base et accordes avec `npm run admin:grant -- adresse@email.fr`.
 
-Variable cote mobile, dans `mobile/.env.local` :
-
-- `EXPO_PUBLIC_API_URL` : URL du backend accessible depuis le telephone.
-
 Open Library ne demande pas de cle API pour l'usage actuel.
 
 ## Architecture du projet
 
-Le projet est organise en deux applications qui partagent le meme backend et la meme base de donnees.
+Ce depot contient le site web et le backend. L'application mobile (depot Bookbox_Mobile) consomme les memes routes API.
 
 ```text
 BooksBox/
@@ -234,15 +135,6 @@ BooksBox/
       validation/         Schemas de validation
     lib/                  Helpers partages (genres, auteurs, site, bareme d'XP et badges)
     types/                Types TypeScript globaux
-  mobile/
-    App.tsx               Entree de l'application Expo
-    src/
-      api/                Client API mobile
-      auth/               Contexte d'authentification mobile
-      components/         Composants React Native
-      notifications/      Enregistrement push et clic sur notifications
-      screens/            Ecrans mobiles
-      lib/                Helpers mobiles
   prisma/
     schema.prisma         Schema de base de donnees
     migrations/           Migrations PostgreSQL
@@ -259,7 +151,7 @@ BooksBox/
 - Prisma communique avec PostgreSQL via `DATABASE_URL`.
 - Docker lance uniquement PostgreSQL en local.
 - Les livres externes viennent de Google Books et Open Library, appeles cote serveur.
-- Le mobile Expo consomme le backend Next.js via `EXPO_PUBLIC_API_URL`.
+- L'application mobile (depot Bookbox_Mobile) consomme le backend Next.js via son `EXPO_PUBLIC_API_URL`.
 
 ### Base de donnees
 
@@ -306,14 +198,6 @@ Depuis la racine :
 - `npm run db:branch` : crée une base locale `booksbox_<branche>` copiée depuis `booksbox` et y applique les migrations de la branche.
 - `npm run prisma:studio` : ouvre Prisma Studio.
 
-Depuis `mobile/` :
-
-- `npm run start` : lance Expo.
-- `npm run android` : lance Expo vers Android si le SDK Android est configure.
-- `npm run ios` : lance Expo vers iOS si l'environnement le permet.
-- `npm run web` : lance la cible web Expo.
-- `npm run typecheck` : verifie TypeScript cote mobile.
-
 ## Verification avant rendu
 
 Depuis la racine :
@@ -325,12 +209,6 @@ npm run build
 ```
 
 Le contrôle `npm run preflight` est réservé à une simulation de mise en ligne : il échoue volontairement en local tant que les coordonnées, l’hébergeur, le SMTP et la politique d’inactivité ne sont pas confirmés.
-
-Depuis `mobile/` :
-
-```bash
-npm run typecheck
-```
 
 ## Fonctionnalites principales
 
@@ -359,7 +237,7 @@ npm run typecheck
 - Notifications sociales : likes, commentaires/reponses, nouveaux followers et nouvelles reviews d'amis, avec inbox mobile et push systeme.
 - Interface web responsive avec navigation mobile.
 - SEO, sitemap, manifeste, footer et pages légales.
-- Application mobile Expo : accueil, recherche, bibliotheque, communaute, profils, listes, favoris et fiches livres.
+- Application mobile Expo (depot Bookbox_Mobile) : accueil, recherche, bibliotheque, communaute, profils, listes, favoris et fiches livres.
 
 ## Routes API mobiles principales
 
@@ -436,19 +314,10 @@ Si Docker signale que le port `5432` est deja utilise, arreter l'autre PostgreSQ
 
 Si `prisma generate` ou `npm run build` echoue sous Windows avec une erreur `EPERM` sur le moteur Prisma, arreter le serveur Next.js puis relancer la commande.
 
-Si le mobile ne se connecte pas au backend :
+Si l'application mobile ne se connecte pas au backend :
 
 - verifier que le backend est lance avec `npm run dev -- -H 0.0.0.0` ;
 - verifier que le telephone ouvre `http://ADRESSE_IP_DU_PC:3000` dans son navigateur ;
-- verifier que `mobile/.env.local` contient la meme IP ;
-- relancer Expo avec `npx expo start --lan -c` ;
 - autoriser Node.js dans le pare-feu Windows si une alerte apparait.
 
-Si les notifications push ne s'affichent pas dans la barre du telephone :
-
-- verifier que `expo-notifications` et `expo-constants` sont installes dans `mobile/node_modules` ;
-- verifier que le plugin `expo-notifications` est present dans `mobile/app.json` ;
-- verifier que `mobile/google-services.json` existe, correspond a `com.bookbox.mobile`, puis reconstruire l'APK ;
-- se reconnecter dans l'app mobile pour enregistrer le token push ;
-- verifier que les preferences de notifications sont activees dans les parametres ;
-- utiliser une development build pour un test fiable, car Expo Go limite les remote push Android depuis SDK 53.
+Le depannage cote application (Expo, notifications push, builds) est documente dans le depot Bookbox_Mobile.
