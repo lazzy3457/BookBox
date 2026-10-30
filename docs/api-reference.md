@@ -16,6 +16,7 @@ Les routes web protégées utilisent la session NextAuth. Les routes partagées 
 ## Compte
 
 - `POST /api/auth/signup` : inscription avec âge et versions juridiques.
+- `POST /api/auth/google-consent` : âge et versions juridiques acceptés avant une première connexion Google.
 - `POST /api/auth/verify-email` : vérification de l’adresse.
 - `POST /api/auth/resend-verification` : renvoi neutre.
 - `POST /api/auth/forgot-password` : récupération neutre.

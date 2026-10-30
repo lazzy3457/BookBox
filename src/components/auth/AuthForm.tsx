@@ -4,12 +4,14 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Send } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { AUTH_ERRORS, authErrorMessage } from "@/lib/authErrors";
 import { legalConfig } from "@/lib/legal";
 import { AuthField, AuthShell } from "@/components/auth/AuthShell";
 
 type AuthFormProps = {
   mode: "login" | "signup";
+  googleEnabled?: boolean;
 };
 
 // N'accepte que des chemins internes pour éviter toute redirection ouverte.
@@ -17,18 +19,37 @@ function safeCallback(value: string | null) {
   return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
 }
 
-export function AuthForm({ mode }: AuthFormProps) {
+function GoogleLogo() {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true" className="h-[18px] w-[18px] shrink-0">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  );
+}
+
+export function AuthForm({ mode, googleEnabled = false }: AuthFormProps) {
   const searchParams = useSearchParams();
-  const [message, setMessage] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  // Les erreurs de NextAuth (Google, liens expirés…) arrivent dans l'URL ; seuls des codes connus sont traduits.
+  const [message, setMessage] = useState(() => {
+    const error = searchParams.get("error");
+    return error ? authErrorMessage(error) : "";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [resent, setResent] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage("");
+    setUnverifiedEmail("");
+    setResent(false);
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email"));
     const password = String(formData.get("password"));
@@ -60,8 +81,10 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     const result = await signIn("credentials", { email, password, redirect: false });
 
-    if (result?.error) {
-      setMessage("E-mail ou mot de passe incorrect.");
+    if (!result?.ok || result.error) {
+      const error = result?.error ?? AUTH_ERRORS.SIGNIN_UNAVAILABLE;
+      if (error === AUTH_ERRORS.EMAIL_NOT_VERIFIED) setUnverifiedEmail(email);
+      setMessage(authErrorMessage(error));
       setIsSubmitting(false);
       return;
     }
@@ -70,11 +93,42 @@ export function AuthForm({ mode }: AuthFormProps) {
     window.location.assign(safeCallback(searchParams.get("callbackUrl")));
   }
 
-  async function resend() {
+  async function continueWithGoogle() {
+    setMessage("");
+
+    if (mode === "signup" && formRef.current) {
+      const formData = new FormData(formRef.current);
+      if (formData.get("ageConfirmed") !== "on" || formData.get("termsAccepted") !== "on") {
+        setMessage("Coche les deux cases ci-dessus pour continuer avec Google.");
+        return;
+      }
+      setIsSubmitting(true);
+      const response = await fetch("/api/auth/google-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ageConfirmed: true,
+          termsAccepted: true,
+          termsVersion: legalConfig.termsVersion,
+          privacyVersion: legalConfig.privacyVersion
+        })
+      });
+      if (!response.ok) {
+        setMessage(authErrorMessage(AUTH_ERRORS.SIGNIN_UNAVAILABLE));
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    await signIn("google", { callbackUrl: safeCallback(searchParams.get("callbackUrl")) });
+  }
+
+  async function resend(email: string) {
     await fetch("/api/auth/resend-verification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: verificationEmail })
+      body: JSON.stringify({ email })
     });
     setResent(true);
   }
@@ -92,7 +146,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             <p className="text-[13px] font-extrabold text-paper">Rien reçu ?</p>
             <p className="mt-1 text-xs text-muted">Regarde dans les spams. Le lien est valable 24 heures.</p>
           </div>
-          <button type="button" onClick={() => void resend()} disabled={resent} className="bb-btn-soft w-full py-3 text-sm">
+          <button type="button" onClick={() => void resend(verificationEmail)} disabled={resent} className="bb-btn-soft w-full py-3 text-sm">
             {resent ? "Lien renvoyé" : "Renvoyer le lien"}
           </button>
           <p className="text-[13px] text-muted">
@@ -129,7 +183,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <AuthShell panelTitle={mode === "signup" ? "Ton carnet de lecture, partagé avec d'autres lecteurs." : "Content de te revoir."}>
-      <form onSubmit={submit} className="flex flex-col gap-5">
+      <form ref={formRef} onSubmit={submit} className="flex flex-col gap-5">
         <div className="mb-2">
           <h1 className="font-display text-[28px] font-semibold leading-tight text-paper sm:text-[34px]">{mode === "signup" ? "Créer un compte" : "Connexion"}</h1>
           <p className="mt-2 text-sm text-muted">{mode === "signup" ? "Commence ta bibliothèque sociale, c'est rapide." : "Retour à tes lectures."}</p>
@@ -178,7 +232,25 @@ export function AuthForm({ mode }: AuthFormProps) {
           {isSubmitting ? (mode === "signup" ? "Création…" : "Connexion…") : mode === "signup" ? "Créer mon compte" : "Se connecter"}
         </button>
 
+        {googleEnabled ? (
+          <>
+            <div aria-hidden className="flex items-center gap-3 text-[11px] font-bold uppercase text-muted">
+              <span className="h-px flex-1 bg-line" />ou<span className="h-px flex-1 bg-line" />
+            </div>
+            <button type="button" onClick={() => void continueWithGoogle()} disabled={isSubmitting} className="bb-btn-outline w-full py-3 text-sm">
+              <GoogleLogo />
+              Continuer avec Google
+            </button>
+          </>
+        ) : null}
+
         {message ? <p role="status" aria-live="polite" className={`text-sm ${message.startsWith("Connexion réussie") ? "text-mint" : "text-coral"}`}>{message}</p> : null}
+
+        {unverifiedEmail ? (
+          <button type="button" onClick={() => void resend(unverifiedEmail)} disabled={resent} className="bb-btn-soft w-full py-3 text-sm">
+            {resent ? "Lien renvoyé" : "Renvoyer le lien"}
+          </button>
+        ) : null}
 
         <p className={`text-[13px] text-muted ${mode === "login" ? "border-t border-line pt-5" : ""}`}>
           {mode === "signup" ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}

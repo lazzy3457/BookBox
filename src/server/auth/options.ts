@@ -2,16 +2,17 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/server/db/prisma";
-import { verifyPassword } from "@/server/auth/password";
-import { enforceRateLimit } from "@/server/security/rateLimit";
+import { authorizeCredentials } from "@/server/auth/credentials";
+import { checkGoogleSignIn, createGoogleUser, googleProvider, isGoogleAuthEnabled } from "@/server/auth/google";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: { ...PrismaAdapter(prisma), createUser: createGoogleUser },
   session: {
     strategy: "jwt"
   },
   pages: {
-    signIn: "/login"
+    signIn: "/login",
+    error: "/login"
   },
   providers: [
     CredentialsProvider({
@@ -20,47 +21,14 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
-        const email = credentials?.email?.toLowerCase().trim();
-        const password = credentials?.password;
-
-        if (!email || !password) {
-          return null;
-        }
-
-        await enforceRateLimit({
-          scope: "login-email",
-          identifier: email,
-          limit: 10,
-          windowMs: 15 * 60_000
-        });
-
-        const user = await prisma.user.findUnique({ where: { email } });
-
-        if (!user?.passwordHash || !user.emailVerified || user.suspendedAt) {
-          return null;
-        }
-
-        // TEMPORAIRE : bypass de vérification en dev
-const isValid = true;
-
-        // const isValid = await verifyPassword(password, user.passwordHash);
-
-        // if (!isValid) {
-        //   return null;
-        // }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          sessionVersion: user.sessionVersion
-        };
-      }
-    })
+      authorize: (credentials) => authorizeCredentials(credentials)
+    }),
+    ...(isGoogleAuthEnabled() ? [googleProvider()] : [])
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      return account?.provider === "google" ? checkGoogleSignIn(account, profile) : true;
+    },
     async jwt({ token, user }) {
       if (user) token.sessionVersion = user.sessionVersion ?? 0;
       return token;

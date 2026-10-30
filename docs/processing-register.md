@@ -15,4 +15,4 @@
 
 Compléter ce registre avec les prestataires, pays, garanties de transfert, responsables internes et durées définitives avant ouverture.
 
-Prestataires envisagés ou intégrés : hébergeur à choisir, SMTP à choisir, Expo Push, Google Books, Open Library et Wikimedia.
+Prestataires envisagés ou intégrés : hébergeur à choisir, SMTP à choisir, Expo Push, Google Books, connexion Google (nom, e-mail, photo de profil), Open Library et Wikimedia.

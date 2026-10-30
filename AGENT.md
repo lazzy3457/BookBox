@@ -24,7 +24,7 @@ Fonctions actuelles :
 ## Stack
 
 - Next.js App Router, React, TypeScript, Tailwind et lucide-react.
-- NextAuth Credentials, sessions JWT et Prisma Adapter.
+- NextAuth Credentials et Google (facultatif), sessions JWT et Prisma Adapter.
 - PostgreSQL avec Prisma `6.19.3`.
 - Zod, Vitest et ESLint.
 - Nodemailer via SMTP.

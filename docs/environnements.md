@@ -15,7 +15,7 @@ Trois environnements, chacun avec sa propre base PostgreSQL et ses propres secre
 
 - Ne jamais copier des données de production vers le développement ou le staging sans les anonymiser.
 - `prisma migrate dev` est réservé au développement : il peut proposer de réinitialiser la base. Ailleurs, seul `prisma migrate deploy` est utilisé.
-- Les secrets (`NEXTAUTH_SECRET`, `MOBILE_JWT_SECRET`, `RATE_LIMIT_SECRET`, SMTP, base) sont différents dans chaque environnement. Une fuite du staging ne doit rien ouvrir en production.
+- Les secrets (`NEXTAUTH_SECRET`, `MOBILE_JWT_SECRET`, `RATE_LIMIT_SECRET`, `GOOGLE_CLIENT_SECRET`, SMTP, base) sont différents dans chaque environnement. Une fuite du staging ne doit rien ouvrir en production.
 - `npm run preflight` refuse une configuration incomplète, une URL non HTTPS ou une base locale ; il se lance avec les variables de staging ou de production.
 - Le staging peut envoyer des e-mails : utiliser un SMTP de test (boîte de capture) ou une liste d’adresses autorisées.
 
