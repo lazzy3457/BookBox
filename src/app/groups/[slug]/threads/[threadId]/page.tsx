@@ -77,7 +77,7 @@ export default async function GroupThreadPage({ params }: { params: Promise<{ sl
   const rules = (group.rules ?? "Indique toujours jusqu'où vont les spoilers.\nOn débat des idées, pas des personnes.").split("\n").map((line) => line.replace(/^\d+[.)]\s*/, "").trim()).filter(Boolean);
 
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="flex min-w-0 flex-col gap-6">
         <Link href={`/groups/${group.slug}`} className="inline-flex w-fit items-center gap-1 text-[13px] font-extrabold text-mint hover:underline">
           <ChevronLeft size={15} aria-hidden />

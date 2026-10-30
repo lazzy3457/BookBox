@@ -37,7 +37,7 @@ export function DailyGoalPicker({ dailyGoal }: { dailyGoal: number }) {
 
   return (
     <>
-      <div role="radiogroup" aria-label="Objectif quotidien" className="grid gap-2 sm:grid-cols-2">
+      <div role="radiogroup" aria-label="Objectif quotidien" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {DAILY_GOAL_OPTIONS.map((option) => (
           <button key={option.value} type="button" role="radio" aria-checked={goal === option.value} disabled={saving} onClick={() => select(option.value)}
             className={`rounded border p-3 text-left transition disabled:cursor-wait ${goal === option.value ? "border-mint bg-mint/10" : "border-line bg-ink/40 hover:border-mint/50"}`}>

@@ -233,12 +233,20 @@ select {
     @apply border-mint bg-mint text-ink hover:border-mint;
   }
 
+  /*
+   * Onglets : sur mobile, des puces qui passent à la ligne (pas de défilement horizontal) ;
+   * à partir de 640px, l'onglet souligné classique dans une barre `bb-tabs`.
+   */
+  .bb-tabs {
+    @apply flex flex-wrap gap-2 sm:flex-nowrap sm:gap-6 sm:overflow-x-auto sm:border-b sm:border-line;
+  }
+
   .bb-tab {
-    @apply inline-flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-1 pb-3 pt-1 text-sm font-bold text-muted transition hover:text-paper;
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-panel px-3 py-1.5 text-[13px] font-bold text-muted transition hover:text-paper sm:gap-2 sm:rounded-none sm:border-0 sm:border-b-2 sm:border-transparent sm:bg-transparent sm:px-1 sm:pb-3 sm:pt-1 sm:text-sm;
   }
 
   .bb-tab-active {
-    @apply border-mint text-mint hover:text-mint;
+    @apply border-mint bg-mint/[0.08] text-mint hover:text-mint sm:border-mint sm:bg-transparent;
   }
 
   .bb-input {
@@ -257,21 +265,14 @@ select {
     @apply h-2 overflow-hidden rounded-full bg-panelSoft;
   }
 
-  /*
-   * Rangée défilante (onglets, filtres) : sur mobile, une seule ligne qui défile
-   * jusqu'aux bords de l'écran au lieu d'empiler les puces sur plusieurs lignes.
-   */
-  .bb-scroll-row {
-    @apply -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0;
-    scrollbar-width: none;
-  }
-
-  .bb-scroll-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bb-scroll-row > * {
+  /* Les icônes des boutons gardent leur taille quand la place manque. */
+  .bb-btn > svg {
     flex-shrink: 0;
+  }
+
+  /* Rangée de puces (filtres, genres) : passe à la ligne plutôt que de défiler horizontalement. */
+  .bb-chip-row {
+    @apply flex flex-wrap gap-2;
   }
 
   /*

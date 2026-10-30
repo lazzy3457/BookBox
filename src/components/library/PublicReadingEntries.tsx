@@ -16,7 +16,7 @@ export function PublicReadingEntries({ entries }: {
   return (
     <section className="flex flex-col gap-4">
       <h2 className="bb-h2">Journal public</h2>
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         {entries.map((entry) => (
           <article key={entry.id} className="rounded border border-line bg-panel/80 p-4">
             <Link href={`/books/${entry.period.userBook.book.id}`} className="font-extrabold text-paper hover:text-mint">{entry.period.userBook.book.title}</Link>

@@ -25,7 +25,7 @@ export function BadgeCatalog({ badges }: { badges: CatalogBadge[] }) {
       <p className="text-sm text-muted">
         <span className="font-extrabold text-paper">{earnedCount}</span> {earnedCount > 1 ? "paliers obtenus" : "palier obtenu"} sur {tierCount}. Chaque badge se débloque en plusieurs paliers : Bronze, Argent, Or, puis Platine.
       </p>
-      <ul className="grid min-w-0 gap-3 xl:grid-cols-2">
+      <ul className="grid grid-cols-1 min-w-0 gap-3 xl:grid-cols-2">
         {badges.map((badge) => {
           const best = [...badge.tiers].reverse().find((tier) => tier.earnedAt);
           const previousThreshold = badge.next ? (badge.tiers[badge.next.tier - 2]?.threshold ?? 0) : 0;

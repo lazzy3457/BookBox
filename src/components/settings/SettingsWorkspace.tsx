@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   BookOpen,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Download,
   EyeOff,
@@ -18,7 +20,7 @@ import {
   UserX
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Toast } from "@/components/ui/Toast";
 import { Avatar } from "@/components/ui/Avatar";
 import { ThemeId, themes } from "@/lib/themes";
@@ -76,6 +78,7 @@ const notificationRows: Array<[keyof Notifications, string, string]> = [
 ];
 
 export function SettingsWorkspace({ section, profile: initialProfile, hideSpoilers: initialSpoilers, theme: initialTheme, notifications: initialNotifications, blockedCount, slots }: Props) {
+  const router = useRouter();
   const savedProfile = {
     name: initialProfile.name ?? "", username: initialProfile.username ?? "",
     bio: initialProfile.bio ?? "", image: initialProfile.image ?? ""
@@ -90,11 +93,6 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
   const [password, setPassword] = useState({ currentPassword: "", newPassword: "", confirmation: "" });
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
-
-  // Sur mobile, la rubrique active peut être hors champ dans la rangée de puces : on la ramène au centre.
-  useEffect(() => {
-    document.querySelector<HTMLElement>("[aria-label=\"Rubriques des paramètres\"] [aria-current=\"page\"]")?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [section]);
 
   const activeNotifications = notificationRows.filter(([key]) => notifications[key]).length;
   const dirtyFields = (Object.keys(profile) as Array<keyof typeof profile>).filter((key) => profile[key] !== baseline[key]).length;
@@ -332,25 +330,36 @@ export function SettingsWorkspace({ section, profile: initialProfile, hideSpoile
 
   return (
     <>
-      <div className="grid items-start gap-5 sm:gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-        {/* Mobile : les rubriques deviennent une rangée de puces défilante au-dessus du contenu. */}
+      <div className="grid grid-cols-1 items-start gap-5 sm:gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-24">
           <h1 className="bb-page-title">Paramètres</h1>
-          <nav aria-label="Rubriques des paramètres" className="bb-scroll-row lg:mx-0 lg:flex-col lg:gap-4 lg:overflow-visible lg:px-0">
+          {/* Sous 1024px, un menu déroulant natif remplace la liste des rubriques. */}
+          <label className="relative lg:hidden">
+            <span className="sr-only">Rubrique</span>
+            <select value={section} onChange={(event) => router.push(`/settings?rubrique=${event.target.value}`)} className="bb-input appearance-none py-3 pr-10 font-extrabold">
+              {groups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.items.map((item) => <option key={item.id} value={item.id}>{item.label}{item.alert ? " · à vérifier" : ""}</option>)}
+                </optgroup>
+              ))}
+            </select>
+            <ChevronDown size={16} aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted" />
+          </label>
+          <nav aria-label="Rubriques des paramètres" className="hidden flex-col gap-4 lg:flex">
             {groups.map((group) => (
-              <div key={group.label} className="contents lg:flex lg:flex-col lg:gap-1">
-                <p className="bb-label hidden pb-1 text-coral lg:block">{group.label}</p>
+              <div key={group.label} className="flex flex-col gap-1">
+                <p className="bb-label pb-1 text-coral">{group.label}</p>
                 {group.items.map((item) => {
                   const active = item.id === section;
                   return (
                     <Link key={item.id} href={`/settings?rubrique=${item.id}`} aria-current={active ? "page" : undefined}
-                      className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 transition lg:gap-3 lg:rounded-xl lg:border-0 lg:px-2.5 lg:py-2 ${active ? "border-mint bg-mint text-ink lg:bg-panel lg:shadow-poster" : "border-line bg-panel hover:bg-panel/60 lg:bg-transparent"}`}>
-                      <span className={`hidden h-8 w-8 shrink-0 place-items-center rounded-lg lg:grid ${active ? "bg-mint text-ink" : "bg-panelSoft/70 text-paper"}`}><item.icon size={15} aria-hidden /></span>
-                      <span className="min-w-0 lg:flex-1">
-                        <span className={`block whitespace-nowrap text-[13px] font-extrabold ${active ? "text-ink lg:text-paper" : "text-paper"}`}>{item.label}</span>
-                        <span className={`hidden truncate text-[11px] lg:block ${item.alert ? "font-bold text-coral" : "text-muted"}`}>{item.hint}</span>
+                      className={`flex items-center gap-3 rounded-xl px-2.5 py-2 transition ${active ? "bg-panel shadow-poster" : "hover:bg-panel/60"}`}>
+                      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${active ? "bg-mint text-ink" : "bg-panelSoft/70 text-paper"}`}><item.icon size={15} aria-hidden /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] font-extrabold text-paper">{item.label}</span>
+                        <span className={`block truncate text-[11px] ${item.alert ? "font-bold text-coral" : "text-muted"}`}>{item.hint}</span>
                       </span>
-                      {active ? <ChevronRight size={15} aria-hidden className="hidden text-paper lg:block" /> : item.alert ? <span aria-hidden className="h-2 w-2 rounded-full bg-coral" /> : null}
+                      {active ? <ChevronRight size={15} aria-hidden className="text-paper" /> : item.alert ? <span aria-hidden className="h-2 w-2 rounded-full bg-coral" /> : null}
                     </Link>
                   );
                 })}

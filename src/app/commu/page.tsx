@@ -122,7 +122,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
         </form>
       </div>
 
-      <nav aria-label="Sections de la communauté" className="bb-scroll-row gap-5 border-b border-line sm:gap-7">
+      <nav aria-label="Sections de la communauté" className="bb-tabs sm:gap-7">
         {tabs.map((item) => (
           <Link key={item.id} href={item.id === "cercle" ? "/commu" : `/commu?tab=${item.id}`} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab sm:text-[15px] ${tab === item.id ? "bb-tab-active" : ""}`}>
             <span className={tab === item.id ? "font-extrabold text-paper" : ""}>{item.label}</span>
@@ -217,12 +217,12 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
           ) : null}
         </div>
         {circleSorted.length ? (
-          <div className="flex gap-3 overflow-x-auto pb-1 sm:gap-4">
-            {circleSorted.slice(0, 12).map((member) => {
+          <div className="grid grid-cols-4 gap-x-2 gap-y-3 sm:flex sm:flex-wrap sm:gap-4">
+            {circleSorted.slice(0, 12).map((member, index) => {
               const last = member.library[0];
               const recent = last && last.updatedAt > twoDaysAgo;
               return (
-                <Link key={member.id} href={`/profile/${member.id}`} className="flex w-[76px] shrink-0 flex-col items-center gap-1 text-center sm:w-[88px]">
+                <Link key={member.id} href={`/profile/${member.id}`} className={`min-w-0 flex-col items-center gap-1 text-center sm:w-[88px] ${index >= 8 ? "hidden sm:flex" : "flex"}`}>
                   <span className={`rounded-full p-[3px] ${recent ? "ring-2 ring-coral" : ""}`}>
                     <Avatar name={member.name} image={member.image} size={54} className="border-0 font-display text-xl" />
                   </span>
@@ -239,7 +239,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
         )}
       </section>
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="flex min-w-0 flex-col gap-6 sm:gap-8">
           <section className="flex flex-col gap-4">
             <h2 className="bb-h2">Ce que lit ton cercle</h2>

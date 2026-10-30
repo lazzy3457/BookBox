@@ -48,7 +48,7 @@ export function LegalNoticeWorkspace() {
   const areaClass = "mt-2 min-h-28 w-full rounded border border-line bg-ink p-3 text-paper outline-none focus:border-mint";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_0.65fr]">
       <form onSubmit={submitNotice} className="rounded border border-line bg-panel/80 p-6 shadow-poster">
         <h2 className="text-xl font-extrabold text-paper">Notifier un contenu potentiellement illicite</h2>
         <p className="mt-2 text-sm leading-6 text-muted">Fournis des éléments précis afin que la notification puisse être examinée rapidement.</p>

@@ -299,7 +299,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
         ))}
       </div>
 
-      <div role="tablist" aria-label="Rayons" className="bb-scroll-row gap-5 border-b border-line sm:gap-6">
+      <div role="tablist" aria-label="Rayons" className="bb-tabs">
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -337,7 +337,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
               <ChevronDown size={15} aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted sm:right-4" />
             </label>
           </div>
-          <div className="bb-scroll-row md:flex-wrap">
+          <div className="bb-chip-row">
             <button type="button" onClick={() => setGenre("ALL")} className={`bb-chip ${genre === "ALL" ? "bb-chip-active" : ""}`}>Tout</button>
             {!searching
               ? topGenres.map((slug) => (
@@ -370,7 +370,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
 
           {inStatus("READING").length ? (
             <ShelfSection title="En cours" count={counts.READING}>
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {inStatus("READING").map((item) => (
                   <ReadingCard key={item.id} item={item} />
                 ))}
@@ -413,7 +413,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
         </div>
       ) : tab === "READING" ? (
         gridItems.length ? (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {gridItems.map((item) => <ReadingCard key={item.id} item={item} />)}
           </div>
         ) : (
@@ -426,7 +426,7 @@ export function LibraryWorkspace({ year, stats, items, lists }: LibraryWorkspace
             <Link href="/lists/new" className="bb-btn-primary"><ListPlus size={16} aria-hidden />Nouvelle liste</Link>
           </div>
           {lists.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {lists.map((list) => (
                 <Link key={list.id} href={`/lists/${list.id}`} className="bb-card-flat group flex items-center gap-4 p-4 transition hover:border-mint/50">
                   <div className="flex -space-x-6">

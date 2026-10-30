@@ -136,7 +136,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         </div>
 
         {mode === "signup" ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <AuthField label="Nom">
               <input required name="name" autoComplete="name" placeholder="Camille Martin" className="bb-input h-12" />
             </AuthField>

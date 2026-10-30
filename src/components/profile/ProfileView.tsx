@@ -126,7 +126,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   const tabHref = (id: ProfileTab) => (id === "apercu" ? basePath : `${basePath}?tab=${id}`);
 
   const yearCard = (
-    <section className="grid gap-5 rounded bg-gradient-to-r from-mint to-[#9a4a3e] p-5 text-ink sm:gap-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_180px]">
+    <section className="grid grid-cols-1 gap-5 rounded bg-gradient-to-r from-mint to-[#9a4a3e] p-5 text-ink sm:gap-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_180px]">
       <div className="flex flex-col gap-4 sm:gap-5">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#f0b48f]">{isOwn ? "Ton" : "Son"} année de lecture</p>
         <h2 className="font-display text-[26px] font-semibold sm:text-4xl">{year} en livres</h2>
@@ -186,7 +186,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
         <section className="flex flex-col gap-4">
           <h2 className="bb-h2">Mois par mois</h2>
           {months.length ? (
-            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
               {months.map((group) => (
                 <div key={group.month} className="bb-card flex flex-col gap-3 p-4">
                   <div className="flex items-baseline justify-between">
@@ -229,13 +229,13 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       </div>
     );
   } else if (tab === "avis") {
-    content = reviews.length ? <div className="grid gap-4 lg:grid-cols-2">{reviews.map(reviewItem)}</div> : <p className="bb-card-flat p-6 text-sm text-muted">Aucun avis publié pour le moment.</p>;
+    content = reviews.length ? <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{reviews.map(reviewItem)}</div> : <p className="bb-card-flat p-6 text-sm text-muted">Aucun avis publié pour le moment.</p>;
   } else if (tab === "listes") {
     content = (
       <div className="flex flex-col gap-4">
         {isOwn ? <Link href="/lists/new" className="bb-btn-primary w-fit"><ListPlus size={15} aria-hidden />Nouvelle liste</Link> : null}
         {lists.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{lists.map((list) => <ListCard key={list.id} list={list} />)}</div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{lists.map((list) => <ListCard key={list.id} list={list} />)}</div>
         ) : (
           <p className="bb-card-flat p-6 text-sm text-muted">Aucune liste pour le moment.</p>
         )}
@@ -252,7 +252,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
     content = (
       <div className="flex flex-col gap-6 sm:gap-8">
         {yearCard}
-        <div className="grid min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6">
+        <div className="grid grid-cols-1 min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6">
           <div className="flex min-w-0 flex-col gap-6 sm:gap-8">
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
@@ -285,7 +285,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
             {quotes.length ? (
               <section className="flex flex-col gap-4">
                 <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} citations</h2>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {quotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSignedIn={Boolean(viewerId)} />)}
                 </div>
               </section>
@@ -445,8 +445,8 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
         </div>
       </section>
 
-      <div className="flex items-end justify-between gap-4 border-b border-line">
-        <nav aria-label="Sections du profil" className="bb-scroll-row min-w-0 gap-5 sm:gap-6">
+      <div className="flex items-end justify-between gap-4 sm:border-b sm:border-line">
+        <nav aria-label="Sections du profil" className="flex min-w-0 flex-wrap gap-2 sm:flex-nowrap sm:gap-6 sm:overflow-x-auto">
           {tabs.map((item) => (
             <Link key={item.id} href={tabHref(item.id)} aria-current={tab === item.id ? "page" : undefined} className={`bb-tab sm:text-[15px] ${tab === item.id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
               {item.label}

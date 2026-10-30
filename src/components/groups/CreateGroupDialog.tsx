@@ -181,7 +181,7 @@ function CreateGroupDialog({ onClose }: { onClose: () => void }) {
 
         <div className="flex flex-col gap-2">
           <p className="text-xs font-extrabold text-paper">Qui peut rejoindre ?</p>
-          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Visibilité">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Visibilité">
             {([
               ["PUBLIC", Globe, "Public", "Tout le monde peut rejoindre et lire"],
               ["INVITE", Lock, "Sur invitation", "Seuls les membres invités voient le groupe"]

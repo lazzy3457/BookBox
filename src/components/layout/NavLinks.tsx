@@ -59,7 +59,7 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-0.5 py-1.5 text-[11px] font-extrabold transition ${
+              className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-0.5 py-1.5 text-[10px] font-extrabold transition min-[360px]:text-[11px] ${
                 active ? "bg-mint/[0.08] text-mint" : "text-muted hover:text-paper"
               }`}
             >

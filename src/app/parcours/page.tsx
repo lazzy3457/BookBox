@@ -110,7 +110,7 @@ export default async function JourneyPage() {
         </section>
       ) : null}
 
-      <div className="grid min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+      <div className="grid grid-cols-1 min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
         <section aria-labelledby="chemin" className="min-w-0 overflow-hidden rounded border border-line bg-panel/60 p-5 shadow-poster sm:p-7">
           <h2 id="chemin" className="text-xl font-extrabold text-paper">Le chemin</h2>
           <p className="mt-1 text-sm text-muted">Chaque étape se débloque avec les jours validés, même s’ils ne se suivent pas.</p>

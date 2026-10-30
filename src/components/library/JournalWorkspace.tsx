@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReadingStatus } from "@prisma/client";
-import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flame, Lock, MoreHorizontal, Quote, Trash2, UsersRound, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flame, Lock, MoreHorizontal, PencilLine, Quote, Trash2, UsersRound, X } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
 import { plural } from "@/lib/format";
 import { QuoteLikeButton } from "@/components/books/QuoteCard";
@@ -58,6 +58,7 @@ type DayEntry = JournalEntry & { pagesRead: number; period: JournalPeriod };
 type Mode = "note" | "citation" | "page";
 
 const monthShort = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const monthLong = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 const levelClasses = ["bg-panelSoft/70", "bg-coral/25", "bg-coral/60", "bg-mint/60", "bg-mint"];
 
 function dayKey(value: string | Date) {
@@ -87,16 +88,6 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
   const [drawer, setDrawer] = useState<{ date: string; bookId: string | null } | null>(null);
   const [confirm, confirmDialog] = useConfirm();
   const [entries, setEntries] = useState(periods);
-  const calendarRef = useRef<HTMLDivElement>(null);
-
-  // Sur petit écran, le calendrier défile : on l'ouvre sur les semaines récentes plutôt que sur janvier.
-  useEffect(() => {
-    const calendar = calendarRef.current;
-    const day = calendar?.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (!calendar || !day || calendar.scrollWidth <= calendar.clientWidth) return;
-    const offset = day.getBoundingClientRect().left - calendar.getBoundingClientRect().left;
-    calendar.scrollLeft += offset - calendar.clientWidth + 48;
-  }, [year]);
 
   const [prevPeriods, setPrevPeriods] = useState(periods);
   if (periods !== prevPeriods) {
@@ -176,6 +167,16 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
   const [picked, setSelected] = useState<string | null>(null);
   const selected = picked ?? defaultDay;
 
+  // Vue mois (sous 1024px) : ouverte sur le mois du jour sélectionné, semaines du lundi au dimanche.
+  const [shownMonth, setShownMonth] = useState<number | null>(null);
+  const month = shownMonth ?? Number(selected.slice(5, 7)) - 1;
+  const monthDays = useMemo(() => {
+    const first = new Date(Date.UTC(year, month, 1));
+    const count = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const blanks: Array<string | null> = Array.from({ length: (first.getUTCDay() + 6) % 7 }, () => null);
+    return [...blanks, ...Array.from({ length: count }, (_, index) => new Date(Date.UTC(year, month, index + 1)).toISOString().slice(0, 10))];
+  }, [year, month]);
+
   const selectedEntries = filteredDay(selected);
   const selectedFinished = finishedByDay.get(selected) ?? [];
   const selectedPages = selectedEntries.reduce((total, entry) => total + entry.pagesRead, 0);
@@ -183,6 +184,13 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
   const selectedDate = new Date(`${selected}T12:00:00Z`);
   const today = todayKey();
   const reading = books.filter((book) => book.status === "READING");
+
+  function dayInfo(day: string) {
+    const items = filteredDay(day);
+    const pages = items.reduce((total, entry) => total + entry.pagesRead, 0);
+    const date = new Date(`${day}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
+    return { pages, tone: level(pages, items.length), label: `${date}, ${items.length ? `${pages} pages` : "rien noté"}` };
+  }
 
   async function updateEntry(entry: DayEntry, patch: Partial<JournalEntry>) {
     const next = { ...entry, ...patch };
@@ -227,7 +235,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
           <h1 className="bb-page-title">Mon journal de lecture</h1>
           <p className="mt-1 text-[13px] text-muted sm:text-sm">Chaque case est un jour : plus elle est foncée, plus tu as lu.</p>
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <Link href={`/diary?annee=${year - 1}`} aria-label="Année précédente" className="text-muted hover:text-paper"><ChevronLeft size={18} /></Link>
             <span className="font-display text-2xl font-semibold text-paper">{year}</span>
@@ -238,7 +246,8 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
             )}
           </div>
           <button type="button" onClick={() => setDrawer({ date: isCurrentYear ? today : selected, bookId: reading[0]?.bookId ?? books[0]?.bookId ?? null })} className="bb-btn-primary px-4 py-2.5 text-sm sm:px-5">
-            Écrire dans mon journal
+            <span className="min-[400px]:hidden">Écrire</span>
+            <span className="hidden min-[400px]:inline">Écrire dans mon journal</span>
           </button>
         </div>
       </div>
@@ -258,32 +267,65 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
       </div>
 
       <section className="bb-card p-4 sm:p-5" aria-label={`Calendrier de lecture ${year}`}>
-        <div ref={calendarRef} className="overflow-x-auto pb-1">
+        {/* Sous 1024px : un mois à la fois, sans défilement horizontal. */}
+        <div className="lg:hidden">
+          <div className="mb-3 flex items-center justify-between">
+            <button type="button" onClick={() => setShownMonth(Math.max(0, month - 1))} disabled={month === 0} aria-label="Mois précédent" className="grid h-9 w-9 place-items-center rounded-full bg-ink text-paper disabled:opacity-30">
+              <ChevronLeft size={17} />
+            </button>
+            <p className="font-display text-lg font-semibold capitalize text-paper">{monthLong[month]} {year}</p>
+            <button type="button" onClick={() => setShownMonth(Math.min(11, month + 1))} disabled={month === 11 || (isCurrentYear && month >= Number(today.slice(5, 7)) - 1)} aria-label="Mois suivant" className="grid h-9 w-9 place-items-center rounded-full bg-ink text-paper disabled:opacity-30">
+              <ChevronRight size={17} />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold text-muted" aria-hidden>
+            {["L", "M", "M", "J", "V", "S", "D"].map((letter, index) => <span key={index}>{letter}</span>)}
+          </div>
+          <div className="mt-1.5 grid grid-cols-7 gap-1.5">
+            {monthDays.map((day, index) => {
+              if (!day) return <span key={`blank-${index}`} />;
+              const { pages, tone, label } = dayInfo(day);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  disabled={isCurrentYear && day > today}
+                  onClick={() => setSelected(day)}
+                  aria-label={label}
+                  aria-pressed={selected === day}
+                  className={`flex aspect-square flex-col items-center justify-center rounded-lg text-[13px] font-bold transition disabled:opacity-40 ${levelClasses[tone]} ${tone >= 3 ? "text-ink" : "text-paper"} ${selected === day ? "ring-2 ring-paper" : ""}`}
+                >
+                  {Number(day.slice(8))}
+                  {pages ? <span className="text-[9px] font-extrabold leading-none opacity-80">{pages} p.</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
           <div className="inline-flex min-w-full flex-col gap-1.5">
-            <div className="flex gap-[3px] pl-0 text-[11px] text-muted sm:gap-[5px]">
+            <div className="flex gap-[3px] pl-0 text-[11px] text-muted xl:gap-[5px]">
               {weeks.map((_, index) => (
-                <span key={index} className="w-[13px] shrink-0 overflow-visible whitespace-nowrap sm:w-[16px]">{monthStarts[index] ? monthShort[monthStarts[index]!.month] : ""}</span>
+                <span key={index} className="w-[13px] shrink-0 overflow-visible whitespace-nowrap xl:w-[16px]">{monthStarts[index] ? monthShort[monthStarts[index]!.month] : ""}</span>
               ))}
             </div>
-            <div className="flex gap-[3px] sm:gap-[5px]">
+            <div className="flex gap-[3px] xl:gap-[5px]">
               {weeks.map((column, index) => (
-                <div key={index} className="flex flex-col gap-[3px] sm:gap-[5px]">
+                <div key={index} className="flex flex-col gap-[3px] xl:gap-[5px]">
                   {column.map((day, row) => {
-                    if (!day) return <span key={row} className="h-[13px] w-[13px] sm:h-[16px] sm:w-[16px]" />;
-                    const items = filteredDay(day);
-                    const pages = items.reduce((total, entry) => total + entry.pagesRead, 0);
-                    const tone = level(pages, items.length);
-                    const future = isCurrentYear && day > today;
+                    if (!day) return <span key={row} className="h-[13px] w-[13px] xl:h-[16px] xl:w-[16px]" />;
+                    const { tone, label } = dayInfo(day);
                     return (
                       <button
                         key={day}
                         type="button"
-                        disabled={future}
+                        disabled={isCurrentYear && day > today}
                         onClick={() => setSelected(day)}
-                        title={`${new Date(`${day}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} · ${items.length ? `${pages} pages` : "rien noté"}`}
-                        aria-label={`${new Date(`${day}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}, ${items.length ? `${pages} pages` : "rien noté"}`}
+                        title={label}
+                        aria-label={label}
                         aria-pressed={selected === day}
-                        className={`h-[13px] w-[13px] rounded-[3px] sm:h-[16px] sm:w-[16px] sm:rounded-[4px] transition hover:ring-2 hover:ring-mint/40 disabled:opacity-40 ${levelClasses[tone]} ${selected === day ? "ring-2 ring-paper" : ""}`}
+                        className={`h-[13px] w-[13px] rounded-[3px] transition hover:ring-2 hover:ring-mint/40 disabled:opacity-40 xl:h-[16px] xl:w-[16px] xl:rounded-[4px] ${levelClasses[tone]} ${selected === day ? "ring-2 ring-paper" : ""}`}
                       />
                     );
                   })}
@@ -298,9 +340,9 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
             {levelClasses.map((className) => <span key={className} className={`h-3 w-3 rounded-[3px] ${className}`} />)}
             Plus
           </div>
-          <label className="relative">
+          <label className="relative w-full min-w-0 sm:w-auto">
             <span className="sr-only">Filtrer par livre</span>
-            <select value={bookFilter} onChange={(event) => setBookFilter(event.target.value)} className="appearance-none rounded-xl bg-ink py-2.5 pl-4 pr-10 text-[13px] font-bold text-paper outline-none">
+            <select value={bookFilter} onChange={(event) => setBookFilter(event.target.value)} className="w-full appearance-none truncate rounded-xl bg-ink py-2.5 pl-4 pr-10 sm:w-auto sm:max-w-[260px] text-[13px] font-bold text-paper outline-none">
               <option value="ALL">Tous les livres</option>
               {entries.map((period) => <option key={period.id} value={period.bookId}>{period.title}</option>)}
             </select>
@@ -309,7 +351,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
         </div>
       </section>
 
-      <div className="grid min-w-0 gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_350px]">
+      <div className="grid grid-cols-1 min-w-0 gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_350px]">
         <section className="bb-card flex flex-col gap-4 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -352,14 +394,15 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
               const percent = book.lastPage && book.pageCount ? Math.min(100, Math.round((book.lastPage / book.pageCount) * 100)) : 0;
               return (
                 <div key={book.bookId} className="flex items-center gap-3">
-                  <Link href={`/books/${book.bookId}`}><BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[60px] w-10 rounded-lg" iconSize={0} /></Link>
+                  <Link href={`/books/${book.bookId}`} className="shrink-0"><BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[60px] w-10 rounded-lg" iconSize={0} /></Link>
                   <div className="min-w-0 flex-1">
-                    <Link href={`/books/${book.bookId}`} className="block truncate text-xs font-extrabold text-paper hover:text-mint">{book.title}</Link>
+                    <Link href={`/books/${book.bookId}`} className="block truncate text-[13px] font-extrabold text-paper hover:text-mint">{book.title}</Link>
                     <div className="bb-track mt-1.5 h-1.5"><div className="h-full rounded-full bg-mint" style={{ width: `${percent}%` }} /></div>
                     <p className="mt-1 text-[11px] text-muted">{book.lastPage ? `p. ${book.lastPage}${book.pageCount ? ` / ${book.pageCount}` : ""}` : "Pas encore de page"}</p>
                   </div>
-                  <button type="button" onClick={() => setDrawer({ date: today, bookId: book.bookId })} className="shrink-0 text-xs font-extrabold text-paper hover:text-mint">
-                    Noter ma page
+                  <button type="button" onClick={() => setDrawer({ date: today, bookId: book.bookId })} aria-label={`Noter ma page de ${book.title}`} className="bb-btn-soft shrink-0 px-3 py-1.5 text-xs">
+                    <PencilLine size={14} aria-hidden />
+                    Noter
                   </button>
                 </div>
               );

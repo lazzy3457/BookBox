@@ -48,7 +48,7 @@ export function GroupsTab({ mine, discover, isSignedIn }: { mine: DirectoryGroup
           {isSignedIn ? <CreateGroupButton /> : null}
         </div>
         {mine.length ? (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {mine.map((group) => <GroupCard key={group.id} group={group} isSignedIn={isSignedIn} />)}
           </div>
         ) : (
@@ -72,7 +72,7 @@ export function GroupsTab({ mine, discover, isSignedIn }: { mine: DirectoryGroup
           </div>
         </div>
         {visible.length ? (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {visible.map((group) => (
               <div key={group.id} className="relative">
                 {group.invited ? <span className="absolute right-3 top-3 z-10 rounded-full bg-panel px-2.5 py-1 text-[11px] font-extrabold text-mint shadow-poster">Tu es invité</span> : null}

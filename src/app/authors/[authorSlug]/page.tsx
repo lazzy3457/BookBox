@@ -239,7 +239,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         </section>
       ) : null}
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="flex min-w-0 flex-col gap-5">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="bb-h2">Ses livres</h2>

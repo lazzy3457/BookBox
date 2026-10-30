@@ -146,7 +146,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
 
   return (
     // Mobile : titre, puis panneau d'actions, puis le détail. Desktop : panneau collant dans la colonne de droite.
-    <div className="grid min-w-0 gap-5 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-9">
+    <div className="grid grid-cols-1 min-w-0 gap-5 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-9">
       <header className="order-1 flex min-w-0 flex-col gap-2.5 sm:gap-3 lg:order-none lg:col-start-1 lg:row-start-1">
         {book.genres.length ? (
           <div className="flex flex-wrap gap-2">
@@ -171,7 +171,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             </span>
           ) : null}
         </div>
-        <nav aria-label="Sections de la fiche" className="bb-scroll-row pt-1 sm:flex-wrap">
+        <nav aria-label="Sections de la fiche" className="bb-chip-row pt-1">
           {anchors.map((anchor) => (
             <a key={anchor.href} href={anchor.href} className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-bold text-paper hover:border-mint/50 sm:py-1 sm:text-[11px]">{anchor.label}</a>
           ))}
@@ -203,7 +203,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             {viewerId ? <AddQuoteButton /> : <Link href={`/login?callbackUrl=/books/${book.id}`} className="text-[13px] font-extrabold text-mint hover:underline">+ Ajouter une citation</Link>}
           </div>
           {quotes.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {quotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSignedIn={Boolean(viewerId)} />)}
             </div>
           ) : (

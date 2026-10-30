@@ -568,7 +568,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
             {history.length ? (
               <section className="flex flex-col gap-3">
                 <h2 className="bb-h3">Tes recherches récentes</h2>
-                <div className="bb-scroll-row sm:flex-wrap">
+                <div className="bb-chip-row">
                   {history.slice(0, 6).map((item) => (
                     <button key={item} type="button" onClick={() => void runSearch(item)} className="bb-chip">{item}</button>
                   ))}
@@ -579,7 +579,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
             {recentBooks.length ? (
               <section className="flex flex-col gap-3">
                 <h2 className="bb-h3">Consultés récemment</h2>
-                <div className="bb-scroll-row gap-3 sm:flex-wrap">
+                <div className="flex flex-wrap gap-3">
                   {recentBooks.map((book) => (
                     <Link key={book.id} href={`/books/${book.id}`} title={book.title} className="transition hover:-translate-y-1">
                       <BookCover title={book.title} thumbnailUrl={book.thumbnailUrl} className="h-[90px] w-[60px] sm:h-[104px] sm:w-[70px]" iconSize={0} />

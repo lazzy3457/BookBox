@@ -111,7 +111,7 @@ export default async function HomePage() {
         {greeting()} {firstName}
       </h1>
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section aria-labelledby="reprendre" className="flex min-w-0 flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <h2 id="reprendre" className="bb-h2">Reprendre ma lecture</h2>
@@ -223,10 +223,10 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
           <input id="hero-search" name="q" placeholder="Titre, auteur ou ISBN" className="min-w-0 flex-1 bg-transparent py-2 text-base text-paper outline-none placeholder:text-muted/80" />
           <button type="submit" className="bb-btn-primary px-4 py-2.5 text-sm sm:px-5">Rechercher</button>
         </form>
-        <div className="bb-scroll-row w-[calc(100%+2rem)] sm:w-full sm:flex-wrap sm:justify-center">
+        <div className="bb-chip-row justify-center">
           <Link href="/search" className="bb-chip bb-chip-active">Tout</Link>
-          {heroGenres.map((slug) => (
-            <Link key={slug} href={`/search?genre=${slug}`} className="bb-chip">
+          {heroGenres.map((slug, index) => (
+            <Link key={slug} href={`/search?genre=${slug}`} className={`bb-chip ${index >= 5 ? "hidden sm:inline-flex" : ""}`}>
               {genreLabel(slug) ?? GENRES.find((genre) => genre.slug === slug)?.label}
             </Link>
           ))}
@@ -284,7 +284,7 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
         </section>
       ) : null}
 
-      <section className="grid gap-6 rounded bg-gradient-to-br from-mint to-[#9a4a3e] p-5 text-ink sm:gap-8 sm:p-10 lg:grid-cols-[300px_minmax(0,1fr)]">
+      <section className="grid grid-cols-1 gap-6 rounded bg-gradient-to-br from-mint to-[#9a4a3e] p-5 text-ink sm:gap-8 sm:p-10 lg:grid-cols-[300px_minmax(0,1fr)]">
         <div className="flex flex-col items-start gap-4">
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#f0b48f]">Pourquoi BooksBox ?</p>
           <h2 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">Ton carnet de lecture, partagé avec d&apos;autres lecteurs.</h2>
@@ -293,7 +293,7 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
             <Link href="/login" className="text-sm font-extrabold hover:underline">J&apos;ai déjà un compte</Link>
           </div>
         </div>
-        <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
           {[
             { icon: BookHeart, title: "Suis tes lectures", text: "Ta bibliothèque, tes livres en cours et la page où tu t'es arrêté." },
             { icon: Star, title: "Note et donne ton avis", text: "Une note, une review, des alertes spoiler pour ne rien gâcher aux autres." },

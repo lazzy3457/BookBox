@@ -238,15 +238,15 @@ export function ModerationWorkspace({ dossiers }: { dossiers: Dossier[] }) {
     ) : null;
 
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
       <aside className="flex flex-col gap-4">
         <div>
           <p className="bb-label text-coral">Administration</p>
           <h1 className="bb-page-title">Modération</h1>
         </div>
-        <div role="tablist" className="flex gap-5 border-b border-line">
+        <div role="tablist" className="bb-tabs sm:gap-5">
           {([["OPEN", "À traiter"], ["REVIEWING", "En cours"], ["CLOSED", "Clôturés"]] as const).map(([id, label]) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setSelectedKey(null); setChecked(new Set()); }} className={`bb-tab text-[15px] ${tab === id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
+            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setSelectedKey(null); setChecked(new Set()); }} className={`bb-tab sm:text-[15px] ${tab === id ? "bb-tab-active font-extrabold text-paper" : ""}`}>
               {label}
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${tab === id ? "bg-mint text-ink" : "bg-panelSoft text-muted"}`}>{counts[id]}</span>
             </button>
@@ -375,7 +375,7 @@ function ReportPanel({ dossier, busy, onDecide }: { dossier: ReportDossier; busy
         ) : null}
       </section>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {dossier.owner ? (
           <section className="bb-card flex flex-col gap-3 p-5">
             <h3 className="bb-h3">Historique de {dossier.owner.handle}</h3>
@@ -398,7 +398,7 @@ function ReportPanel({ dossier, busy, onDecide }: { dossier: ReportDossier; busy
 
       <section className="bb-card flex flex-col gap-4 p-6">
         <h3 className="bb-h3 text-xl">Décision</h3>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {options.map((option) => (
             <DecisionCard key={option.id} active={choice === option.id} icon={option.icon} title={option.title} text={option.text} onClick={() => {
               setChoice(option.id);
@@ -454,7 +454,7 @@ function LegalPanel({ dossier, busy, onDecide }: { dossier: LegalDossier; busy: 
         </div>
       </section>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="bb-card flex flex-col gap-3 p-5">
           <h3 className="bb-h3">Suivi du dossier</h3>
           <p className="flex gap-2 text-xs"><CheckCircle2 size={15} aria-hidden className="text-mint" /><span><span className="block font-extrabold text-paper">Reçue</span><span className="text-muted">{new Date(dossier.createdAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · accusé envoyé au déclarant</span></span></p>
@@ -478,7 +478,7 @@ function LegalPanel({ dossier, busy, onDecide }: { dossier: LegalDossier; busy: 
 
       <section className="bb-card flex flex-col gap-4 p-6">
         <h3 className="bb-h3 text-xl">Décision</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <DecisionCard active={choice === "RESOLVED"} icon={Trash2} title="Retirer le contenu" text="Notification fondée : le contenu est retiré, le déclarant est prévenu." onClick={() => { setChoice("RESOLVED"); setReason(motivations.LEGAL_REMOVE[0]); }} />
           <DecisionCard active={choice === "DISMISSED"} icon={X} title="Rejeter la notification" text="Pas d'illégalité manifeste." onClick={() => { setChoice("DISMISSED"); setReason(motivations.LEGAL_DISMISS[0]); }} />
         </div>

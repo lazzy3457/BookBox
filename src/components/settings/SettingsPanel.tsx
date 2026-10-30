@@ -75,7 +75,7 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
       <section className="space-y-4">
         {preferenceItems.map((item) => (
           <div key={item.title} className="flex items-center justify-between gap-5 rounded border border-line bg-panel/80 p-5 shadow-poster">

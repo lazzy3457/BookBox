@@ -90,12 +90,13 @@ export function CurrentReadCard(props: CurrentReadCardProps) {
   }
 
   return (
-    <article className="bb-card flex gap-4 p-4 sm:gap-5 sm:p-5">
-      <Link href={`/books/${props.bookId}`} aria-label={props.title} className="shrink-0">
+    // Mobile : les actions passent sous la couverture, sur toute la largeur de la carte.
+    <article className="bb-card grid grid-cols-[64px_minmax(0,1fr)] gap-x-4 gap-y-3 p-4 sm:grid-cols-[84px_minmax(0,1fr)] sm:gap-x-5 sm:gap-y-2 sm:p-5">
+      <Link href={`/books/${props.bookId}`} aria-label={props.title} className="sm:row-span-2">
         <BookCover title={props.title} thumbnailUrl={props.thumbnailUrl} className="h-24 w-16 sm:h-[126px] sm:w-[84px]" />
       </Link>
-      <div className="flex min-w-0 flex-1 flex-col gap-1 sm:gap-1.5">
-        <div className="bb-label text-coral">{props.sinceLabel}</div>
+      <div className="flex min-w-0 flex-col gap-1 sm:gap-1.5">
+        <div className="bb-label truncate text-coral">{props.sinceLabel}</div>
         <Link href={`/books/${props.bookId}`} className="bb-h3 truncate hover:text-mint">{props.title}</Link>
         <div className="truncate text-xs text-muted sm:text-sm">{props.author}</div>
         <div className="flex flex-col gap-1.5 pt-1 sm:pt-2">
@@ -104,8 +105,10 @@ export function CurrentReadCard(props: CurrentReadCardProps) {
           </div>
           <div className="text-xs font-bold text-muted">{progressLabel}</div>
         </div>
+      </div>
+      <div className="col-span-2 flex min-w-0 flex-col gap-2 sm:col-span-1 sm:col-start-2">
         {isNoting ? (
-          <form onSubmit={savePage} className="flex flex-wrap items-center gap-2 pt-2">
+          <form onSubmit={savePage} className="flex items-center gap-2">
             <label className="sr-only" htmlFor={`page-${props.bookId}`}>Page actuelle</label>
             <input
               id={`page-${props.bookId}`}
@@ -115,14 +118,14 @@ export function CurrentReadCard(props: CurrentReadCardProps) {
               value={page}
               onChange={(event) => setPage(event.target.value)}
               placeholder="Page"
-              className="bb-input w-24 py-2 sm:w-28"
+              className="bb-input min-w-0 flex-1 py-2 sm:w-28 sm:flex-none"
               autoFocus
             />
             <button type="submit" disabled={busy} className="bb-btn-primary">Enregistrer</button>
-            <button type="button" onClick={() => setIsNoting(false)} className="bb-btn-ghost">Annuler</button>
+            <button type="button" onClick={() => setIsNoting(false)} className="bb-btn-ghost px-3">Annuler</button>
           </form>
         ) : (
-          <div className="flex gap-2 pt-1.5 sm:pt-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             <button type="button" onClick={() => setIsNoting(true)} className="bb-btn-soft px-3 sm:px-4">
               <PencilLine size={16} aria-hidden />
               Noter ma page

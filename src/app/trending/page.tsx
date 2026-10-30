@@ -81,7 +81,7 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
         </div>
       </div>
 
-      <nav aria-label="Vue des tendances" className="bb-scroll-row gap-6 border-b border-line sm:gap-7">
+      <nav aria-label="Vue des tendances" className="bb-tabs sm:gap-7">
         <Link href={href({ periode: periodParam })} aria-current={tab === "communaute" ? "page" : undefined} className={`bb-tab ${tab === "communaute" ? "bb-tab-active font-extrabold text-paper" : ""}`}>
           Toute la communauté
         </Link>
@@ -113,7 +113,7 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
 
   return (
     <>
-      <div className="bb-scroll-row sm:flex-wrap">
+      <div className="bb-chip-row">
         <Link href={href({ periode: periodParam })} className={`bb-chip ${!genre ? "bb-chip-active" : ""}`}>Tous les genres</Link>
         {filterGenres.map((slug) => (
           <Link key={slug} href={href({ periode: periodParam, genre: slug })} className={`bb-chip ${genre === slug ? "bb-chip-active" : ""}`}>{genreLabel(slug)}</Link>
@@ -154,7 +154,7 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
             </div>
           </section>
 
-          <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="grid grid-cols-1 min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div className="flex min-w-0 flex-col gap-3">
               {rest.map((book) => (
                 <article key={book.id} className="bb-card-flat flex items-center gap-3 p-3 sm:gap-4 sm:pr-4">
@@ -304,7 +304,7 @@ async function ForYou({ viewerId, period }: { viewerId: string; period: TrendPer
     <div className="flex flex-col gap-7 sm:gap-9">
       <ForYouSection icon={UsersRound} title="Dans ton cercle" caption="Les livres que les gens que tu suis lisent en ce moment">
         {circleBooks.length ? (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {circleBooks.map((group) => {
               const finished = group.readers.filter((entry) => entry.status === ReadingStatus.READ).length;
               const reading = group.readers.length - finished;
