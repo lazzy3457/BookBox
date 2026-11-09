@@ -1,7 +1,6 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { isAdminRole } from "@/server/auth/admin";
 import { prisma } from "@/server/db/prisma";
 import { listModerationReports } from "@/server/services/moderation";
@@ -27,7 +26,7 @@ function statusGroup(statuses: string[]) {
 }
 
 export default async function ModerationPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user?.id || !isAdminRole(session.user.role)) notFound();
 
   const [reports, legalNotices] = await Promise.all([listModerationReports(), listLegalNotices()]);

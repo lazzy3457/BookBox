@@ -1,9 +1,8 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { BookOpen, ChevronLeft, ScrollText, Trophy, UsersRound } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import { getChallengeProgress, getGroupAccess, getReadalong, getWeeklyLeaderboard } from "@/server/services/groups";
@@ -35,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function GroupPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; filtre?: string }> }) {
-  const [{ slug }, query, session] = await Promise.all([params, searchParams, getServerSession(authOptions)]);
+  const [{ slug }, query, session] = await Promise.all([params, searchParams, getSession()]);
   const viewerId = session?.user?.id ?? null;
   const access = await getGroupAccess({ slug }, viewerId);
   if (!access || !access.canView) notFound();

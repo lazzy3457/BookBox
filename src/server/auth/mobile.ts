@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { prisma } from "@/server/db/prisma";
 import { DUMMY_PASSWORD_HASH, verifyPassword } from "@/server/auth/password";
 
@@ -10,6 +10,8 @@ type MobileTokenPayload = {
   name: string | null;
   // sessionVersion du compte à l'émission ; absent des jetons émis avant ce contrôle.
   sv?: number;
+  // Identifiant du jeton, inscrit dans RevokedMobileToken à la déconnexion.
+  jti?: string;
   iat: number;
   exp: number;
 };
@@ -56,6 +58,7 @@ export function createMobileToken(user: { id: string; email: string | null; name
     email: user.email,
     name: user.name,
     sv: user.sessionVersion,
+    jti: randomUUID(),
     iat: now,
     exp: now + TOKEN_TTL_SECONDS
   };
@@ -119,8 +122,28 @@ export async function getMobileUserId(request: Request) {
   }
 
   // Changer ou réinitialiser le mot de passe incrémente sessionVersion : les jetons émis avant ne valent plus rien.
-  const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { sessionVersion: true } });
-  return user && user.sessionVersion === (payload.sv ?? 0) ? payload.sub : null;
+  const [user, revoked] = await Promise.all([
+    prisma.user.findUnique({ where: { id: payload.sub }, select: { sessionVersion: true } }),
+    payload.jti ? prisma.revokedMobileToken.findUnique({ where: { jti: payload.jti }, select: { jti: true } }) : null
+  ]);
+  return user && !revoked && user.sessionVersion === (payload.sv ?? 0) ? payload.sub : null;
+}
+
+// Déconnexion : le jeton présenté ne sera plus accepté, même avant son expiration.
+export async function revokeMobileToken(request: Request) {
+  const token = getMobileBearerToken(request);
+  const payload = token ? verifyMobileToken(token) : null;
+
+  if (!payload?.jti) {
+    return;
+  }
+
+  const expiresAt = new Date(payload.exp * 1000);
+  await prisma.revokedMobileToken.upsert({
+    where: { jti: payload.jti },
+    update: {},
+    create: { jti: payload.jti, expiresAt }
+  });
 }
 
 export async function authenticateMobileCredentials(input: { email: string; password: string }) {

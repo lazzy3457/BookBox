@@ -1,8 +1,7 @@
+import { getSession } from "@/server/auth/session";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
 import { BookHeart, MessageSquareText, Plus, Quote, Search, Star } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getFriendActivity } from "@/server/services/feed";
 import { getTrendingBooks } from "@/server/services/trending";
@@ -40,7 +39,7 @@ function readersLabel(book: TrendingBook) {
 }
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   const trending = await getTrendingBooks();
 
   if (!session?.user?.id) {

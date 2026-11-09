@@ -1,7 +1,6 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { ProfileView, parseProfileTab } from "@/components/profile/ProfileView";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
 
   if (!session?.user?.id) {
     return (

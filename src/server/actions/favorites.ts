@@ -1,22 +1,20 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
+import { requireActionUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function toggleFavorite(bookId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) throw new Error("Non connecté");
+  const userId = await requireActionUserId();
 
   const entry = await prisma.userBook.findUnique({
-    where: { userId_bookId: { userId: session.user.id, bookId } },
+    where: { userId_bookId: { userId: userId, bookId } },
   });
 
   if (!entry) throw new Error("Livre non présent dans ta bibliothèque");
 
   await prisma.userBook.update({
-    where: { userId_bookId: { userId: session.user.id, bookId } },
+    where: { userId_bookId: { userId: userId, bookId } },
     data: { isFavorite: !entry.isFavorite },
   });
 

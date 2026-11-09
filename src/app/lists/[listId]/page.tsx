@@ -1,8 +1,7 @@
+import { getSession } from "@/server/auth/session";
 import { publicUserSelect } from "@/server/db/selects";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { BookOpen, Globe, Lock, Star } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -15,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ListPage({ params }: { params: Promise<{ listId: string }> }) {
   const { listId } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   const list = await prisma.bookList.findUnique({
     where: { id: listId },

@@ -1,9 +1,8 @@
+import { getSession } from "@/server/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { Quote } from "lucide-react";
 import { ReadingStatus } from "@prisma/client";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBookDetails } from "@/server/services/books";
 import { getBlockedUserIds } from "@/server/services/blocks";
@@ -57,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ bookId: s
 
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
-  const [book, session] = await Promise.all([getBookDetails(bookId), getServerSession(authOptions)]);
+  const [book, session] = await Promise.all([getBookDetails(bookId), getSession()]);
   if (!book) notFound();
 
   const viewerId = session?.user?.id ?? null;

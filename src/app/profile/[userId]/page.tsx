@@ -1,7 +1,6 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { areUsersBlocked } from "@/server/services/blocks";
 import { ProfileView, parseProfileTab } from "@/components/profile/ProfileView";
@@ -15,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ userId: s
 }
 
 export default async function PublicProfilePage({ params, searchParams }: { params: Promise<{ userId: string }>; searchParams: Promise<{ tab?: string }> }) {
-  const [session, { userId }, query] = await Promise.all([getServerSession(authOptions), params, searchParams]);
+  const [session, { userId }, query] = await Promise.all([getSession(), params, searchParams]);
   const viewerId = session?.user?.id ?? null;
   if (viewerId && viewerId !== userId && (await areUsersBlocked(viewerId, userId))) notFound();
 

@@ -49,7 +49,8 @@ export async function POST(request: Request) {
       },
       select: { id: true, email: true }
     });
-    await sendVerificationEmail({ id: user.id, email: user.email! });
+    // Le compte existe déjà : si l'envoi échoue, la personne peut redemander le lien depuis la connexion.
+    await sendVerificationEmail({ id: user.id, email: user.email! }).catch((error) => console.error("[signup] E-mail de vérification non envoyé.", error));
     return NextResponse.json({ ok: true, verificationRequired: true }, { status: 201 });
   } catch (error) {
     return apiError(error);

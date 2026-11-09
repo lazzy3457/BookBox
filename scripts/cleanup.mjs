@@ -8,14 +8,16 @@ const prisma = new PrismaClient();
 const now = new Date();
 
 try {
-  const [buckets, tokens, notifications] = await Promise.all([
+  const [buckets, tokens, notifications, revoked] = await Promise.all([
     prisma.rateLimitBucket.deleteMany({ where: { resetAt: { lt: now } } }),
     prisma.accountToken.deleteMany({ where: { expiresAt: { lt: now } } }),
-    prisma.notification.deleteMany({ where: { readAt: { lt: new Date(now.getTime() - 90 * DAY) } } })
+    prisma.notification.deleteMany({ where: { readAt: { lt: new Date(now.getTime() - 90 * DAY) } } }),
+    prisma.revokedMobileToken.deleteMany({ where: { expiresAt: { lt: now } } })
   ]);
   console.log(`Compteurs de débit expirés : ${buckets.count}`);
   console.log(`Jetons de compte expirés : ${tokens.count}`);
   console.log(`Notifications lues depuis plus de 90 jours : ${notifications.count}`);
+  console.log(`Jetons mobiles révoqués et expirés : ${revoked.count}`);
 
   if (process.argv.includes("--unverified")) {
     // Un compte sans e-mail vérifié ne peut pas se connecter : il n'a donc aucun contenu.

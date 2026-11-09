@@ -1,9 +1,8 @@
+import { getSession } from "@/server/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
 import { ArrowRight, Check, ChevronDown, Search, UserRound } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import { slugifyAuthor } from "@/lib/authors";
@@ -83,7 +82,7 @@ function year(value: string | null) {
 
 export default async function AuthorPage({ params }: { params: Promise<{ authorSlug: string }> }) {
   const { authorSlug } = await params;
-  const [{ name: authorName, ids }, session] = await Promise.all([findAuthorBookIds(authorSlug), getServerSession(authOptions)]);
+  const [{ name: authorName, ids }, session] = await Promise.all([findAuthorBookIds(authorSlug), getSession()]);
   if (!authorName) notFound();
 
   const viewerId = session?.user?.id ?? null;

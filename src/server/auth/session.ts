@@ -1,9 +1,14 @@
+import { cache } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth/options";
 import { getMobileUserId } from "@/server/auth/mobile";
 import { prisma } from "@/server/db/prisma";
+import { enforceRateLimit } from "@/server/security/rateLimit";
 
 const RECENT_SIGN_IN_MS = 5 * 60_000;
+
+// Session web, lue une seule fois par rendu : le layout et la page ne refont pas chacun la requête en base.
+export const getSession = cache(() => getServerSession(authOptions));
 
 export function isRecentGoogleSignIn(signedInAt: number | undefined, now = Date.now()) {
   return typeof signedInAt === "number" && now - signedInAt <= RECENT_SIGN_IN_MS;
@@ -12,7 +17,7 @@ export function isRecentGoogleSignIn(signedInAt: number | undefined, now = Date.
 // Preuve d'identité des comptes sans mot de passe : une connexion Google de moins de 5 minutes
 // dans la session web de ce même compte (un jeton mobile n'en porte jamais).
 export async function hasRecentGoogleSignIn(userId: string) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   return session?.user?.id === userId && isRecentGoogleSignIn(session.googleSignInAt);
 }
 
@@ -25,8 +30,20 @@ export async function getCurrentUserId(request?: Request) {
     }
   }
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   return session?.user?.id ?? null;
+}
+
+async function assertActiveUser(userId: string) {
+  const activeUser = await prisma.user.findFirst({ where: { id: userId, suspendedAt: null }, select: { id: true } });
+  if (!activeUser) {
+    throw Object.assign(new Error("Ce compte n’est pas autorisé à effectuer cette action."), { status: 403, code: "ACCOUNT_SUSPENDED" });
+  }
+}
+
+// Plafond commun à toutes les modifications d'un compte ; les routes sensibles gardent en plus leur propre limite.
+async function enforceMutationLimit(userId: string) {
+  await enforceRateLimit({ scope: "user-mutation", identifier: userId, limit: 120, windowMs: 60_000 });
 }
 
 export async function requireCurrentUserId(request?: Request) {
@@ -40,15 +57,24 @@ export async function requireCurrentUserId(request?: Request) {
       throw Object.assign(new Error("Origine de la requête refusée."), { status: 403, code: "ORIGIN_FORBIDDEN" });
     }
   }
-  const userId = mobileUserId ?? (await getServerSession(authOptions))?.user?.id ?? null;
+  const userId = mobileUserId ?? (await getSession())?.user?.id ?? null;
 
   if (!userId) {
     throw Object.assign(new Error("Authentication required"), { status: 401 });
   }
-  const activeUser = await prisma.user.findFirst({ where: { id: userId, suspendedAt: null }, select: { id: true } });
-  if (!activeUser) {
-    throw Object.assign(new Error("Ce compte n’est pas autorisé à effectuer cette action."), { status: 403, code: "ACCOUNT_SUSPENDED" });
+  await assertActiveUser(userId);
+  if (request && request.method !== "GET" && request.method !== "HEAD") {
+    await enforceMutationLimit(userId);
   }
 
+  return userId;
+}
+
+// Actions serveur : mêmes gardes que les routes API (compte actif, plafond de modifications).
+export async function requireActionUserId() {
+  const userId = (await getSession())?.user?.id;
+  if (!userId) throw new Error("Non connecté");
+  await assertActiveUser(userId);
+  await enforceMutationLimit(userId);
   return userId;
 }

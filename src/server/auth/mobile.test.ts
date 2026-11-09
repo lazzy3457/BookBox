@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findUnique } = vi.hoisted(() => ({ findUnique: vi.fn() }));
+const { findUnique, findRevoked, upsertRevoked } = vi.hoisted(() => ({ findUnique: vi.fn(), findRevoked: vi.fn(), upsertRevoked: vi.fn() }));
 
-vi.mock("@/server/db/prisma", () => ({ prisma: { user: { findUnique } } }));
+vi.mock("@/server/db/prisma", () => ({
+  prisma: { user: { findUnique }, revokedMobileToken: { findUnique: findRevoked, upsert: upsertRevoked } }
+}));
 
-import { createMobileToken, getMobileUserId } from "@/server/auth/mobile";
+import { createMobileToken, getMobileUserId, revokeMobileToken, verifyMobileToken } from "@/server/auth/mobile";
 
 function requestWith(token: string) {
   return new Request("https://booksbox.test", { headers: { authorization: `Bearer ${token}` } });
@@ -13,7 +15,11 @@ function requestWith(token: string) {
 describe("jetons mobiles", () => {
   const user = { id: "user-1", email: "lectrice@example.com", name: "Lectrice", sessionVersion: 2 };
 
-  beforeEach(() => findUnique.mockReset());
+  beforeEach(() => {
+    findUnique.mockReset();
+    findRevoked.mockReset().mockResolvedValue(null);
+    upsertRevoked.mockReset();
+  });
 
   it("accepte un jeton émis pour la version de session courante", async () => {
     findUnique.mockResolvedValue({ sessionVersion: 2 });
@@ -28,6 +34,16 @@ describe("jetons mobiles", () => {
   it("refuse un jeton dont le compte n'existe plus", async () => {
     findUnique.mockResolvedValue(null);
     await expect(getMobileUserId(requestWith(createMobileToken(user)))).resolves.toBeNull();
+  });
+
+  it("refuse un jeton révoqué par une déconnexion", async () => {
+    findUnique.mockResolvedValue({ sessionVersion: 2 });
+    const token = createMobileToken(user);
+    await revokeMobileToken(requestWith(token));
+    expect(upsertRevoked).toHaveBeenCalledWith(expect.objectContaining({ where: { jti: verifyMobileToken(token)?.jti } }));
+
+    findRevoked.mockResolvedValue({ jti: verifyMobileToken(token)?.jti });
+    await expect(getMobileUserId(requestWith(token))).resolves.toBeNull();
   });
 
   it("refuse un jeton falsifié sans interroger la base", async () => {

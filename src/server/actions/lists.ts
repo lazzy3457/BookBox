@@ -1,14 +1,11 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
+import { requireActionUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { revalidatePath } from "next/cache";
 
 async function requireSession() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) throw new Error("Non connecté");
-  return session.user.id;
+  return requireActionUserId();
 }
 
 // ── Créer une liste ────────────────────────────────────────────────

@@ -1,6 +1,5 @@
+import { getSession } from "@/server/auth/session";
 import { notFound, redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { EditListForm } from "@/components/lists/EditListForm";
 
@@ -8,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditListPage({ params }: { params: Promise<{ listId: string }> }) {
   const { listId } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session?.user?.id) redirect("/login");
 

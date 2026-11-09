@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  verifications:
+    runs-on: ubuntu-latest
+    env:
+      # Valeurs factices : le build ne se connecte à rien, les pages sont rendues à la demande.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ci-secret-sans-valeur
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma validate
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      # Bloque sur les failles critiques des dépendances d'exécution ; les autres passent par Dependabot.
+      - run: npm audit --omit=dev --audit-level=critical
