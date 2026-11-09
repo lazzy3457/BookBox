@@ -49,7 +49,7 @@ export function UserMenu({ user, isAdmin = false }: UserMenuProps) {
         <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-mint text-[13px] font-extrabold text-ink">
           {user.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.image} alt={displayName} className="h-full w-full object-cover" />
+            <img decoding="async" src={user.image} alt={displayName} className="h-full w-full object-cover" />
           ) : (
             initials
           )}

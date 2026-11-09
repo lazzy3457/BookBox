@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      authorize: (credentials) => authorizeCredentials(credentials)
+      authorize: (credentials, request) => authorizeCredentials(credentials, request?.headers)
     }),
     ...(isGoogleAuthEnabled() ? [googleProvider()] : [])
   ],

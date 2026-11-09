@@ -1,7 +1,9 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, notFound } from "@/server/http/errors";
+import { enforceRateLimit } from "@/server/security/rateLimit";
 import { commentMutationSchema } from "@/server/validation/reviews";
 import { deleteCommentKeepingThread } from "@/server/services/comments";
 
@@ -9,8 +11,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ co
   try {
     const userId = await requireCurrentUserId(request);
     const { commentId } = await params;
+    await enforceRateLimit({ scope: "comment-edit", identifier: userId, limit: 30, windowMs: 60_000 });
     const input = commentMutationSchema.pick({ body: true }).parse(await request.json());
-    const existing = await prisma.reviewComment.findFirst({ where: { id: commentId, deletedAt: null } });
+    const existing = await prisma.reviewComment.findFirst({ where: { id: commentId, deletedAt: null, hiddenAt: null } });
 
     if (!existing) {
       throw notFound("Commentaire introuvable.", "COMMENT_NOT_FOUND");
@@ -23,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ co
     const comment = await prisma.reviewComment.update({
       where: { id: commentId },
       data: { body: input.body },
-      include: { user: true, likes: true }
+      include: { user: { select: publicUserSelect }, likes: true }
     });
 
     return NextResponse.json(comment);

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/server/http/errors";
 import { prisma } from "@/server/db/prisma";
-import { slugifyAuthor } from "@/lib/authors";
+import { findAuthorNames } from "@/server/services/authors";
+import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
 import { dedupeExternalBooks } from "@/server/services/externalBooks";
 import type { ExternalBookCandidate } from "@/server/services/externalBooks";
 import { searchGoogleBooks } from "@/server/services/googleBooks";
@@ -58,6 +59,13 @@ function filterEditions(items: ExternalBookCandidate[], edition: EditionFilter) 
 
 export async function GET(request: Request, { params }: { params: Promise<{ authorSlug: string }> }) {
   try {
+    // Chaque appel interroge Google Books et Open Library : même plafond que la recherche.
+    await enforceRateLimit({
+      scope: "author-external-books",
+      identifier: getClientIdentifier(request),
+      limit: 60,
+      windowMs: 60_000
+    });
     const { authorSlug } = await params;
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
@@ -66,25 +74,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ auth
     const language = searchParams.get("language") ?? "all";
     const edition = (searchParams.get("edition") ?? "all") as EditionFilter;
     const startIndex = (page - 1) * pageSize;
-    const allAuthorBooks = await prisma.book.findMany({
-      where: { authors: { isEmpty: false } },
-      select: { authors: true, googleBooksVolumeId: true }
-    });
-    const authorName = allAuthorBooks
-      .flatMap((book) => book.authors)
-      .find((author) => slugifyAuthor(author) === authorSlug);
+    const authorNames = await findAuthorNames(authorSlug);
+    const authorName = authorNames[0];
 
     if (!authorName) {
       throw Object.assign(new Error("Auteur introuvable."), { status: 404, code: "AUTHOR_NOT_FOUND" });
     }
 
-    const existingGoogleIds = new Set(
-      allAuthorBooks.flatMap((book) =>
-        book.authors.some((author) => slugifyAuthor(author) === authorSlug) && book.googleBooksVolumeId
-          ? [book.googleBooksVolumeId]
-          : []
-      )
-    );
+    const authorBooks = await prisma.book.findMany({
+      where: { authors: { hasSome: authorNames }, googleBooksVolumeId: { not: null } },
+      select: { googleBooksVolumeId: true }
+    });
+    const existingGoogleIds = new Set(authorBooks.map((book) => book.googleBooksVolumeId));
     const [googleResult, openLibraryResult] = await Promise.allSettled([
       source === "open_library"
         ? Promise.resolve({ items: [], totalItems: 0, nextStartIndex: startIndex, hasMore: false })

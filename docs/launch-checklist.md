@@ -17,7 +17,7 @@ Une case non validée signifie que le site n’est pas prêt à être ouvert au 
 - [ ] Le domaine définitif utilise HTTPS.
 - [ ] `NEXTAUTH_URL` et `NEXT_PUBLIC_APP_URL` utilisent exactement ce domaine.
 - [ ] `NEXTAUTH_SECRET`, `MOBILE_JWT_SECRET` et `RATE_LIMIT_SECRET` sont longs, uniques et absents du dépôt.
-- [ ] `TRUST_PROXY_HEADERS=true` uniquement derrière un proxy connu qui réécrit les adresses clientes.
+- [ ] `TRUST_PROXY_HEADERS=true` uniquement derrière un proxy connu qui réécrit les adresses clientes (`cloudflare` derrière Cloudflare) ; sinon les limites de débit par adresse se rabattent sur le User-Agent.
 - [ ] Les secrets de développement ont été remplacés.
 
 ## E-mails

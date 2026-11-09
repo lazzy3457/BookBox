@@ -32,6 +32,7 @@ export async function getRecommendations(userId: string, limit = 8): Promise<Rec
           select: { userId: true, rating: true }
         }
       },
+      orderBy: [{ libraries: { _count: "desc" } }, { id: "asc" }],
       take: 300
     })
   ]);

@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
@@ -19,7 +20,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
   const list = await prisma.bookList.findUnique({
     where: { id: listId },
     include: {
-      user: true,
+      user: { select: { ...publicUserSelect, suspendedAt: true } },
       entries: {
         orderBy: { order: "asc" },
         include: {
@@ -28,11 +29,11 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
               reviews: {
                 where: { hiddenAt: null, user: { suspendedAt: null } },
                 include: {
-                  user: true,
+                  user: { select: publicUserSelect },
                   reactions: true,
                   comments: {
                     where: { hiddenAt: null, user: { suspendedAt: null } },
-                    include: { user: true, likes: true },
+                    include: { user: { select: publicUserSelect }, likes: true },
                     orderBy: { createdAt: "asc" },
                   },
                 },
@@ -85,7 +86,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
               <div key={entry.id} className="relative h-full flex-1 overflow-hidden" style={{ opacity: 1 - i * 0.08 }}>
                 {entry.book.thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full cover-placeholder" />
                 )}
@@ -161,7 +162,7 @@ export default async function ListPage({ params }: { params: Promise<{ listId: s
               <div className="cover-sheen h-20 w-14 shrink-0 overflow-hidden rounded border border-line bg-panelSoft shadow-poster">
                 {entry.book.thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <BookOpen size={20} className="text-mint/30" />

@@ -1,16 +1,19 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, notFound } from "@/server/http/errors";
+import { enforceRateLimit } from "@/server/security/rateLimit";
 import { reviewMutationSchema } from "@/server/validation/reviews";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ reviewId: string }> }) {
   try {
     const userId = await requireCurrentUserId(request);
     const { reviewId } = await params;
+    await enforceRateLimit({ scope: "review-edit", identifier: userId, limit: 30, windowMs: 60_000 });
     const input = reviewMutationSchema.omit({ bookId: true }).parse(await request.json());
 
-    const existing = await prisma.review.findUnique({ where: { id: reviewId } });
+    const existing = await prisma.review.findFirst({ where: { id: reviewId, hiddenAt: null } });
 
     if (!existing) {
       throw notFound("Review introuvable.", "REVIEW_NOT_FOUND");
@@ -23,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
     const review = await prisma.review.update({
       where: { id: reviewId },
       data: input,
-      include: { user: true, book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null }, include: { user: true, likes: true } } }
+      include: { user: { select: publicUserSelect }, book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null }, include: { user: { select: publicUserSelect }, likes: true } } }
     });
 
     return NextResponse.json(review);

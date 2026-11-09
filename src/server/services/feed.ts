@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 
@@ -19,13 +20,13 @@ export async function getFriendActivity(userId: string) {
       where: { userId: { in: followingIds }, hiddenAt: null, user: { suspendedAt: null } },
       orderBy: { createdAt: "desc" },
       take: 20,
-      include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
+      include: { book: true, user: { select: publicUserSelect }, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
     }),
     prisma.userBook.findMany({
       where: { userId: { in: followingIds }, user: { suspendedAt: null } },
       orderBy: { updatedAt: "desc" },
       take: 20,
-      include: { book: true, user: true }
+      include: { book: true, user: { select: publicUserSelect } }
     })
   ]);
 
@@ -62,7 +63,7 @@ export async function getTopReviewsLast24Hours(userId?: string) {
     },
     orderBy: { createdAt: "desc" },
     take: 30,
-    include: { book: true, user: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
+    include: { book: true, user: { select: publicUserSelect }, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
   });
 
   return reviews

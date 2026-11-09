@@ -38,3 +38,8 @@
 - Traiter les contestations séparément et conserver uniquement les informations nécessaires.
 - Accorder le rôle administrateur uniquement avec `npm run admin:grant -- adresse@email.fr`.
 - Révoquer un administrateur directement en base en remettant son rôle à `USER`.
+
+## Ménage de la base
+
+- Planifier `npm run db:cleanup` une fois par jour : compteurs de débit et jetons expirés, notifications lues depuis plus de 90 jours.
+- `npm run db:cleanup -- --unverified` supprime aussi les comptes jamais vérifiés depuis plus de 7 jours.

@@ -15,7 +15,7 @@ export function BookCover({ title, thumbnailUrl, className = "h-[126px] w-[84px]
     <div className={`bb-cover relative shrink-0 ${className}`}>
       {thumbnailUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />
+        <img decoding="async" src={thumbnailUrl} alt="" className="h-full w-full object-cover" />
       ) : (
         <div className="flex h-full flex-col justify-between p-[10%]">
           {iconSize ? <BookOpen size={iconSize} aria-hidden className="shrink-0" /> : <span />}

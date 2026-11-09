@@ -30,7 +30,9 @@ export async function getCurrentUserId(request?: Request) {
 }
 
 export async function requireCurrentUserId(request?: Request) {
-  if (request && !request.headers.get("authorization")?.startsWith("Bearer ")) {
+  const mobileUserId = request ? await getMobileUserId(request) : null;
+  // Le contrôle d'origine protège la session par cookie : seul un jeton mobile valide en dispense.
+  if (request && !mobileUserId) {
     const origin = request.headers.get("origin");
     const fetchSite = request.headers.get("sec-fetch-site");
     const configuredOrigin = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL;
@@ -38,7 +40,7 @@ export async function requireCurrentUserId(request?: Request) {
       throw Object.assign(new Error("Origine de la requête refusée."), { status: 403, code: "ORIGIN_FORBIDDEN" });
     }
   }
-  const userId = await getCurrentUserId(request);
+  const userId = mobileUserId ?? (await getServerSession(authOptions))?.user?.id ?? null;
 
   if (!userId) {
     throw Object.assign(new Error("Authentication required"), { status: 401 });

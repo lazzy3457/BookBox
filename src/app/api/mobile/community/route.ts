@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { getCurrentUserId } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
         orderBy: { createdAt: "desc" },
         take: 8,
         include: {
-          user: true,
+          user: { select: publicUserSelect },
           book: true,
           reactions: blockedUserIds.length ? { where: { userId: { notIn: blockedUserIds } } } : true,
           comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) } }

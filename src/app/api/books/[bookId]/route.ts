@@ -11,7 +11,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ bookId: st
       throw notFound("Livre introuvable.", "BOOK_NOT_FOUND");
     }
 
-    return NextResponse.json(book);
+    // Les bibliothèques des lecteurs restent côté serveur.
+    const { libraries: _libraries, ...publicBook } = book;
+    return NextResponse.json(publicBook);
   } catch (error) {
     return apiError(error);
   }

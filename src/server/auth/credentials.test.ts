@@ -1,13 +1,13 @@
 import bcrypt from "bcryptjs";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findUnique, enforceRateLimit } = vi.hoisted(() => ({
+const { findUnique, enforceLoginRateLimit } = vi.hoisted(() => ({
   findUnique: vi.fn(),
-  enforceRateLimit: vi.fn()
+  enforceLoginRateLimit: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({ prisma: { user: { findUnique } } }));
-vi.mock("@/server/security/rateLimit", () => ({ enforceRateLimit }));
+vi.mock("@/server/security/rateLimit", () => ({ enforceLoginRateLimit }));
 vi.mock("@/server/auth/password", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/server/auth/password")>();
   return { ...actual, verifyPassword: vi.fn(actual.verifyPassword) };
@@ -40,7 +40,7 @@ describe("connexion par mot de passe", () => {
 
   beforeEach(() => {
     findUnique.mockReset();
-    enforceRateLimit.mockReset().mockResolvedValue(undefined);
+    enforceLoginRateLimit.mockReset().mockResolvedValue(undefined);
     vi.mocked(verifyPassword).mockClear();
   });
 
@@ -93,7 +93,7 @@ describe("connexion par mot de passe", () => {
   });
 
   it("transmet le blocage anti-force brute sous forme de code", async () => {
-    enforceRateLimit.mockRejectedValue(Object.assign(new Error("Trop de tentatives."), { status: 429, code: "RATE_LIMITED" }));
+    enforceLoginRateLimit.mockRejectedValue(Object.assign(new Error("Trop de tentatives."), { status: 429, code: "RATE_LIMITED" }));
     await expect(authorizeCredentials({ email: "lectrice@example.com", password: PASSWORD })).rejects.toThrow(/^RATE_LIMITED$/);
     expect(findUnique).not.toHaveBeenCalled();
   });

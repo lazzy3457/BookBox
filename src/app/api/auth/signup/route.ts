@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/server/db/prisma";
 import { hashPassword } from "@/server/auth/password";
-import { apiError } from "@/server/http/errors";
+import { apiError, conflict } from "@/server/http/errors";
 import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
 import { legalConfig } from "@/lib/legal";
 import { sendVerificationEmail } from "@/server/services/accountTokens";
@@ -27,8 +27,10 @@ export async function POST(request: Request) {
       enforceRateLimit({ scope: "signup-ip", identifier: getClientIdentifier(request), limit: 5, windowMs: 60 * 60_000 }),
       enforceRateLimit({ scope: "signup-email", identifier: email, limit: 3, windowMs: 60 * 60_000 })
     ]);
-    const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
-    if (existing) return NextResponse.json({ ok: true, verificationRequired: true }, { status: 202 });
+    const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] }, select: { email: true } });
+    if (existing?.email === email) return NextResponse.json({ ok: true, verificationRequired: true }, { status: 202 });
+    // Les pseudos sont publics : dire qu'il est pris ne révèle rien, et évite d'attendre un e-mail qui ne viendra pas.
+    if (existing) throw conflict("Ce pseudo est déjà utilisé.", "USERNAME_TAKEN");
 
     const user = await prisma.user.create({
       data: {

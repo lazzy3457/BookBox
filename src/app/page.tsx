@@ -36,7 +36,7 @@ function excerpt(body: string | null, spoiler: boolean, max = 180) {
 }
 
 function readersLabel(book: TrendingBook) {
-  return plural(new Set(book.libraries.map((entry) => entry.userId)).size, "lecteur");
+  return plural(book.readers, "lecteur");
 }
 
 export default async function HomePage() {
