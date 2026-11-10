@@ -177,6 +177,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           {anchors.map((anchor) => (
             <a key={anchor.href} href={anchor.href} className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-bold text-paper hover:border-mint/50 sm:py-1 sm:text-[11px]">{anchor.label}</a>
           ))}
+          <Link href={chaptersHref(book.id)} className="inline-flex items-center gap-1.5 rounded-full border border-mint/50 bg-mint/10 px-3 py-1.5 text-xs font-extrabold text-mint hover:bg-mint/20 sm:py-1 sm:text-[11px]">
+            <UsersRound size={12} aria-hidden />
+            Chapitre par chapitre{chapterReviewsCount ? ` (${chapterReviewsCount})` : ""}
+          </Link>
         </nav>
       </header>
 
@@ -239,15 +243,6 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </section>
         ) : null}
 
-        <BookReviews
-          bookId={book.id}
-          isSignedIn={Boolean(viewerId)}
-          hasUserReview={visibleReviews.some((review) => review.userId === viewerId)}
-          averageRating={averageRating}
-          featured={featured ? { ...toView(featured), commentsCount: featured.comments.filter((comment) => !comment.deletedAt).length, liked: featured.reactions.some((reaction) => reaction.userId === viewerId && reaction.kind === "LIKE") } : null}
-          reviews={otherReviews.map(toView)}
-        />
-
         <Link href={chaptersHref(book.id)} className="bb-card flex min-w-0 items-center gap-3 p-4 transition hover:border-mint/50">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-mint/10 text-mint">
             <UsersRound size={18} aria-hidden />
@@ -262,6 +257,15 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </span>
           <ArrowRight size={16} aria-hidden className="shrink-0 text-muted" />
         </Link>
+
+        <BookReviews
+          bookId={book.id}
+          isSignedIn={Boolean(viewerId)}
+          hasUserReview={visibleReviews.some((review) => review.userId === viewerId)}
+          averageRating={averageRating}
+          featured={featured ? { ...toView(featured), commentsCount: featured.comments.filter((comment) => !comment.deletedAt).length, liked: featured.reactions.some((reaction) => reaction.userId === viewerId && reaction.kind === "LIKE") } : null}
+          reviews={otherReviews.map(toView)}
+        />
 
         {authorBooks.length ? (
           <section id="auteur" className="flex scroll-mt-24 flex-col gap-4">
