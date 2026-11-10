@@ -196,7 +196,7 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
   const [featuredReview, recentReaders] = featured
     ? await Promise.all([
         prisma.review.findFirst({
-          where: { bookId: featured.id, hiddenAt: null, spoiler: false, body: { not: null }, user: { suspendedAt: null } },
+          where: { chapter: 0, bookId: featured.id, hiddenAt: null, spoiler: false, body: { not: null }, user: { suspendedAt: null } },
           orderBy: [{ reactions: { _count: "desc" } }, { createdAt: "desc" }],
           include: { user: { select: { name: true } } }
         }),

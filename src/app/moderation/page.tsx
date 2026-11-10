@@ -35,7 +35,7 @@ export default async function ModerationPage() {
   const ownerSelect = { id: true, name: true, username: true, createdAt: true, suspendedAt: true } as const;
   const [users, reviews, comments, groupThreads, groupPosts] = await Promise.all([
     prisma.user.findMany({ where: { id: { in: ids("USER") } }, select: { ...ownerSelect, bio: true } }),
-    prisma.review.findMany({ where: { id: { in: ids("REVIEW") } }, select: { id: true, body: true, rating: true, hiddenAt: true, createdAt: true, bookId: true, book: { select: { title: true } }, user: { select: ownerSelect } } }),
+    prisma.review.findMany({ where: { id: { in: ids("REVIEW") } }, select: { id: true, body: true, rating: true, chapter: true, hiddenAt: true, createdAt: true, bookId: true, book: { select: { title: true } }, user: { select: ownerSelect } } }),
     prisma.reviewComment.findMany({ where: { id: { in: ids("COMMENT") } }, select: { id: true, body: true, hiddenAt: true, createdAt: true, review: { select: { bookId: true, book: { select: { title: true } } } }, user: { select: ownerSelect } } }),
     prisma.groupThread.findMany({ where: { id: { in: ids("GROUP_THREAD") } }, select: { id: true, title: true, body: true, hiddenAt: true, createdAt: true, group: { select: { slug: true, name: true } }, author: { select: ownerSelect } } }),
     prisma.groupPost.findMany({ where: { id: { in: ids("GROUP_POST") } }, select: { id: true, body: true, hiddenAt: true, createdAt: true, thread: { select: { id: true, title: true, group: { select: { slug: true, name: true } } } }, author: { select: ownerSelect } } })
@@ -94,7 +94,7 @@ export default async function ModerationPage() {
       heading: review ? `Avis de ${handle} sur « ${review.book.title} »` : comment ? `Commentaire de ${handle} sur « ${comment.review.book.title} »` : groupThread ? `Discussion de ${handle} dans « ${groupThread.group.name} »` : groupPost ? `Message de ${handle} dans « ${groupPost.thread.group.name} »` : `Profil de ${handle}`,
       href: review ? `/books/${review.bookId}#avis` : comment ? `/books/${comment.review.bookId}#avis` : groupThread ? `/groups/${groupThread.group.slug}/threads/${groupThread.id}` : groupPost ? `/groups/${groupPost.thread.group.slug}/threads/${groupPost.thread.id}` : user ? `/profile/${user.id}` : null,
       content: review?.body ?? comment?.body ?? (groupThread ? [groupThread.title, groupThread.body].filter(Boolean).join("\n\n") : null) ?? groupPost?.body ?? user?.bio ?? null,
-      contentMeta: review ? `★ ${formatRating(review.rating)}/5 · publié le ${review.createdAt.toLocaleDateString("fr-FR")}` : comment ? `publié le ${comment.createdAt.toLocaleDateString("fr-FR")}` : groupThread ? `publié le ${groupThread.createdAt.toLocaleDateString("fr-FR")}` : groupPost ? `publié le ${groupPost.createdAt.toLocaleDateString("fr-FR")}` : "bio du profil",
+      contentMeta: review ? `★ ${formatRating(review.rating)}/5${review.chapter ? ` · chapitre ${review.chapter}` : ""} · publié le ${review.createdAt.toLocaleDateString("fr-FR")}` : comment ? `publié le ${comment.createdAt.toLocaleDateString("fr-FR")}` : groupThread ? `publié le ${groupThread.createdAt.toLocaleDateString("fr-FR")}` : groupPost ? `publié le ${groupPost.createdAt.toLocaleDateString("fr-FR")}` : "bio du profil",
       isHidden: Boolean(review?.hiddenAt ?? comment?.hiddenAt ?? groupThread?.hiddenAt ?? groupPost?.hiddenAt ?? user?.suspendedAt),
       owner: owner
         ? {

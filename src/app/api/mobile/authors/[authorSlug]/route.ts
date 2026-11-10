@@ -63,7 +63,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ auth
       include: {
         libraries: { where: { user: { suspendedAt: null } }, select: { userId: true } },
         reviews: {
-          where: { hiddenAt: null, user: { suspendedAt: null } },
+          where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null } },
           include: {
             user: { select: publicUserSelect },
             reactions: true,

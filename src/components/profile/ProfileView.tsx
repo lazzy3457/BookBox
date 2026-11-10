@@ -45,7 +45,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   const [user, libraryCount, reviewCount, followerCount, followingCount, library, reviews, lists, badges, stats, publicEntries, progress, groupMemberships] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId, suspendedAt: null } }),
     prisma.userBook.count({ where: { userId } }),
-    prisma.review.count({ where: { userId, hiddenAt: null } }),
+    prisma.review.count({ where: { userId, chapter: 0, hiddenAt: null } }),
     prisma.follow.count({ where: { followingId: userId, follower: { suspendedAt: null } } }),
     prisma.follow.count({ where: { followerId: userId, following: { suspendedAt: null } } }),
     prisma.userBook.findMany({
@@ -57,7 +57,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       }
     }),
     prisma.review.findMany({
-      where: { userId, hiddenAt: null },
+      where: { chapter: 0, userId, hiddenAt: null },
       orderBy: { updatedAt: "desc" },
       include: {
         book: { select: { id: true, title: true, thumbnailUrl: true } },

@@ -276,7 +276,7 @@ async function ForYou({ viewerId, period }: { viewerId: string; period: TrendPer
   const circleBooks = [...byBook.values()].sort((a, b) => b.readers.length - a.readers.length).slice(0, 2);
   const quotes = circleBooks.length
     ? await prisma.review.findMany({
-        where: { bookId: { in: circleBooks.map((group) => group.book.id) }, userId: { in: followingIds }, hiddenAt: null, spoiler: false, body: { not: null } },
+        where: { chapter: 0, bookId: { in: circleBooks.map((group) => group.book.id) }, userId: { in: followingIds }, hiddenAt: null, spoiler: false, body: { not: null } },
         orderBy: { createdAt: "desc" },
         select: { bookId: true, body: true, rating: true, user: { select: { name: true } } }
       })

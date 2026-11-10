@@ -24,7 +24,7 @@ function selectProfile(userId: string) {
       _count: {
         select: {
           library: true,
-          reviews: true,
+          reviews: { where: { chapter: 0 } },
           followers: true,
           following: true,
           lists: true
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
         include: { book: true }
       }),
       prisma.review.findMany({
-        where: { userId, hiddenAt: null },
+        where: { chapter: 0, userId, hiddenAt: null },
         orderBy: { updatedAt: "desc" },
         take: 8,
         include: { book: true, reactions: true, comments: true }

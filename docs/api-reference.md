@@ -44,7 +44,8 @@ L’ancien client mobile doit transmettre les nouveaux champs juridiques avant d
 
 ## Social
 
-- `POST /api/reviews`
+- `POST /api/reviews` (`rating` de 0,5 à 5 par pas de 0,5 ; `chapter` facultatif : absent ou `0` pour le livre entier, `N` pour le chapitre N)
+- `PUT /api/books/:bookId/chapter-progress` (`{ chapter }` : le lecteur déclare où il en est, ce qui lui ouvre les avis des chapitres 1 à N)
 - `PATCH/DELETE /api/reviews/:reviewId`
 - `POST /api/reviews/:reviewId/reactions`
 - `POST /api/reviews/:reviewId/comments` (`parentId` facultatif pour répondre à un commentaire visible de la même review, à n’importe quelle profondeur)

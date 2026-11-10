@@ -8,10 +8,12 @@ import { Toast } from "@/components/ui/Toast";
 
 type ReviewComposerProps = {
   bookId: string;
+  /** Numéro du chapitre visé ; absent pour un avis sur le livre entier. */
+  chapter?: number;
   hasUserReview?: boolean;
 };
 
-export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposerProps) {
+export function ReviewComposer({ bookId, chapter, hasUserReview = false }: ReviewComposerProps) {
   const router = useRouter();
   const [rating, setRating] = useState(4);
   const [body, setBody] = useState("");
@@ -36,7 +38,7 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
     const response = await fetch("/api/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookId, rating, body: body || undefined, spoiler })
+      body: JSON.stringify({ bookId, chapter, rating, body: body || undefined, spoiler })
     });
 
     setIsSaving(false);
@@ -46,7 +48,9 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
         tone: response.status === 409 ? "info" : "error",
         message:
           response.status === 409
-            ? "Tu as deja publie une review pour ce livre. Tu peux modifier ta review existante."
+            ? chapter
+              ? "Tu as déjà publié un avis sur ce chapitre. Tu peux modifier ton avis existant."
+              : "Tu as deja publie une review pour ce livre. Tu peux modifier ta review existante."
             : "La review n'a pas pu etre publiee. Reessaie dans un instant."
       });
       return;
@@ -62,7 +66,7 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
     <form onSubmit={submitReview} className="bb-card w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-5">
       <div className="mb-4 grid min-w-0 gap-4 sm:flex sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="bb-h3">Mon avis</h2>
+          <h2 className="bb-h3">{chapter ? `Mon avis sur le chapitre ${chapter}` : "Mon avis"}</h2>
           <p className="mt-1 text-sm text-muted">La note suffit, le texte peut venir plus tard.</p>
         </div>
         <RatingControl value={rating} onChange={setRating} />
@@ -72,14 +76,18 @@ export function ReviewComposer({ bookId, hasUserReview = false }: ReviewComposer
         value={body}
         onChange={(event) => setBody(event.target.value)}
         className="min-h-32 w-full resize-y rounded-xl border border-line bg-ink px-4 py-3 text-sm text-paper outline-none transition placeholder:text-muted/45 focus:border-mint"
-        placeholder="Une impression, une phrase, ou rien du tout."
+        placeholder={chapter ? "Ce que tu as pensé de ce chapitre." : "Une impression, une phrase, ou rien du tout."}
       />
 
       <div className="mt-4 grid gap-4 sm:flex sm:items-center sm:justify-between">
-        <label className="flex min-w-0 items-center gap-2 text-sm text-muted">
-          <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
-          Contient des spoilers
-        </label>
+        {chapter ? (
+          <p className="min-w-0 text-sm text-muted">Visible seulement par les lecteurs arrivés à ce chapitre.</p>
+        ) : (
+          <label className="flex min-w-0 items-center gap-2 text-sm text-muted">
+            <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
+            Contient des spoilers
+          </label>
+        )}
         <button
           type="submit"
           disabled={isSaving || hasUserReview}

@@ -26,14 +26,14 @@ export async function GET(request: Request) {
           _count: {
             select: {
               library: true,
-              reviews: true,
+              reviews: { where: { chapter: 0 } },
               followers: true
             }
           }
         }
       }),
       prisma.review.findMany({
-        where: { hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) },
+        where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null }, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}) },
         orderBy: { createdAt: "desc" },
         take: 8,
         include: {

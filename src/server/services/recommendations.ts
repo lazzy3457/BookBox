@@ -19,7 +19,7 @@ export async function getRecommendations(userId: string, limit = 8): Promise<Rec
   const blockedUserIds = await getBlockedUserIds(userId);
   const [library, reviews, dismissed, books] = await Promise.all([
     prisma.userBook.findMany({ where: { userId }, include: { book: true } }),
-    prisma.review.findMany({ where: { userId, hiddenAt: null } }),
+    prisma.review.findMany({ where: { chapter: 0, userId, hiddenAt: null } }),
     prisma.recommendationDismissal.findMany({ where: { userId }, select: { bookId: true } }),
     prisma.book.findMany({
       include: {
@@ -28,7 +28,7 @@ export async function getRecommendations(userId: string, limit = 8): Promise<Rec
           select: { userId: true, status: true, isFavorite: true }
         },
         reviews: {
-          where: { ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}), hiddenAt: null, user: { suspendedAt: null } },
+          where: { chapter: 0, ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {}), hiddenAt: null, user: { suspendedAt: null } },
           select: { userId: true, rating: true }
         }
       },

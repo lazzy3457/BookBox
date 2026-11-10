@@ -21,7 +21,7 @@ async function computeTrendingBooks() {
       _count: { _all: true }
     }),
     prisma.review.findMany({
-      where: { createdAt: { gte: since }, hiddenAt: null, user: { suspendedAt: null } },
+      where: { chapter: 0, createdAt: { gte: since }, hiddenAt: null, user: { suspendedAt: null } },
       select: { bookId: true, _count: { select: { reactions: true } } }
     })
   ]);
@@ -67,7 +67,7 @@ async function computeTrendingBooks() {
     }),
     prisma.review.groupBy({
       by: ["bookId"],
-      where: { bookId: { in: topIds }, hiddenAt: null, user: { suspendedAt: null } },
+      where: { chapter: 0, bookId: { in: topIds }, hiddenAt: null, user: { suspendedAt: null } },
       _avg: { rating: true }
     })
   ]);

@@ -97,7 +97,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         publishedDate: true,
         libraries: { where: { user: { suspendedAt: null } }, select: { userId: true } },
         reviews: {
-          where: { hiddenAt: null, user: { suspendedAt: null } },
+          where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null } },
           orderBy: { createdAt: "desc" },
           select: {
             id: true,

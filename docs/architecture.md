@@ -88,6 +88,13 @@ L’ancien mécanisme `ADMIN_EMAILS` n’est plus utilisé.
 - `ReadingPeriod` représente une lecture ou une relecture avec début et fin.
 - `ReadingEntry` représente une progression datée en page, pourcentage ou chapitre.
 - Une entrée de journal est privée par défaut et peut être rendue publique individuellement.
+- `ChapterProgress` retient le chapitre qu’un lecteur déclare avoir atteint dans un livre ; il sert uniquement à ouvrir les avis de chapitre (voir ci-dessous).
+
+### Avis
+
+- Un avis (`Review`) porte une note de 0,5 à 5 par demi-étoile et un champ `chapter` : `0` pour l’avis sur le livre entier, `N` pour l’avis sur le chapitre N. Un lecteur a au plus un avis par livre et un par chapitre (`@@unique([userId, bookId, chapter])`).
+- Les avis de chapitre ne s’affichent que dans l’espace chapitres (`/books/:bookId/chapitres` et `/books/:bookId/chapitres/:n`). Toute autre requête sur `Review` (fiche livre, moyennes, tendances, fil, profils, recommandations, API mobile) filtre `chapter: 0` : une nouvelle surface publique doit en faire autant.
+- La page d’un chapitre n’envoie ses avis au navigateur que si le lecteur a terminé le livre, a déclaré avoir atteint ce chapitre, ou choisit « Révéler quand même ». Un avis de chapitre est toujours enregistré avec `spoiler: true`, ne notifie pas les amis et ne donne pas d’XP.
 
 ### Recommandations
 

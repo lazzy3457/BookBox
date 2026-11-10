@@ -82,7 +82,7 @@ async function metricValue(userId: string, metric: BadgeMetric) {
     case "booksRead":
       return prisma.userBook.count({ where: { userId, status: ReadingStatus.READ } });
     case "reviews":
-      return prisma.review.count({ where: { userId } });
+      return prisma.review.count({ where: { userId, chapter: 0 } });
     case "likes": {
       const [reviewLikes, commentLikes] = await Promise.all([
         prisma.reviewReaction.count({ where: { userId, kind: ReactionKind.LIKE } }),

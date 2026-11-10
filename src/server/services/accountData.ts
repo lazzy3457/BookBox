@@ -33,6 +33,7 @@ export async function buildAccountExport(userId: string) {
     notifications,
     notificationPreferences,
     recommendationDismissals,
+    chapterProgress,
     devices,
     moderationReports,
     blockedUsers,
@@ -101,6 +102,10 @@ export async function buildAccountExport(userId: string) {
       orderBy: { createdAt: "asc" }
     }),
     prisma.notificationPreference.findUnique({ where: { userId } }),
+    prisma.chapterProgress.findMany({
+      where: { userId },
+      select: { chapter: true, updatedAt: true, book: { select: { id: true, title: true } } }
+    }),
     prisma.recommendationDismissal.findMany({
       where: { userId },
       select: {
@@ -198,6 +203,7 @@ export async function buildAccountExport(userId: string) {
     notifications,
     notificationPreferences,
     recommendationDismissals,
+    chapterProgress,
     devices,
     moderationReports,
     progression: { stats: progressStats, xpEvents, activityDays, badges },
