@@ -68,3 +68,26 @@ export async function getChapterReviews(bookId: string, chapter: number, blocked
     }
   });
 }
+
+/** Livres qu'un lecteur commente chapitre par chapitre : des compteurs seulement, jamais le texte ni la note des avis. */
+export async function getChapterReadings(userId: string, limit = 6) {
+  const rows = await prisma.review.groupBy({
+    by: ["bookId"],
+    where: { userId, chapter: { gt: WHOLE_BOOK }, hiddenAt: null },
+    _count: { _all: true },
+    _max: { chapter: true, createdAt: true }
+  });
+  const recent = rows.sort((a, b) => (b._max.createdAt?.getTime() ?? 0) - (a._max.createdAt?.getTime() ?? 0)).slice(0, limit);
+  if (!recent.length) return [];
+
+  const books = await prisma.book.findMany({
+    where: { id: { in: recent.map((row) => row.bookId) } },
+    select: { id: true, title: true, authors: true, thumbnailUrl: true }
+  });
+  const bookById = new Map(books.map((book) => [book.id, book]));
+
+  return recent.flatMap((row) => {
+    const book = bookById.get(row.bookId);
+    return book ? [{ book, chapters: row._count._all, lastChapter: row._max.chapter ?? 0, lastReviewAt: row._max.createdAt }] : [];
+  });
+}
