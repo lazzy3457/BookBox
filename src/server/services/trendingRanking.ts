@@ -33,7 +33,7 @@ async function tallies(since: Date, until: Date) {
       select: { bookId: true, status: true }
     }),
     prisma.review.findMany({
-      where: { createdAt: { gte: since, lt: until }, hiddenAt: null, user: { suspendedAt: null } },
+      where: { chapter: 0, createdAt: { gte: since, lt: until }, hiddenAt: null, user: { suspendedAt: null } },
       select: { bookId: true, _count: { select: { reactions: true } } }
     })
   ]);
@@ -96,7 +96,7 @@ export async function getTrendingRanking({ period = "week", genre, limit = 20 }:
     const topIds = currentOrder.slice(0, Math.max(limit, 20));
     const ratings = await prisma.review.groupBy({
       by: ["bookId"],
-      where: { bookId: { in: topIds }, hiddenAt: null, user: { suspendedAt: null } },
+      where: { chapter: 0, bookId: { in: topIds }, hiddenAt: null, user: { suspendedAt: null } },
       _avg: { rating: true },
       _count: { rating: true }
     });

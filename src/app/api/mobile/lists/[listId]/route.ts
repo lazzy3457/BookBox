@@ -26,7 +26,7 @@ async function getList(listId: string) {
           book: {
             include: {
               reviews: {
-                where: { hiddenAt: null, user: { suspendedAt: null } },
+                where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null } },
                 include: {
                   user: { select: publicUserSelect },
                   reactions: true,

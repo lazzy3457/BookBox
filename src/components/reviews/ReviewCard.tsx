@@ -16,6 +16,8 @@ import { buildCommentTree, countVisibleComments, type CommentView } from "@/lib/
 type ReviewCardProps = {
   review: {
     id: string;
+    /** Renseigné dans l'espace chapitres : la page protège déjà du spoiler, l'avis s'affiche sans masque. */
+    chapter?: number;
     rating: number;
     body: string | null;
     spoiler: boolean;
@@ -33,9 +35,10 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const router = useRouter();
   const { hideSpoilers } = useUserPreferences();
   const [isDeleted, setIsDeleted] = useState(false);
-  const [isRevealed, setIsRevealed] = useState(!review.spoiler || !hideSpoilers);
+  const inChapter = Boolean(review.chapter);
+  const [isRevealed, setIsRevealed] = useState(inChapter || !review.spoiler || !hideSpoilers);
   const [isEditing, setIsEditing] = useState(false);
-  const [rating, setRating] = useState(Math.max(1, Math.min(5, review.rating)));
+  const [rating, setRating] = useState(Math.max(0.5, Math.min(5, review.rating)));
   const [reviewBody, setReviewBody] = useState(review.body ?? "");
   const [spoiler, setSpoiler] = useState(review.spoiler);
   const [likesCount, setLikesCount] = useState(review.reactionsCount);
@@ -215,7 +218,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     }
 
     setIsEditing(false);
-    setIsRevealed(!spoiler);
+    setIsRevealed(inChapter || !spoiler);
     setToast({ tone: "success", message: "Ta review a ete mise a jour." });
     router.refresh();
   }
@@ -277,7 +280,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           </div>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {spoiler ? (
+          {spoiler && !inChapter ? (
             <div className="inline-flex items-center gap-1 rounded-full bg-coral/15 px-2 py-1 text-xs font-bold text-coral">
               <TriangleAlert size={13} />
               Spoiler
@@ -314,10 +317,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
             onChange={(event) => setReviewBody(event.target.value)}
             className="mt-3 min-h-28 w-full resize-y rounded-xl border border-line bg-panel px-3 py-2 text-sm text-paper outline-none focus:border-mint"
           />
-          <label className="mt-3 flex items-center gap-2 text-sm text-muted">
-            <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
-            Contient des spoilers
-          </label>
+          {inChapter ? null : (
+            <label className="mt-3 flex items-center gap-2 text-sm text-muted">
+              <input type="checkbox" checked={spoiler} onChange={(event) => setSpoiler(event.target.checked)} />
+              Contient des spoilers
+            </label>
+          )}
           <div className="mt-3 flex gap-2">
             <button disabled={isSaving} className="bb-btn-primary px-3 py-1.5 text-xs">
               {isSaving ? "Enregistrement..." : "Enregistrer"}

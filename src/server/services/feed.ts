@@ -17,7 +17,7 @@ export async function getFriendActivity(userId: string) {
 
   const [reviews, libraryUpdates] = await Promise.all([
     prisma.review.findMany({
-      where: { userId: { in: followingIds }, hiddenAt: null, user: { suspendedAt: null } },
+      where: { chapter: 0, userId: { in: followingIds }, hiddenAt: null, user: { suspendedAt: null } },
       orderBy: { createdAt: "desc" },
       take: 20,
       include: { book: true, user: { select: publicUserSelect }, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }
@@ -54,7 +54,7 @@ export async function getTopReviewsLast24Hours(userId?: string) {
   const blockedUserIds = userId ? await getBlockedUserIds(userId) : [];
 
   const reviews = await prisma.review.findMany({
-    where: {
+    where: { chapter: 0,
       createdAt: { gte: since },
       ...(blockedUserIds.length ? { userId: { notIn: blockedUserIds } } : {})
       ,

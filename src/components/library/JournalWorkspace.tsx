@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReadingStatus } from "@prisma/client";
 import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Flame, Lock, MoreHorizontal, PencilLine, Quote, Trash2, UsersRound, X } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
-import { plural } from "@/lib/format";
+import { formatRating, plural } from "@/lib/format";
 import { QuoteLikeButton } from "@/components/books/QuoteCard";
 import { useConfirm } from "@/components/ui/useConfirm";
 
@@ -375,7 +375,7 @@ export function JournalWorkspace({ year, isCurrentYear, streak, periods, books }
               <p key={period.id} className="flex flex-wrap items-center gap-2 text-xs">
                 <CheckCircle2 size={15} aria-hidden className="text-mint" />
                 <span className="font-extrabold text-paper">
-                  {[period.isReread ? "Relecture terminée" : "Lecture terminée", days ? plural(days, "jour") : null, period.rating ? `noté ${period.rating}/5` : null].filter(Boolean).join(" · ")}
+                  {[period.isReread ? "Relecture terminée" : "Lecture terminée", days ? plural(days, "jour") : null, period.rating ? `noté ${formatRating(period.rating)}/5` : null].filter(Boolean).join(" · ")}
                 </span>
                 <Link href={`/books/${period.bookId}`} className="text-muted hover:text-mint">· {period.title}</Link>
               </p>

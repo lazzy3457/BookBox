@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
 import { apiError, notFound } from "@/server/http/errors";
+import { WHOLE_BOOK } from "@/lib/chapters";
 import { enforceRateLimit } from "@/server/security/rateLimit";
 import { reviewMutationSchema } from "@/server/validation/reviews";
 
@@ -11,7 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
     const userId = await requireCurrentUserId(request);
     const { reviewId } = await params;
     await enforceRateLimit({ scope: "review-edit", identifier: userId, limit: 30, windowMs: 60_000 });
-    const input = reviewMutationSchema.omit({ bookId: true }).parse(await request.json());
+    const input = reviewMutationSchema.omit({ bookId: true, chapter: true }).parse(await request.json());
 
     const existing = await prisma.review.findFirst({ where: { id: reviewId, hiddenAt: null } });
 
@@ -25,7 +26,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ re
 
     const review = await prisma.review.update({
       where: { id: reviewId },
-      data: input,
+      // Un avis de chapitre reste marqué spoiler, quoi qu'envoie le client.
+      data: { ...input, spoiler: existing.chapter > WHOLE_BOOK || input.spoiler },
       include: { user: { select: publicUserSelect }, book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null }, include: { user: { select: publicUserSelect }, likes: true } } }
     });
 

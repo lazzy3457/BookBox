@@ -49,7 +49,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
         ) : null}
         {typeof book.averageRating === "number" ? (
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-            <StarRating value={Math.round(book.averageRating)} />
+            <StarRating value={book.averageRating} />
             <span className="text-[11px] font-bold text-muted">Moyenne {book.averageRating.toFixed(1)}/5</span>
           </div>
         ) : null}
@@ -80,7 +80,7 @@ export function BookCard({ book, href, badge, compact, showScore = true, variant
           ) : null}
           {typeof book.averageRating === "number" ? (
             <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
-              <StarRating value={Math.round(book.averageRating)} />
+              <StarRating value={book.averageRating} />
               <span className="text-xs font-bold text-muted">Moyenne {book.averageRating.toFixed(1)}/5</span>
             </div>
           ) : null}

@@ -33,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
               id: { not: book.id },
               authors: { hasSome: book.authors }
             },
-            include: { reviews: { where: { hiddenAt: null, user: { suspendedAt: null } } } },
+            include: { reviews: { where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null } } } },
             take: 6
           })
         : Promise.resolve([]),
@@ -47,7 +47,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
                   name: true,
                   image: true,
                   reviews: {
-                    where: { bookId: book.id, hiddenAt: null },
+                    where: { chapter: 0, bookId: book.id, hiddenAt: null },
                     orderBy: { createdAt: "desc" },
                     take: 1
                   },

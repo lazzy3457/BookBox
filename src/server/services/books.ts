@@ -170,7 +170,7 @@ export async function getBookDetails(bookId: string) {
     where: { id: bookId },
     include: {
       reviews: {
-        where: { hiddenAt: null, user: { suspendedAt: null } },
+        where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null } },
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: publicUserSelect },

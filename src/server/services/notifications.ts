@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/prisma";
 import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
 import { areUsersBlocked } from "@/server/services/blocks";
 import { extractMentions } from "@/lib/mentions";
+import { reviewHref, WHOLE_BOOK } from "@/lib/chapters";
 
 type PreferenceInput = Partial<
   Pick<NotificationPreference, "enabled" | "likesEnabled" | "commentsEnabled" | "friendReviewsEnabled" | "followersEnabled" | "groupsEnabled">
@@ -191,6 +192,11 @@ async function createNotification(input: {
   return notification;
 }
 
+// Titre du livre, suivi du chapitre pour un avis de chapitre.
+function reviewLabel(review: { chapter: number; book: { title: string } }) {
+  return review.chapter > WHOLE_BOOK ? `${review.book.title} · chapitre ${review.chapter}` : review.book.title;
+}
+
 function displayName(user: { name: string | null; username?: string | null }) {
   return user.name ?? user.username ?? "Un lecteur";
 }
@@ -211,8 +217,8 @@ export async function notifyReviewReaction(input: { actorId: string; reviewId: s
     actorId: input.actorId,
     type: NotificationType.REVIEW_LIKE,
     title: `${displayName(actor)} a aime ta review`,
-    message: review.book.title,
-    targetUrl: `/books/${review.bookId}`
+    message: reviewLabel(review),
+    targetUrl: reviewHref(review)
   });
 }
 
@@ -232,8 +238,8 @@ export async function notifyCommentReaction(input: { actorId: string; commentId:
     actorId: input.actorId,
     type: NotificationType.COMMENT_LIKE,
     title: `${displayName(actor)} a aime ton commentaire`,
-    message: comment.review.book.title,
-    targetUrl: `/books/${comment.review.bookId}`
+    message: reviewLabel(comment.review),
+    targetUrl: reviewHref(comment.review)
   });
 }
 
@@ -259,8 +265,8 @@ export async function notifyReviewComment(input: { actorId: string; commentId: s
     actorId: input.actorId,
     type: isReply ? NotificationType.COMMENT_REPLY : NotificationType.REVIEW_COMMENT,
     title: isReply ? `${displayName(comment.user)} t'a repondu` : `${displayName(comment.user)} a commente ta review`,
-    message: comment.review.book.title,
-    targetUrl: `/books/${comment.review.bookId}`
+    message: reviewLabel(comment.review),
+    targetUrl: reviewHref(comment.review)
   });
 }
 
@@ -287,7 +293,7 @@ export async function notifyFriendReview(input: { actorId: string; reviewId: str
         type: NotificationType.FRIEND_REVIEW,
         title: `${displayName(review.user)} a publie une review`,
         message: review.book.title,
-        targetUrl: `/books/${review.bookId}`
+        targetUrl: reviewHref(review)
       })
     )
   );

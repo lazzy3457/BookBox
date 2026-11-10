@@ -11,7 +11,7 @@ import { StarRating } from "@/components/reviews/StarRating";
 import { Avatar } from "@/components/ui/Avatar";
 import { AddToReadButton } from "@/components/library/AddToReadButton";
 import { genreLabel } from "@/lib/genres";
-import { daysAgo, plural } from "@/lib/format";
+import { daysAgo, formatRating, plural } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -169,7 +169,7 @@ async function Community({ period, periodParam, genre, showAll, viewerId }: { pe
                   </div>
                   {book.averageRating ? (
                     <div className="hidden flex-col items-end gap-0.5 sm:flex">
-                      <StarRating value={Math.round(book.averageRating)} />
+                      <StarRating value={book.averageRating} />
                       <span className="text-[11px] text-muted">{book.averageRating.toFixed(1)} · {plural(book.ratingCount, "note")}</span>
                     </div>
                   ) : null}
@@ -276,7 +276,7 @@ async function ForYou({ viewerId, period }: { viewerId: string; period: TrendPer
   const circleBooks = [...byBook.values()].sort((a, b) => b.readers.length - a.readers.length).slice(0, 2);
   const quotes = circleBooks.length
     ? await prisma.review.findMany({
-        where: { bookId: { in: circleBooks.map((group) => group.book.id) }, userId: { in: followingIds }, hiddenAt: null, spoiler: false, body: { not: null } },
+        where: { chapter: 0, bookId: { in: circleBooks.map((group) => group.book.id) }, userId: { in: followingIds }, hiddenAt: null, spoiler: false, body: { not: null } },
         orderBy: { createdAt: "desc" },
         select: { bookId: true, body: true, rating: true, user: { select: { name: true } } }
       })
@@ -324,7 +324,7 @@ async function ForYou({ viewerId, period }: { viewerId: string; period: TrendPer
                     {quote?.body ? (
                       <p className="flex gap-2 rounded-xl bg-ink px-3 py-2.5 text-xs italic text-paper">
                         <Quote size={13} aria-hidden className="mt-0.5 shrink-0 text-coral" />
-                        « {quote.body.length > 110 ? `${quote.body.slice(0, 110)}…` : quote.body} » — {quote.user.name ?? "Un ami"}, {quote.rating}/5
+                        « {quote.body.length > 110 ? `${quote.body.slice(0, 110)}…` : quote.body} » — {quote.user.name ?? "Un ami"}, {formatRating(quote.rating)}/5
                       </p>
                     ) : null}
                   </div>

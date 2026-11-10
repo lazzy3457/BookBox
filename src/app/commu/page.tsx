@@ -14,7 +14,7 @@ import { FollowButton } from "@/components/community/FollowButton";
 import { ReaderGrid } from "@/components/community/ReaderGrid";
 import { GroupsTab } from "@/components/groups/GroupsTab";
 import { getGroupDirectory } from "@/server/services/groupDirectory";
-import { daysAgo, plural, timeAgo } from "@/lib/format";
+import { daysAgo, formatRating, plural, timeAgo } from "@/lib/format";
 import { genreLabel } from "@/lib/genres";
 
 export const dynamic = "force-dynamic";
@@ -157,7 +157,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
       select: { userId: true, status: true, user: { select: { name: true, image: true } }, book: { select: { id: true, title: true, thumbnailUrl: true } } }
     }),
     prisma.review.findMany({
-      where: { userId: { in: followingIds }, hiddenAt: null },
+      where: { chapter: 0, userId: { in: followingIds }, hiddenAt: null },
       orderBy: { createdAt: "desc" },
       take: 4,
       include: {
@@ -173,13 +173,13 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
     }),
     getReaderCards(viewerId, suggestedIds, new Set()),
     prisma.book.findMany({
-      where: { reviews: { some: { createdAt: { gte: weekAgo }, hiddenAt: null } } },
+      where: { reviews: { some: { chapter: 0, createdAt: { gte: weekAgo }, hiddenAt: null } } },
       take: 30,
       select: {
         id: true,
         title: true,
         thumbnailUrl: true,
-        reviews: { where: { createdAt: { gte: weekAgo }, hiddenAt: null }, select: { _count: { select: { comments: true } } } }
+        reviews: { where: { chapter: 0, createdAt: { gte: weekAgo }, hiddenAt: null }, select: { _count: { select: { comments: true } } } }
       }
     })
   ]);
@@ -195,7 +195,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
   const sharedBooks = [...byBook.values()].sort((a, b) => b.readers.length - a.readers.length).slice(0, 3);
   const quotes = sharedBooks.length
     ? await prisma.review.findMany({
-        where: { bookId: { in: sharedBooks.map((group) => group.book.id) }, userId: { in: followingIds }, hiddenAt: null, spoiler: false, body: { not: null } },
+        where: { chapter: 0, bookId: { in: sharedBooks.map((group) => group.book.id) }, userId: { in: followingIds }, hiddenAt: null, spoiler: false, body: { not: null } },
         orderBy: { createdAt: "desc" },
         select: { bookId: true, body: true, rating: true, user: { select: { name: true } } }
       })
@@ -269,7 +269,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
                       {quote?.body ? (
                         <p className="flex gap-2 rounded-xl bg-ink px-3 py-2.5 text-[13px] italic text-paper">
                           <Quote size={14} aria-hidden className="mt-0.5 shrink-0 text-coral" />
-                          <span>« {quote.body.length > 120 ? `${quote.body.slice(0, 120)}…` : quote.body} » — {quote.user.name ?? "Un ami"}, {quote.rating}/5</span>
+                          <span>« {quote.body.length > 120 ? `${quote.body.slice(0, 120)}…` : quote.body} » — {quote.user.name ?? "Un ami"}, {formatRating(quote.rating)}/5</span>
                         </p>
                       ) : null}
                     </div>

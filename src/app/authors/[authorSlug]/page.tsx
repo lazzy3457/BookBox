@@ -97,7 +97,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         publishedDate: true,
         libraries: { where: { user: { suspendedAt: null } }, select: { userId: true } },
         reviews: {
-          where: { hiddenAt: null, user: { suspendedAt: null } },
+          where: { chapter: 0, hiddenAt: null, user: { suspendedAt: null } },
           orderBy: { createdAt: "desc" },
           select: {
             id: true,
@@ -190,7 +190,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1 sm:gap-x-7">
             {averageRating ? (
               <span className="flex items-center gap-2 text-[13px] font-extrabold text-paper">
-                <StarRating value={Math.round(averageRating)} />
+                <StarRating value={averageRating} />
                 {averageRating.toFixed(1).replace(".", ",")} de moyenne
               </span>
             ) : null}

@@ -196,7 +196,7 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
   const [featuredReview, recentReaders] = featured
     ? await Promise.all([
         prisma.review.findFirst({
-          where: { bookId: featured.id, hiddenAt: null, spoiler: false, body: { not: null }, user: { suspendedAt: null } },
+          where: { chapter: 0, bookId: featured.id, hiddenAt: null, spoiler: false, body: { not: null }, user: { suspendedAt: null } },
           orderBy: [{ reactions: { _count: "desc" } }, { createdAt: "desc" }],
           include: { user: { select: { name: true } } }
         }),
@@ -245,7 +245,7 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
             </p>
             {featured.averageRating ? (
               <div className="flex items-center gap-2 text-xs font-bold text-muted">
-                <StarRating value={Math.round(featured.averageRating)} />
+                <StarRating value={featured.averageRating} />
                 {featured.averageRating.toFixed(1).replace(".", ",")} · {readersLabel(featured)} ce mois-ci
               </div>
             ) : null}

@@ -1,7 +1,7 @@
 import { getSession } from "@/server/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Quote } from "lucide-react";
+import { ArrowRight, Quote, UsersRound } from "lucide-react";
 import { ReadingStatus } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { getBookDetails } from "@/server/services/books";
@@ -9,7 +9,7 @@ import { getBlockedUserIds } from "@/server/services/blocks";
 import { toCommentView } from "@/server/services/comments";
 import { authorHref } from "@/lib/authors";
 import { genreLabel } from "@/lib/genres";
-import { plural } from "@/lib/format";
+import { formatRating, plural } from "@/lib/format";
 import { StarRating } from "@/components/reviews/StarRating";
 import { BookReviews } from "@/components/reviews/BookReviews";
 import { BookCover } from "@/components/books/BookCover";
@@ -18,6 +18,8 @@ import { ExpandableDescription } from "@/components/books/ExpandableDescription"
 import { Avatar } from "@/components/ui/Avatar";
 import { AddQuoteButton, QuoteCard } from "@/components/books/QuoteCard";
 import { getQuotes } from "@/server/services/quotes";
+import { getChapterSummaries } from "@/server/services/chapters";
+import { chaptersHref } from "@/lib/chapters";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -83,7 +85,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
                 name: true,
                 image: true,
                 library: { where: { bookId: book.id }, select: { status: true } },
-                reviews: { where: { bookId: book.id, hiddenAt: null, spoiler: false }, select: { body: true, rating: true }, take: 1 }
+                reviews: { where: { chapter: 0, bookId: book.id, hiddenAt: null, spoiler: false }, select: { body: true, rating: true }, take: 1 }
               }
             }
           }
@@ -91,7 +93,8 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
       : []
   ]);
 
-  const quotes = await getQuotes({ bookId: book.id }, viewerId, [...blocked], 6);
+  const [quotes, chapterSummaries] = await Promise.all([getQuotes({ bookId: book.id }, viewerId, [...blocked], 6), getChapterSummaries(book.id, [...blocked])]);
+  const chapterReviewsCount = chapterSummaries.reduce((total, summary) => total + summary.reviews, 0);
   const averageRating = visibleReviews.length ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length : null;
   const counts = {
     read: book.libraries.filter((entry) => entry.status === ReadingStatus.READ).length,
@@ -165,7 +168,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           )}
           {averageRating ? (
             <span className="flex items-center gap-2 text-xs font-bold text-muted">
-              <StarRating value={Math.round(averageRating)} />
+              <StarRating value={averageRating} />
               {averageRating.toFixed(1).replace(".", ",")} · {plural(visibleReviews.length, "note")}
             </span>
           ) : null}
@@ -174,6 +177,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           {anchors.map((anchor) => (
             <a key={anchor.href} href={anchor.href} className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs font-bold text-paper hover:border-mint/50 sm:py-1 sm:text-[11px]">{anchor.label}</a>
           ))}
+          <Link href={chaptersHref(book.id)} className="inline-flex items-center gap-1.5 rounded-full border border-mint/50 bg-mint/10 px-3 py-1.5 text-xs font-extrabold text-mint hover:bg-mint/20 sm:py-1 sm:text-[11px]">
+            <UsersRound size={12} aria-hidden />
+            Chapitre par chapitre{chapterReviewsCount ? ` (${chapterReviewsCount})` : ""}
+          </Link>
         </nav>
       </header>
 
@@ -229,12 +236,27 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
               {friendQuote?.reviews[0]?.body ? (
                 <p className="flex gap-2 rounded-xl bg-ink px-3 py-2.5 text-xs italic text-paper">
                   <Quote size={13} aria-hidden className="mt-0.5 shrink-0 text-coral" />
-                  « {friendQuote.reviews[0].body.length > 160 ? `${friendQuote.reviews[0].body.slice(0, 160)}…` : friendQuote.reviews[0].body} » — {friendQuote.name ?? "Un ami"}, {friendQuote.reviews[0].rating}/5
+                  « {friendQuote.reviews[0].body.length > 160 ? `${friendQuote.reviews[0].body.slice(0, 160)}…` : friendQuote.reviews[0].body} » — {friendQuote.name ?? "Un ami"}, {formatRating(friendQuote.reviews[0].rating)}/5
                 </p>
               ) : null}
             </div>
           </section>
         ) : null}
+
+        <Link href={chaptersHref(book.id)} className="bb-card flex min-w-0 items-center gap-3 p-4 transition hover:border-mint/50">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-mint/10 text-mint">
+            <UsersRound size={18} aria-hidden />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="font-display text-base font-semibold text-paper">Lire en communauté, chapitre par chapitre</span>
+            <span className="text-xs text-muted">
+              {chapterReviewsCount
+                ? `${plural(chapterReviewsCount, "avis", "avis")} sur ${plural(chapterSummaries.length, "chapitre")} · visibles seulement une fois le chapitre lu`
+                : "Donne ton avis au fil de ta lecture, sans te faire dévoiler la suite"}
+            </span>
+          </span>
+          <ArrowRight size={16} aria-hidden className="shrink-0 text-muted" />
+        </Link>
 
         <BookReviews
           bookId={book.id}

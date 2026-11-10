@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
           }
         }),
         prisma.userBook.count({ where: { userId } }),
-        prisma.review.count({ where: { userId } }),
+        prisma.review.count({ where: { userId, chapter: 0 } }),
         prisma.follow.count({ where: { followingId: userId } }),
         prisma.follow.count({ where: { followerId: userId } }),
         prisma.userBook.findMany({
@@ -35,7 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
           include: { book: true }
         }),
         prisma.review.findMany({
-          where: { userId, hiddenAt: null },
+          where: { chapter: 0, userId, hiddenAt: null },
           orderBy: { updatedAt: "desc" },
           take: 8,
           include: { book: true, reactions: true, comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } } } }

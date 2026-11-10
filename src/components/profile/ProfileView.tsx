@@ -5,7 +5,7 @@ import { prisma } from "@/server/db/prisma";
 import { getEarnedBadges, getProgressSummary, syncBadges } from "@/server/services/progression";
 import { levelProgress } from "@/lib/progression";
 import { genreLabel } from "@/lib/genres";
-import { plural } from "@/lib/format";
+import { formatRating, plural } from "@/lib/format";
 import { BookCover } from "@/components/books/BookCover";
 import { StarRating } from "@/components/reviews/StarRating";
 import { Avatar } from "@/components/ui/Avatar";
@@ -23,6 +23,9 @@ import { GroupEmblem } from "@/components/groups/GroupEmblem";
 import { ShowcaseEditor } from "@/components/profile/ShowcaseEditor";
 import { QuoteCard } from "@/components/books/QuoteCard";
 import { getQuotes } from "@/server/services/quotes";
+import { getChapterReadings } from "@/server/services/chapters";
+import { chaptersHref } from "@/lib/chapters";
+import { ShowMore } from "@/components/ui/ShowMore";
 
 export type ProfileTab = "apercu" | "annee" | "avis" | "listes" | "badges";
 
@@ -45,7 +48,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   const [user, libraryCount, reviewCount, followerCount, followingCount, library, reviews, lists, badges, stats, publicEntries, progress, groupMemberships] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId, suspendedAt: null } }),
     prisma.userBook.count({ where: { userId } }),
-    prisma.review.count({ where: { userId, hiddenAt: null } }),
+    prisma.review.count({ where: { userId, chapter: 0, hiddenAt: null } }),
     prisma.follow.count({ where: { followingId: userId, follower: { suspendedAt: null } } }),
     prisma.follow.count({ where: { followerId: userId, following: { suspendedAt: null } } }),
     prisma.userBook.findMany({
@@ -57,7 +60,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       }
     }),
     prisma.review.findMany({
-      where: { userId, hiddenAt: null },
+      where: { chapter: 0, userId, hiddenAt: null },
       orderBy: { updatedAt: "desc" },
       include: {
         book: { select: { id: true, title: true, thumbnailUrl: true } },
@@ -92,7 +95,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   ]);
 
   if (!user) return null;
-  const quotes = await getQuotes({ userId }, viewerId, [], 4);
+  const [quotes, chapterReadings] = await Promise.all([getQuotes({ userId }, viewerId, [], 4), getChapterReadings(userId)]);
 
   const level = levelProgress(stats?.xpTotal ?? 0);
   const year = new Date().getFullYear();
@@ -150,7 +153,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
           <BookCover title={bookOfYear.book.title} thumbnailUrl={bookOfYear.book.thumbnailUrl} className="h-[120px] w-20 border border-ink/30 sm:h-[160px] sm:w-[106px]" iconSize={0} />
           <span className="font-display text-base font-semibold">{bookOfYear.book.title}</span>
           <span className="text-[11px] text-ink/75">
-            {[ratingByBook.get(bookOfYear.bookId) ? `noté ${ratingByBook.get(bookOfYear.bookId)}/5` : null, `lu en ${monthNames[finishedAt(bookOfYear).getMonth()].toLowerCase()}`].filter(Boolean).join(" · ")}
+            {[ratingByBook.get(bookOfYear.bookId) ? `noté ${formatRating(ratingByBook.get(bookOfYear.bookId) ?? 0)}/5` : null, `lu en ${monthNames[finishedAt(bookOfYear).getMonth()].toLowerCase()}`].filter(Boolean).join(" · ")}
           </span>
         </Link>
       ) : null}
@@ -171,6 +174,32 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       </div>
     </article>
   );
+
+  // Avis de chapitre : seulement des compteurs et un lien vers l'espace chapitres, qui protège du spoiler.
+  const chapterSection = chapterReadings.length ? (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} lectures chapitre par chapitre</h2>
+        <p className="text-xs text-muted">Les avis s&apos;ouvrent chapitre après chapitre, à mesure que tu avances dans le livre.</p>
+      </div>
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {chapterReadings.map((reading) => (
+          <li key={reading.book.id} className="min-w-0">
+            <Link href={chaptersHref(reading.book.id)} className="bb-card flex min-w-0 items-center gap-3 p-3 transition hover:border-mint/50">
+              <BookCover title={reading.book.title} thumbnailUrl={reading.book.thumbnailUrl} className="aspect-[2/3] w-11 shrink-0" iconSize={14} />
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate font-display text-sm font-semibold text-paper">{reading.book.title}</span>
+                <span className="text-xs text-muted">
+                  {plural(reading.chapters, "chapitre commenté", "chapitres commentés")} · jusqu&apos;au chapitre {reading.lastChapter}
+                </span>
+              </span>
+              <ArrowRight size={15} aria-hidden className="shrink-0 text-muted" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
 
   let content: React.ReactNode;
   if (tab === "annee") {
@@ -229,7 +258,12 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
       </div>
     );
   } else if (tab === "avis") {
-    content = reviews.length ? <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{reviews.map(reviewItem)}</div> : <p className="bb-card-flat p-6 text-sm text-muted">Aucun avis publié pour le moment.</p>;
+    content = (
+      <div className="flex flex-col gap-6 sm:gap-8">
+        {reviews.length ? <ShowMore initial={6} className="grid grid-cols-1 gap-4 lg:grid-cols-2" buttonClassName="col-span-full">{reviews.map(reviewItem)}</ShowMore> : <p className="bb-card-flat p-6 text-sm text-muted">Aucun avis publié pour le moment.</p>}
+        {chapterSection}
+      </div>
+    );
   } else if (tab === "listes") {
     content = (
       <div className="flex flex-col gap-4">
@@ -282,6 +316,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
               <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} derniers avis</h2>
               {reviews.length ? reviews.slice(0, 2).map(reviewItem) : <p className="bb-card-flat p-5 text-sm text-muted">Aucun avis publié pour le moment.</p>}
             </section>
+            {chapterSection}
             {quotes.length ? (
               <section className="flex flex-col gap-4">
                 <h2 className="bb-h2">{isOwn ? "Mes" : "Ses"} citations</h2>

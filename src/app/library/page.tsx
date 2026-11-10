@@ -38,7 +38,7 @@ export default async function LibraryPage() {
       },
       orderBy: { createdAt: "desc" }
     }),
-    prisma.review.findMany({ where: { userId }, select: { bookId: true, rating: true } }),
+    prisma.review.findMany({ where: { userId, chapter: 0 }, select: { bookId: true, rating: true } }),
     prisma.bookList.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },

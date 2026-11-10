@@ -99,7 +99,7 @@ export function parseLibraryImport(text: string): ImportRow[] {
         : authorText.split(";").map((author) => author.trim()).filter(Boolean),
       ...isbn,
       status: statusFrom(record.status || "", goodreads ? record["Exclusive Shelf"] : ""),
-      rating: ratingValue >= 1 && ratingValue <= 5 ? ratingValue : null,
+      rating: ratingValue >= 0.5 && ratingValue <= 5 ? Math.round(ratingValue * 2) / 2 : null,
       startedAt: isoDate(record["Date Started"] || record.startedAt || ""),
       finishedAt: isoDate(record["Date Read"] || record.finishedAt || ""),
       addedAt: isoDate(record["Date Added"] || record.addedAt || ""),
@@ -114,7 +114,7 @@ export async function previewLibraryImport(userId: string, rows: ImportRow[]): P
     where: { userId },
     include: { readingPeriods: true, book: true }
   });
-  const reviews = await prisma.review.findMany({ where: { userId } });
+  const reviews = await prisma.review.findMany({ where: { userId, chapter: 0 } });
 
   return rows.map((row) => {
     if (!row.title || !row.authors.length) return { ...row, state: "invalid", bookId: null, message: "Titre et auteur obligatoires." };
@@ -185,7 +185,7 @@ export async function commitLibraryImport(userId: string, preview: ImportPreview
         else if (!existingPeriod) await tx.readingPeriod.create({ data: { userBookId: userBook.id, ...dates } });
       }
       if (row.rating) {
-        const existingReview = await tx.review.findUnique({ where: { userId_bookId: { userId, bookId } } });
+        const existingReview = await tx.review.findUnique({ where: { userId_bookId_chapter: { userId, bookId, chapter: 0 } } });
         if (!existingReview) await tx.review.create({ data: { userId, bookId, rating: row.rating, body: row.review } });
         else if (row.state === "conflict") await tx.review.update({ where: { id: existingReview.id }, data: { rating: row.rating, body: row.review ?? existingReview.body } });
       }

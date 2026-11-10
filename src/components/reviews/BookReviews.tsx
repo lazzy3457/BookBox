@@ -58,7 +58,7 @@ export function BookReviews({ bookId, isSignedIn, hasUserReview, averageRating, 
 
       {averageRating ? (
         <p className="flex flex-wrap items-center gap-2 text-sm">
-          <StarRating value={Math.round(averageRating)} />
+          <StarRating value={averageRating} />
           <span className="font-extrabold text-paper">{summary(averageRating)}</span>
           <span className="text-muted">· {averageRating.toFixed(1).replace(".", ",")} sur {total} note{total > 1 ? "s" : ""}</span>
         </p>

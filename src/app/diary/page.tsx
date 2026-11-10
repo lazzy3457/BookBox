@@ -61,7 +61,7 @@ export default async function DiaryPage({ searchParams }: { searchParams: Promis
   ]);
 
   const ratings = new Map(
-    (await prisma.review.findMany({ where: { userId, bookId: { in: periods.map((period) => period.userBook.bookId) } }, select: { bookId: true, rating: true } })).map((review) => [review.bookId, review.rating])
+    (await prisma.review.findMany({ where: { userId, chapter: 0, bookId: { in: periods.map((period) => period.userBook.bookId) } }, select: { bookId: true, rating: true } })).map((review) => [review.bookId, review.rating])
   );
 
   return (

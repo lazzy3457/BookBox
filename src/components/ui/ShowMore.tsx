@@ -7,10 +7,12 @@ type ShowMoreProps = {
   initial: number;
   children: React.ReactNode;
   className?: string;
+  /** Classes ajoutées au bouton, par exemple « col-span-full » quand le conteneur est une grille. */
+  buttonClassName?: string;
 };
 
 // Affiche les `initial` premiers éléments, puis un bouton « Voir plus » pour dérouler le reste.
-export function ShowMore({ initial, children, className = "flex flex-col gap-3" }: ShowMoreProps) {
+export function ShowMore({ initial, children, className = "flex flex-col gap-3", buttonClassName = "" }: ShowMoreProps) {
   const [expanded, setExpanded] = useState(false);
   const items = Children.toArray(children);
   const hidden = items.length - initial;
@@ -19,7 +21,7 @@ export function ShowMore({ initial, children, className = "flex flex-col gap-3" 
     <div className={className}>
       {expanded ? items : items.slice(0, initial)}
       {hidden > 0 ? (
-        <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className="bb-btn-outline mx-auto w-fit px-5 py-2.5 text-sm text-mint">
+        <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className={`bb-btn-outline mx-auto w-fit px-5 py-2.5 text-sm text-mint ${buttonClassName}`}>
           {expanded ? "Voir moins" : `Voir plus (${hidden})`}
           {expanded ? <ChevronUp size={15} aria-hidden /> : <ChevronDown size={15} aria-hidden />}
         </button>

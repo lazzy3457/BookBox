@@ -118,6 +118,7 @@ model User {
   preference               UserPreference?
   pushTokens               PushToken[]
   recommendationDismissals RecommendationDismissal[]
+  chapterProgress          ChapterProgress[]
   moderationReports        ModerationReport[]
   blockedUsers             UserBlock[]               @relation("blocker")
   blockedBy                UserBlock[]               @relation("blocked")
@@ -300,6 +301,7 @@ model Book {
   reviews                  Review[]
   listEntries              BookListEntry[]
   recommendationDismissals RecommendationDismissal[]
+  chapterProgress          ChapterProgress[]
   groups                   Group[]                   @relation("group_book")
   readalongGroups          Group[]                   @relation("group_readalong")
   groupThreads             GroupThread[]
@@ -334,7 +336,10 @@ model Review {
   id           String    @id @default(cuid())
   userId       String
   bookId       String
-  rating       Int
+  // De 0,5 à 5 par pas de 0,5 (borne garantie par une contrainte CHECK).
+  rating       Float
+  // 0 = avis sur le livre entier ; N = avis sur le chapitre N, affiché uniquement dans l'espace chapitres.
+  chapter      Int       @default(0)
   body         String?
   spoiler      Boolean   @default(false)
   hiddenAt     DateTime?
@@ -347,9 +352,9 @@ model Review {
   reactions ReviewReaction[]
   comments  ReviewComment[]
 
-  @@unique([userId, bookId])
+  @@unique([userId, bookId, chapter])
   @@index([createdAt])
-  @@index([bookId])
+  @@index([bookId, chapter])
 }
 
 model ReviewReaction {
@@ -462,6 +467,22 @@ model RecommendationDismissal {
 
   @@unique([userId, bookId])
   @@index([userId])
+}
+
+// Où en est un lecteur dans un livre : ouvre les avis des chapitres déjà atteints sans dévoiler les suivants.
+model ChapterProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  chapter   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@index([bookId])
 }
 
 // Jetons mobiles déconnectés avant leur expiration ; la ligne est purgée une fois le jeton expiré.

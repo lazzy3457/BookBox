@@ -160,7 +160,8 @@ Le schema principal est dans `prisma/schema.prisma`. Les tables principales sont
 - `User` : comptes utilisateurs.
 - `Book` : livres importes ou ajoutes manuellement, avec leurs genres principaux (`genres`).
 - `UserBook` : bibliotheque personnelle, statut de lecture et date d'ajout (`createdAt`).
-- `Review` : avis et notes.
+- `Review` : avis et notes (demi-etoiles), sur le livre entier ou sur un chapitre.
+- `ChapterProgress` : chapitre atteint par un lecteur, pour ouvrir les avis de chapitre sans spoiler.
 - `ReviewComment` : commentaires de reviews.
 - `ReviewReaction` et `ReviewCommentReaction` : likes et reactions.
 - `Follow` : abonnements entre utilisateurs.
