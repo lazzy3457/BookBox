@@ -334,7 +334,8 @@ model Review {
   id           String    @id @default(cuid())
   userId       String
   bookId       String
-  rating       Int
+  // De 0,5 à 5 par pas de 0,5 (borne garantie par une contrainte CHECK).
+  rating       Float
   body         String?
   spoiler      Boolean   @default(false)
   hiddenAt     DateTime?

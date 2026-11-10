@@ -9,7 +9,7 @@ import { getBlockedUserIds } from "@/server/services/blocks";
 import { toCommentView } from "@/server/services/comments";
 import { authorHref } from "@/lib/authors";
 import { genreLabel } from "@/lib/genres";
-import { plural } from "@/lib/format";
+import { formatRating, plural } from "@/lib/format";
 import { StarRating } from "@/components/reviews/StarRating";
 import { BookReviews } from "@/components/reviews/BookReviews";
 import { BookCover } from "@/components/books/BookCover";
@@ -165,7 +165,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           )}
           {averageRating ? (
             <span className="flex items-center gap-2 text-xs font-bold text-muted">
-              <StarRating value={Math.round(averageRating)} />
+              <StarRating value={averageRating} />
               {averageRating.toFixed(1).replace(".", ",")} · {plural(visibleReviews.length, "note")}
             </span>
           ) : null}
@@ -229,7 +229,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
               {friendQuote?.reviews[0]?.body ? (
                 <p className="flex gap-2 rounded-xl bg-ink px-3 py-2.5 text-xs italic text-paper">
                   <Quote size={13} aria-hidden className="mt-0.5 shrink-0 text-coral" />
-                  « {friendQuote.reviews[0].body.length > 160 ? `${friendQuote.reviews[0].body.slice(0, 160)}…` : friendQuote.reviews[0].body} » — {friendQuote.name ?? "Un ami"}, {friendQuote.reviews[0].rating}/5
+                  « {friendQuote.reviews[0].body.length > 160 ? `${friendQuote.reviews[0].body.slice(0, 160)}…` : friendQuote.reviews[0].body} » — {friendQuote.name ?? "Un ami"}, {formatRating(friendQuote.reviews[0].rating)}/5
                 </p>
               ) : null}
             </div>

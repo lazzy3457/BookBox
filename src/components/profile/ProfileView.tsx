@@ -5,7 +5,7 @@ import { prisma } from "@/server/db/prisma";
 import { getEarnedBadges, getProgressSummary, syncBadges } from "@/server/services/progression";
 import { levelProgress } from "@/lib/progression";
 import { genreLabel } from "@/lib/genres";
-import { plural } from "@/lib/format";
+import { formatRating, plural } from "@/lib/format";
 import { BookCover } from "@/components/books/BookCover";
 import { StarRating } from "@/components/reviews/StarRating";
 import { Avatar } from "@/components/ui/Avatar";
@@ -150,7 +150,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
           <BookCover title={bookOfYear.book.title} thumbnailUrl={bookOfYear.book.thumbnailUrl} className="h-[120px] w-20 border border-ink/30 sm:h-[160px] sm:w-[106px]" iconSize={0} />
           <span className="font-display text-base font-semibold">{bookOfYear.book.title}</span>
           <span className="text-[11px] text-ink/75">
-            {[ratingByBook.get(bookOfYear.bookId) ? `noté ${ratingByBook.get(bookOfYear.bookId)}/5` : null, `lu en ${monthNames[finishedAt(bookOfYear).getMonth()].toLowerCase()}`].filter(Boolean).join(" · ")}
+            {[ratingByBook.get(bookOfYear.bookId) ? `noté ${formatRating(ratingByBook.get(bookOfYear.bookId) ?? 0)}/5` : null, `lu en ${monthNames[finishedAt(bookOfYear).getMonth()].toLowerCase()}`].filter(Boolean).join(" · ")}
           </span>
         </Link>
       ) : null}

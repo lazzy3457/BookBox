@@ -35,7 +35,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const [isDeleted, setIsDeleted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(!review.spoiler || !hideSpoilers);
   const [isEditing, setIsEditing] = useState(false);
-  const [rating, setRating] = useState(Math.max(1, Math.min(5, review.rating)));
+  const [rating, setRating] = useState(Math.max(0.5, Math.min(5, review.rating)));
   const [reviewBody, setReviewBody] = useState(review.body ?? "");
   const [spoiler, setSpoiler] = useState(review.spoiler);
   const [likesCount, setLikesCount] = useState(review.reactionsCount);

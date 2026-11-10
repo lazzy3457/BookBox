@@ -2,6 +2,7 @@
 
 import { Download, FileUp } from "lucide-react";
 import { useState } from "react";
+import { formatRating } from "@/lib/format";
 
 type Preview = {
   index: number;
@@ -77,7 +78,7 @@ export function LibraryImport() {
                 {preview.map((row) => (
                   <tr key={row.index} className="border-t border-line">
                     <td className="p-3"><div className="font-extrabold text-paper">{row.title || "Ligne invalide"}</div><div className="text-xs text-muted">{row.authors.join(", ")}</div></td>
-                    <td className="p-3 text-muted">{row.status}{row.rating ? ` · ${row.rating}/5` : ""}</td>
+                    <td className="p-3 text-muted">{row.status}{row.rating ? ` · ${formatRating(row.rating)}/5` : ""}</td>
                     <td className="p-3"><span className={row.state === "invalid" || row.state === "conflict" ? "text-coral" : "text-mint"}>{row.message}</span></td>
                     <td className="p-3">
                       {row.state === "conflict" ? (

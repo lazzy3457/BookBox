@@ -46,3 +46,8 @@ export function daysUntil(date: Date | string) {
   const value = typeof date === "string" ? new Date(date) : date;
   return Math.ceil((value.getTime() - Date.now()) / 86400000);
 }
+
+// Note sur 5 avec demi-étoiles : « 4 », « 3,5 ».
+export function formatRating(rating: number) {
+  return String(Math.round(rating * 2) / 2).replace(".", ",");
+}

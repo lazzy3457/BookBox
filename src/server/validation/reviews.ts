@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const reviewMutationSchema = z.object({
   bookId: z.string().min(1),
-  rating: z.number().int().min(1).max(5),
+  rating: z.number().min(0.5).max(5).multipleOf(0.5),
   body: z.string().trim().max(5000).optional(),
   spoiler: z.boolean().default(false)
 });

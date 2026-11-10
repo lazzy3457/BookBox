@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isAdminRole } from "@/server/auth/admin";
 import { prisma } from "@/server/db/prisma";
+import { formatRating } from "@/lib/format";
 import { listModerationReports } from "@/server/services/moderation";
 import { listLegalNotices } from "@/server/services/legalNotices";
 import { ModerationWorkspace, type Dossier } from "@/components/moderation/ModerationWorkspace";
@@ -93,7 +94,7 @@ export default async function ModerationPage() {
       heading: review ? `Avis de ${handle} sur « ${review.book.title} »` : comment ? `Commentaire de ${handle} sur « ${comment.review.book.title} »` : groupThread ? `Discussion de ${handle} dans « ${groupThread.group.name} »` : groupPost ? `Message de ${handle} dans « ${groupPost.thread.group.name} »` : `Profil de ${handle}`,
       href: review ? `/books/${review.bookId}#avis` : comment ? `/books/${comment.review.bookId}#avis` : groupThread ? `/groups/${groupThread.group.slug}/threads/${groupThread.id}` : groupPost ? `/groups/${groupPost.thread.group.slug}/threads/${groupPost.thread.id}` : user ? `/profile/${user.id}` : null,
       content: review?.body ?? comment?.body ?? (groupThread ? [groupThread.title, groupThread.body].filter(Boolean).join("\n\n") : null) ?? groupPost?.body ?? user?.bio ?? null,
-      contentMeta: review ? `★ ${review.rating}/5 · publié le ${review.createdAt.toLocaleDateString("fr-FR")}` : comment ? `publié le ${comment.createdAt.toLocaleDateString("fr-FR")}` : groupThread ? `publié le ${groupThread.createdAt.toLocaleDateString("fr-FR")}` : groupPost ? `publié le ${groupPost.createdAt.toLocaleDateString("fr-FR")}` : "bio du profil",
+      contentMeta: review ? `★ ${formatRating(review.rating)}/5 · publié le ${review.createdAt.toLocaleDateString("fr-FR")}` : comment ? `publié le ${comment.createdAt.toLocaleDateString("fr-FR")}` : groupThread ? `publié le ${groupThread.createdAt.toLocaleDateString("fr-FR")}` : groupPost ? `publié le ${groupPost.createdAt.toLocaleDateString("fr-FR")}` : "bio du profil",
       isHidden: Boolean(review?.hiddenAt ?? comment?.hiddenAt ?? groupThread?.hiddenAt ?? groupPost?.hiddenAt ?? user?.suspendedAt),
       owner: owner
         ? {

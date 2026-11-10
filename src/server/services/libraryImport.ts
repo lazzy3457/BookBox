@@ -99,7 +99,7 @@ export function parseLibraryImport(text: string): ImportRow[] {
         : authorText.split(";").map((author) => author.trim()).filter(Boolean),
       ...isbn,
       status: statusFrom(record.status || "", goodreads ? record["Exclusive Shelf"] : ""),
-      rating: ratingValue >= 1 && ratingValue <= 5 ? ratingValue : null,
+      rating: ratingValue >= 0.5 && ratingValue <= 5 ? Math.round(ratingValue * 2) / 2 : null,
       startedAt: isoDate(record["Date Started"] || record.startedAt || ""),
       finishedAt: isoDate(record["Date Read"] || record.finishedAt || ""),
       addedAt: isoDate(record["Date Added"] || record.addedAt || ""),

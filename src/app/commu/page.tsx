@@ -14,7 +14,7 @@ import { FollowButton } from "@/components/community/FollowButton";
 import { ReaderGrid } from "@/components/community/ReaderGrid";
 import { GroupsTab } from "@/components/groups/GroupsTab";
 import { getGroupDirectory } from "@/server/services/groupDirectory";
-import { daysAgo, plural, timeAgo } from "@/lib/format";
+import { daysAgo, formatRating, plural, timeAgo } from "@/lib/format";
 import { genreLabel } from "@/lib/genres";
 
 export const dynamic = "force-dynamic";
@@ -269,7 +269,7 @@ async function CircleTab({ viewerId, followingIds, suggestedIds }: { viewerId: s
                       {quote?.body ? (
                         <p className="flex gap-2 rounded-xl bg-ink px-3 py-2.5 text-[13px] italic text-paper">
                           <Quote size={14} aria-hidden className="mt-0.5 shrink-0 text-coral" />
-                          <span>« {quote.body.length > 120 ? `${quote.body.slice(0, 120)}…` : quote.body} » — {quote.user.name ?? "Un ami"}, {quote.rating}/5</span>
+                          <span>« {quote.body.length > 120 ? `${quote.body.slice(0, 120)}…` : quote.body} » — {quote.user.name ?? "Un ami"}, {formatRating(quote.rating)}/5</span>
                         </p>
                       ) : null}
                     </div>

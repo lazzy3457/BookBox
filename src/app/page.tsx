@@ -245,7 +245,7 @@ async function GuestHome({ trending }: { trending: TrendingBook[] }) {
             </p>
             {featured.averageRating ? (
               <div className="flex items-center gap-2 text-xs font-bold text-muted">
-                <StarRating value={Math.round(featured.averageRating)} />
+                <StarRating value={featured.averageRating} />
                 {featured.averageRating.toFixed(1).replace(".", ",")} · {readersLabel(featured)} ce mois-ci
               </div>
             ) : null}
