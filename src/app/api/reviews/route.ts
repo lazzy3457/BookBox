@@ -11,7 +11,7 @@ import { enforceRateLimit } from "@/server/security/rateLimit";
 export async function POST(request: Request) {
   try {
     const userId = await requireCurrentUserId(request);
-    await enforceRateLimit({ scope: "review-create", identifier: userId, limit: 12, windowMs: 60 * 60_000 });
+    await enforceRateLimit({ scope: "review-create", identifier: userId, limit: 60, windowMs: 60 * 60_000 });
     const input = reviewMutationSchema.parse(await request.json());
     const existingReview = await prisma.review.findUnique({
       where: {
