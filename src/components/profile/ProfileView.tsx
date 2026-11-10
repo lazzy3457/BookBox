@@ -25,6 +25,7 @@ import { QuoteCard } from "@/components/books/QuoteCard";
 import { getQuotes } from "@/server/services/quotes";
 import { getChapterReadings } from "@/server/services/chapters";
 import { chaptersHref } from "@/lib/chapters";
+import { ShowMore } from "@/components/ui/ShowMore";
 
 export type ProfileTab = "apercu" | "annee" | "avis" | "listes" | "badges";
 
@@ -259,7 +260,7 @@ export async function ProfileView({ userId, viewerId, tab, basePath, isFollowing
   } else if (tab === "avis") {
     content = (
       <div className="flex flex-col gap-6 sm:gap-8">
-        {reviews.length ? <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{reviews.map(reviewItem)}</div> : <p className="bb-card-flat p-6 text-sm text-muted">Aucun avis publié pour le moment.</p>}
+        {reviews.length ? <ShowMore initial={6} className="grid grid-cols-1 gap-4 lg:grid-cols-2" buttonClassName="col-span-full">{reviews.map(reviewItem)}</ShowMore> : <p className="bb-card-flat p-6 text-sm text-muted">Aucun avis publié pour le moment.</p>}
         {chapterSection}
       </div>
     );
