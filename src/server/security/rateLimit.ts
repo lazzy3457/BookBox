@@ -25,20 +25,51 @@ function bucketKey(scope: string, identifier: string) {
     .digest("hex");
 }
 
-export function getClientIdentifier(request: Request) {
-  const trustProxyHeaders = process.env.TRUST_PROXY_HEADERS === "true" || process.env.NODE_ENV !== "production";
-  if (!trustProxyHeaders) {
-    return `untrusted-proxy:${(request.headers.get("user-agent") ?? "no-agent").slice(0, 180)}`;
+// En-têtes d'une requête web (Headers) ou de NextAuth (objet simple).
+export type HeaderSource = Headers | Record<string, unknown>;
+
+function readHeader(headers: HeaderSource, name: string) {
+  const value = headers instanceof Headers ? headers.get(name) : headers[name];
+  return typeof value === "string" && value ? value : null;
+}
+
+// TRUST_PROXY_HEADERS : "true" derrière un proxy qui réécrit x-forwarded-for / x-real-ip,
+// "cloudflare" pour lire cf-connecting-ip (falsifiable par le client hors Cloudflare).
+// Sans proxy de confiance en production, aucune adresse fiable n'existe : les limites par
+// adresse se rabattent sur le User-Agent, partagé entre visiteurs et facile à changer.
+export function getClientIdentifierFromHeaders(headers: HeaderSource) {
+  const mode = process.env.TRUST_PROXY_HEADERS;
+  const userAgent = (readHeader(headers, "user-agent") ?? "no-agent").slice(0, 180);
+  if (mode !== "true" && mode !== "cloudflare" && process.env.NODE_ENV === "production") {
+    return `untrusted-proxy:${userAgent}`;
   }
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const address = request.headers.get("cf-connecting-ip")
-    ?? request.headers.get("x-real-ip")
+  const forwarded = readHeader(headers, "x-forwarded-for")?.split(",")[0]?.trim();
+  const address = (mode === "cloudflare" ? readHeader(headers, "cf-connecting-ip") : null)
+    ?? readHeader(headers, "x-real-ip")
     ?? forwarded;
   if (address) return address.slice(0, 128);
-  return `unknown:${(request.headers.get("user-agent") ?? "no-agent").slice(0, 180)}`;
+  return `unknown:${userAgent}`;
+}
+
+export function getClientIdentifier(request: Request) {
+  return getClientIdentifierFromHeaders(request.headers);
+}
+
+export async function purgeExpiredRateLimitBuckets() {
+  return prisma.rateLimitBucket.deleteMany({ where: { resetAt: { lt: new Date() } } });
+}
+
+// Connexion web et mobile : plafond par adresse e-mail visée et par adresse cliente.
+export async function enforceLoginRateLimit(email: string, headers?: HeaderSource) {
+  await enforceRateLimit({ scope: "login-email", identifier: email, limit: 10, windowMs: 15 * 60_000 });
+  if (headers) {
+    await enforceRateLimit({ scope: "login-ip", identifier: getClientIdentifierFromHeaders(headers), limit: 30, windowMs: 15 * 60_000 });
+  }
 }
 
 export async function enforceRateLimit({ scope, identifier, limit, windowMs }: RateLimitInput) {
+  // Ménage occasionnel : sans lui, les compteurs expirés s'accumulent indéfiniment.
+  if (Math.random() < 0.01) void purgeExpiredRateLimitBuckets().catch(() => undefined);
   const key = bucketKey(scope, identifier);
   const now = new Date();
   const nextReset = new Date(now.getTime() + windowMs);

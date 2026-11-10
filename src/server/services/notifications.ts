@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NotificationType, type NotificationPreference } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
@@ -197,7 +198,7 @@ function displayName(user: { name: string | null; username?: string | null }) {
 export async function notifyReviewReaction(input: { actorId: string; reviewId: string }) {
   const review = await prisma.review.findUnique({
     where: { id: input.reviewId },
-    include: { user: true, book: true }
+    include: { user: { select: publicUserSelect }, book: true }
   });
   const actor = await prisma.user.findUnique({ where: { id: input.actorId }, select: { name: true, username: true } });
 
@@ -240,7 +241,7 @@ export async function notifyReviewComment(input: { actorId: string; commentId: s
   const comment = await prisma.reviewComment.findUnique({
     where: { id: input.commentId },
     include: {
-      user: true,
+      user: { select: publicUserSelect },
       parent: true,
       review: { include: { book: true } }
     }
@@ -266,7 +267,7 @@ export async function notifyReviewComment(input: { actorId: string; commentId: s
 export async function notifyFriendReview(input: { actorId: string; reviewId: string }) {
   const review = await prisma.review.findUnique({
     where: { id: input.reviewId },
-    include: { user: true, book: true }
+    include: { user: { select: publicUserSelect }, book: true }
   });
 
   if (!review) {

@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { getCurrentUserId, requireCurrentUserId } from "@/server/auth/session";
@@ -27,9 +28,9 @@ async function getList(listId: string) {
               reviews: {
                 where: { hiddenAt: null, user: { suspendedAt: null } },
                 include: {
-                  user: true,
+                  user: { select: publicUserSelect },
                   reactions: true,
-                  comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } }, include: { user: true, likes: true }, orderBy: { createdAt: "asc" } }
+                  comments: { where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } }, include: { user: { select: publicUserSelect }, likes: true }, orderBy: { createdAt: "asc" } }
                 }
               }
             }

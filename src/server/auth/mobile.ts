@@ -1,6 +1,6 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { prisma } from "@/server/db/prisma";
-import { verifyPassword } from "@/server/auth/password";
+import { DUMMY_PASSWORD_HASH, verifyPassword } from "@/server/auth/password";
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
 
@@ -8,6 +8,10 @@ type MobileTokenPayload = {
   sub: string;
   email: string | null;
   name: string | null;
+  // sessionVersion du compte à l'émission ; absent des jetons émis avant ce contrôle.
+  sv?: number;
+  // Identifiant du jeton, inscrit dans RevokedMobileToken à la déconnexion.
+  jti?: string;
   iat: number;
   exp: number;
 };
@@ -46,13 +50,15 @@ function signTokenPayload(encodedHeader: string, encodedPayload: string) {
   );
 }
 
-export function createMobileToken(user: { id: string; email: string | null; name: string | null }) {
+export function createMobileToken(user: { id: string; email: string | null; name: string | null; sessionVersion: number }) {
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "HS256", typ: "JWT" };
   const payload: MobileTokenPayload = {
     sub: user.id,
     email: user.email,
     name: user.name,
+    sv: user.sessionVersion,
+    jti: randomUUID(),
     iat: now,
     exp: now + TOKEN_TTL_SECONDS
   };
@@ -109,7 +115,35 @@ export async function getMobileUserId(request: Request) {
     return null;
   }
 
-  return verifyMobileToken(token)?.sub ?? null;
+  const payload = verifyMobileToken(token);
+
+  if (!payload) {
+    return null;
+  }
+
+  // Changer ou réinitialiser le mot de passe incrémente sessionVersion : les jetons émis avant ne valent plus rien.
+  const [user, revoked] = await Promise.all([
+    prisma.user.findUnique({ where: { id: payload.sub }, select: { sessionVersion: true } }),
+    payload.jti ? prisma.revokedMobileToken.findUnique({ where: { jti: payload.jti }, select: { jti: true } }) : null
+  ]);
+  return user && !revoked && user.sessionVersion === (payload.sv ?? 0) ? payload.sub : null;
+}
+
+// Déconnexion : le jeton présenté ne sera plus accepté, même avant son expiration.
+export async function revokeMobileToken(request: Request) {
+  const token = getMobileBearerToken(request);
+  const payload = token ? verifyMobileToken(token) : null;
+
+  if (!payload?.jti) {
+    return;
+  }
+
+  const expiresAt = new Date(payload.exp * 1000);
+  await prisma.revokedMobileToken.upsert({
+    where: { jti: payload.jti },
+    update: {},
+    create: { jti: payload.jti, expiresAt }
+  });
 }
 
 export async function authenticateMobileCredentials(input: { email: string; password: string }) {
@@ -123,24 +157,21 @@ export async function authenticateMobileCredentials(input: { email: string; pass
       username: true,
       image: true,
       bio: true,
-      passwordHash: true
-      ,
+      passwordHash: true,
       emailVerified: true,
-      suspendedAt: true
+      suspendedAt: true,
+      sessionVersion: true
     }
   });
 
-  if (!user?.passwordHash || !user.emailVerified || user.suspendedAt) {
+  // Comparaison systématique : le temps de réponse ne révèle pas quelles adresses sont inscrites.
+  const isValid = await verifyPassword(input.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+
+  if (!user?.passwordHash || isValid !== true || !user.emailVerified || user.suspendedAt) {
     return null;
   }
 
-  const isValid = await verifyPassword(input.password, user.passwordHash);
-
-  if (!isValid) {
-    return null;
-  }
-
-  const { passwordHash: _passwordHash, emailVerified: _emailVerified, suspendedAt: _suspendedAt, ...safeUser } = user;
+  const { passwordHash: _passwordHash, emailVerified: _emailVerified, suspendedAt: _suspendedAt, sessionVersion: _sessionVersion, ...safeUser } = user;
 
   return {
     token: createMobileToken(user),

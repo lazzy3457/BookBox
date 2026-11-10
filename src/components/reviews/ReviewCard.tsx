@@ -54,7 +54,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
     <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-mint text-sm font-extrabold text-ink">
       {review.userImage ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={review.userImage} alt="" className="h-full w-full object-cover" />
+        <img loading="lazy" decoding="async" src={review.userImage} alt="" className="h-full w-full object-cover" />
       ) : (
         review.userName.slice(0, 1).toUpperCase()
       )}

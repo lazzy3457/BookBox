@@ -280,7 +280,7 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
           <div className="cover-sheen grid h-28 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster min-[360px]:h-32 min-[360px]:w-20 sm:h-36 sm:w-24">
             {book.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+              <img loading="lazy" decoding="async" src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <BookOpen className="text-mint/30" />
             )}

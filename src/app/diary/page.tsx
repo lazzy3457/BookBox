@@ -1,8 +1,7 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getProgressSummary } from "@/server/services/progression";
 import { JournalWorkspace } from "@/components/library/JournalWorkspace";
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DiaryPage({ searchParams }: { searchParams: Promise<{ annee?: string }> }) {
-  const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
   if (!session?.user?.id) {
     return (
       <div className="bb-card mx-auto mt-6 flex max-w-xl flex-col items-start gap-3 p-6 sm:p-8">

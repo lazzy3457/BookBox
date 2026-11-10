@@ -51,7 +51,7 @@ export function EditProfileModal({ user, onClose }: Props) {
             <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-ink text-2xl font-extrabold text-mint">
               {image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={image} alt="" className="h-full w-full object-cover" />
+                <img loading="lazy" decoding="async" src={image} alt="" className="h-full w-full object-cover" />
               ) : (
                 (name || user.name || "B").slice(0, 1)
               )}

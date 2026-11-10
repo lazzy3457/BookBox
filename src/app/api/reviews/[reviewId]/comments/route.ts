@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
@@ -37,7 +38,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ rev
         body: input.body,
         parentId: input.parentId
       },
-      include: { user: true }
+      include: { user: { select: publicUserSelect } }
     });
 
     await notifyReviewComment({ actorId: userId, commentId: comment.id });

@@ -15,35 +15,36 @@
     "genres:backfill": "node --env-file=.env scripts/backfill-genres.mjs",
     "preflight": "node --env-file=.env scripts/preflight.mjs",
     "db:deploy": "prisma migrate deploy",
-    "db:branch": "node --env-file=.env scripts/db-branch.mjs"
+    "db:branch": "node --env-file=.env scripts/db-branch.mjs",
+    "db:cleanup": "node --env-file=.env scripts/cleanup.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@next-auth/prisma-adapter": "latest",
+    "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "6.19.3",
-    "bcryptjs": "latest",
-    "lucide-react": "latest",
-    "next": "latest",
-    "next-auth": "latest",
+    "bcryptjs": "^3.0.3",
+    "lucide-react": "^1.70.0",
+    "next": "^16.4.6",
+    "next-auth": "^4.24.15",
     "nodemailer": "^7.0.13",
-    "react": "latest",
-    "react-dom": "latest",
-    "zod": "latest"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/nodemailer": "^8.0.1",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@types/node": "^25.9.9",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.20",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
-    "postcss": "^8.4.49",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.6",
+    "postcss": "^8.5.32",
     "prisma": "6.19.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "latest",
+    "typescript": "^6.0.3",
     "vitest": "3.2.6"
   }
 }

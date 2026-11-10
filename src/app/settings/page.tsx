@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { isGoogleAuthEnabled } from "@/server/auth/google";
-import { isRecentGoogleSignIn } from "@/server/auth/session";
+import { isRecentGoogleSignIn, getSession } from "@/server/auth/session";
 import { SettingsWorkspace, type SettingsSection } from "@/components/settings/SettingsWorkspace";
 import { LibraryImport } from "@/components/settings/LibraryImport";
 import { AccountDataControls } from "@/components/settings/AccountDataControls";
@@ -21,7 +19,7 @@ export const metadata: Metadata = {
 const sections: SettingsSection[] = ["profil", "securite", "lecture", "notifications", "confidentialite", "bloques", "importer", "donnees"];
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ rubrique?: string; suppression?: string }> }) {
-  const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
 
   if (!session?.user?.id) {
     return (

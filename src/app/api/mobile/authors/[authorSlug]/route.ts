@@ -1,7 +1,9 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
-import { slugifyAuthor } from "@/lib/authors";
+import { findAuthorNames } from "@/server/services/authors";
 import { apiError, notFound } from "@/server/http/errors";
+import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
 
 type AuthorSummary = {
   extract?: string;
@@ -43,23 +45,31 @@ async function getAuthorSummary(authorName: string) {
   };
 }
 
-export async function GET(_: Request, { params }: { params: Promise<{ authorSlug: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ authorSlug: string }> }) {
   try {
+    await enforceRateLimit({ scope: "mobile-author", identifier: getClientIdentifier(request), limit: 60, windowMs: 60_000 });
     const { authorSlug } = await params;
-    const allAuthorBooks = await prisma.book.findMany({
+    const authorNames = await findAuthorNames(authorSlug);
+    const authorName = authorNames[0];
+
+    if (!authorName) {
+      throw notFound("Auteur introuvable.", "AUTHOR_NOT_FOUND");
+    }
+
+    const authorBooks = await prisma.book.findMany({
       where: {
-        authors: { isEmpty: false }
+        authors: { hasSome: authorNames }
       },
       include: {
-        libraries: true,
+        libraries: { where: { user: { suspendedAt: null } }, select: { userId: true } },
         reviews: {
           where: { hiddenAt: null, user: { suspendedAt: null } },
           include: {
-            user: true,
+            user: { select: publicUserSelect },
             reactions: true,
             comments: {
               where: { hiddenAt: null, deletedAt: null, user: { suspendedAt: null } },
-              include: { user: true, likes: true },
+              include: { user: { select: publicUserSelect }, likes: true },
               orderBy: { createdAt: "asc" }
             }
           },
@@ -68,20 +78,18 @@ export async function GET(_: Request, { params }: { params: Promise<{ authorSlug
       },
       orderBy: { updatedAt: "desc" }
     });
-    const books = allAuthorBooks.filter((book) => book.authors.some((author) => slugifyAuthor(author) === authorSlug));
-    const authorName = books[0]?.authors.find((author) => slugifyAuthor(author) === authorSlug);
-
-    if (!authorName) {
-      throw notFound("Auteur introuvable.", "AUTHOR_NOT_FOUND");
-    }
+    // Les bibliothèques ne servent qu'aux compteurs : elles ne partent pas dans la réponse.
+    const books = authorBooks.map(({ libraries, ...book }) => ({ ...book, readerIds: libraries.map((entry) => entry.userId) }));
+    const withoutReaders = ({ readerIds: _readerIds, ...book }: (typeof books)[number]) => book;
 
     const authorSummary = await getAuthorSummary(authorName);
-    const reviews = books.flatMap((book) => book.reviews.map((review) => ({ ...review, book })));
+    const reviews = books.flatMap((book) => book.reviews.map((review) => ({ ...review, book: withoutReaders(book) })));
     const averageRating = reviews.length
       ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
       : null;
-    const readerCount = new Set(books.flatMap((book) => book.libraries.map((entry) => entry.userId))).size;
-    const mostReadBook = books.slice().sort((a, b) => b.libraries.length - a.libraries.length)[0] ?? null;
+    const readerCount = new Set(books.flatMap((book) => book.readerIds)).size;
+    const mostRead = books.slice().sort((a, b) => b.readerIds.length - a.readerIds.length)[0];
+    const mostReadBook = mostRead ? withoutReaders(mostRead) : null;
 
     return NextResponse.json({
       author: {

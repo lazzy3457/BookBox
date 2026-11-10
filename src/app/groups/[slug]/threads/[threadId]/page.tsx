@@ -1,9 +1,8 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { ChevronLeft, MessageCircle } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import { getGroupAccess } from "@/server/services/groups";
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ threadId:
 }
 
 export default async function GroupThreadPage({ params }: { params: Promise<{ slug: string; threadId: string }> }) {
-  const [{ slug, threadId }, session] = await Promise.all([params, getServerSession(authOptions)]);
+  const [{ slug, threadId }, session] = await Promise.all([params, getSession()]);
   const viewerId = session?.user?.id ?? null;
   const access = await getGroupAccess({ slug }, viewerId);
   if (!access || !access.canView) notFound();

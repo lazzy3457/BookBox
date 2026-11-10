@@ -1,10 +1,9 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
 import { ArrowRight, MessageCircle, MessageSquareReply, Quote, Search } from "lucide-react";
 import { ReviewLikeButton } from "@/components/reviews/ReviewLikeButton";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import { getReaderCards, getSuggestedReaderIds } from "@/server/services/community";
@@ -38,7 +37,7 @@ const circleCaption: Record<ReadingStatus, string> = {
 };
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
-  const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
   const viewerId = session?.user?.id ?? null;
 
   if (!viewerId) {

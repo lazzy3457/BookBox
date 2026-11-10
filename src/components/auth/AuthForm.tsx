@@ -72,7 +72,8 @@ export function AuthForm({ mode, googleEnabled = false }: AuthFormProps) {
 
       setIsSubmitting(false);
       if (!response.ok) {
-        setMessage("Ton compte n’a pas pu être créé. Vérifie les champs et réessaie.");
+        const payload = await response.json().catch(() => null);
+        setMessage(payload?.error?.code === "USERNAME_TAKEN" ? "Ce pseudo est déjà utilisé. Choisis-en un autre." : "Ton compte n’a pas pu être créé. Vérifie les champs et réessaie.");
         return;
       }
       setVerificationEmail(email);

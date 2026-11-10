@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { requireCurrentUserId } from "@/server/auth/session";
@@ -10,7 +11,7 @@ import { enforceRateLimit } from "@/server/security/rateLimit";
 export async function POST(request: Request) {
   try {
     const userId = await requireCurrentUserId(request);
-    await enforceRateLimit({ scope: "review-create", identifier: userId, limit: 12, windowMs: 60 * 60_000 });
+    await enforceRateLimit({ scope: "review-create", identifier: userId, limit: 60, windowMs: 60 * 60_000 });
     const input = reviewMutationSchema.parse(await request.json());
     const existingReview = await prisma.review.findUnique({
       where: {
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
         body: input.body,
         spoiler: input.spoiler
       },
-      include: { book: true, user: true }
+      include: { book: true, user: { select: publicUserSelect } }
     });
 
     await notifyFriendReview({ actorId: userId, reviewId: review.id });

@@ -1,7 +1,6 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import { Fraunces, Inter, Nunito_Sans } from "next/font/google";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/server/auth/options";
 import { AppShell } from "@/components/layout/AppShell";
 import { isAdminRole } from "@/server/auth/admin";
 import { getSiteUrl, siteConfig } from "@/lib/site";
@@ -46,7 +45,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   const preference = session?.user?.id
     ? await prisma.userPreference.findUnique({ where: { userId: session.user.id }, select: { hideSpoilers: true, theme: true } })
     : null;

@@ -1,3 +1,4 @@
+import { publicUserSelect } from "@/server/db/selects";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import type { GoogleBookCandidate } from "@/server/services/googleBooks";
@@ -172,11 +173,11 @@ export async function getBookDetails(bookId: string) {
         where: { hiddenAt: null, user: { suspendedAt: null } },
         orderBy: { createdAt: "desc" },
         include: {
-          user: true,
+          user: { select: publicUserSelect },
           reactions: true,
           comments: {
             where: { hiddenAt: null, user: { suspendedAt: null } },
-            include: { user: true, likes: true },
+            include: { user: { select: publicUserSelect }, likes: true },
             orderBy: { createdAt: "asc" }
           }
         }

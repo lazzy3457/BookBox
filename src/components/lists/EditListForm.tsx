@@ -92,7 +92,7 @@ function SortableEntry({
       <div className="h-14 w-10 shrink-0 overflow-hidden rounded border border-line bg-panelSoft">
         {entry.book.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+          <img loading="lazy" decoding="async" src={entry.book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
       </div>
 

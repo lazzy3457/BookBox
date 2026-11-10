@@ -38,7 +38,7 @@ function CommentAvatar({ node }: { node: CommentNode }) {
     <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-mint text-xs font-extrabold text-ink">
       {node.userImage ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={node.userImage} alt="" className="h-full w-full object-cover" />
+        <img loading="lazy" decoding="async" src={node.userImage} alt="" className="h-full w-full object-cover" />
       ) : (
         node.userName.slice(0, 1).toUpperCase()
       )}

@@ -15,7 +15,7 @@ export function Avatar({ name, image, size = 40, className = "" }: AvatarProps) 
     >
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" className="h-full w-full object-cover" />
+        <img decoding="async" src={image} alt="" className="h-full w-full object-cover" />
       ) : (
         initials(name, "?").slice(0, size < 36 ? 1 : 2)
       )}

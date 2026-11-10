@@ -1,12 +1,8 @@
 import { prisma } from "@/server/db/prisma";
-import { verifyPassword } from "@/server/auth/password";
-import { enforceRateLimit } from "@/server/security/rateLimit";
+import { DUMMY_PASSWORD_HASH, verifyPassword } from "@/server/auth/password";
+import { enforceLoginRateLimit, type HeaderSource } from "@/server/security/rateLimit";
 import { credentialsSchema } from "@/server/validation/auth";
 import { AUTH_ERRORS } from "@/lib/authErrors";
-
-// Hash d'un mot de passe aléatoire jeté : on le compare quand le compte n'existe pas ou n'a pas
-// de mot de passe, pour que le temps de réponse ne révèle pas quelles adresses sont inscrites.
-const DUMMY_PASSWORD_HASH = "$2b$12$EiUpvEuj97LTF5JL5nHXguW6ZmOu5BcGt6NGxAzSirn8MsTRJDl5a";
 
 const publicErrorCodes = new Set<string>([AUTH_ERRORS.EMAIL_NOT_VERIFIED, AUTH_ERRORS.RATE_LIMITED]);
 
@@ -18,13 +14,8 @@ function toPublicError(error: unknown) {
   return new Error(AUTH_ERRORS.SIGNIN_UNAVAILABLE);
 }
 
-async function checkCredentials(email: string, password: string) {
-  await enforceRateLimit({
-    scope: "login-email",
-    identifier: email,
-    limit: 10,
-    windowMs: 15 * 60_000
-  });
+async function checkCredentials(email: string, password: string, headers?: HeaderSource) {
+  await enforceLoginRateLimit(email, headers);
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -60,7 +51,7 @@ async function checkCredentials(email: string, password: string) {
   };
 }
 
-export async function authorizeCredentials(credentials: Record<string, string> | undefined) {
+export async function authorizeCredentials(credentials: Record<string, string> | undefined, headers?: HeaderSource) {
   const parsed = credentialsSchema.safeParse(credentials ?? {});
 
   if (!parsed.success) {
@@ -68,7 +59,7 @@ export async function authorizeCredentials(credentials: Record<string, string> |
   }
 
   try {
-    return await checkCredentials(parsed.data.email, parsed.data.password);
+    return await checkCredentials(parsed.data.email, parsed.data.password, headers);
   } catch (error) {
     throw toPublicError(error);
   }

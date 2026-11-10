@@ -1,4 +1,5 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import type { PrismaClient } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/server/db/prisma";
@@ -6,7 +7,8 @@ import { authorizeCredentials } from "@/server/auth/credentials";
 import { checkGoogleSignIn, createGoogleUser, googleProvider, googleSignInTime, isGoogleAuthEnabled } from "@/server/auth/google";
 
 export const authOptions: NextAuthOptions = {
-  adapter: { ...PrismaAdapter(prisma), createUser: createGoogleUser },
+  // L'adaptateur attend le type PrismaClient par défaut ; le nôtre omet seulement passwordHash des lectures.
+  adapter: { ...PrismaAdapter(prisma as unknown as PrismaClient), createUser: createGoogleUser },
   session: {
     strategy: "jwt"
   },
@@ -21,7 +23,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      authorize: (credentials) => authorizeCredentials(credentials)
+      authorize: (credentials, request) => authorizeCredentials(credentials, request?.headers)
     }),
     ...(isGoogleAuthEnabled() ? [googleProvider()] : [])
   ],

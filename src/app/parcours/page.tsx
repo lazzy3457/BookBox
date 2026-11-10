@@ -1,8 +1,7 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { BookCheck, Flame, Medal, Snowflake, Sparkles } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { getBadgeOverview, getProgressSummary } from "@/server/services/progression";
 import { BadgeCatalog } from "@/components/progression/BadgeCatalog";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -25,7 +24,7 @@ const capLabels: Record<string, string> = {
 const timeFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export default async function JourneyPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session?.user?.id) {
     return (

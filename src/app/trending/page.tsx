@@ -1,9 +1,8 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
 import { ArrowRight, Flame, Minus, Quote, Sparkles, TrendingDown, TrendingUp, Trophy, UserRoundCheck, UsersRound } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import { getTrendingRanking, TREND_POINTS, trendReason, type RankedBook, type TrendPeriod } from "@/server/services/trendingRanking";
@@ -50,7 +49,7 @@ function Movement({ book }: { book: RankedBook }) {
 }
 
 export default async function TrendingPage({ searchParams }: TrendingPageProps) {
-  const [session, params] = await Promise.all([getServerSession(authOptions), searchParams]);
+  const [session, params] = await Promise.all([getSession(), searchParams]);
   const viewerId = session?.user?.id ?? null;
   const period: TrendPeriod = params.periode === "mois" ? "month" : params.periode === "annee" ? "year" : "week";
   const periodParam = period === "month" ? "mois" : period === "year" ? "annee" : undefined;

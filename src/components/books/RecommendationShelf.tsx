@@ -59,7 +59,7 @@ export function RecommendationShelf({ initialItems, compact = false }: { initial
             <div className="cover-sheen aspect-[2/3] overflow-hidden rounded border border-line bg-panel shadow-poster transition group-hover:-translate-y-1 group-hover:border-mint/70">
               {book.thumbnailUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                <img loading="lazy" decoding="async" src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
               ) : <div className="grid h-full place-items-center"><BookOpen className="text-muted" /></div>}
             </div>
             <h3 className="mt-3 line-clamp-2 text-sm font-extrabold leading-tight text-paper">{book.title}</h3>

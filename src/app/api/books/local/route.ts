@@ -53,23 +53,20 @@ export async function GET(request: Request) {
       .sort((a, b) => b.readers - a.readers)
       .slice(0, 5);
 
-    const needle = q.toLowerCase();
-    const authorCounts = new Map<string, number>();
-    const authorBooks = await prisma.book.findMany({
-      where: { authors: { isEmpty: false } },
-      select: { authors: true },
-      take: 2000
-    });
-    authorBooks.forEach((book) => {
-      book.authors.forEach((name) => {
-        if (name.toLowerCase().includes(needle)) authorCounts.set(name, (authorCounts.get(name) ?? 0) + 1);
-      });
-    });
-    const author = [...authorCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    // L'auteur le plus présent parmi ceux dont le nom contient la recherche, compté en base.
+    const pattern = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
+    const [author] = await prisma.$queryRaw<Array<{ name: string; bookCount: number }>>`
+      SELECT a."name", COUNT(*)::int AS "bookCount"
+      FROM "Book" b, unnest(b."authors") AS a("name")
+      WHERE a."name" ILIKE ${pattern}
+      GROUP BY a."name"
+      ORDER BY COUNT(*) DESC, a."name" ASC
+      LIMIT 1
+    `;
 
     return NextResponse.json({
       items,
-      author: author ? { name: author[0], bookCount: author[1], href: authorHref(author[0]) } : null
+      author: author ? { name: author.name, bookCount: author.bookCount, href: authorHref(author.name) } : null
     });
   } catch (error) {
     return apiError(error);

@@ -13,6 +13,9 @@ const inactivePolicyMissing = process.env.INACTIVE_ACCOUNT_POLICY_CONFIRMED !== 
 const localDatabase = (() => {
   try { return ["localhost", "127.0.0.1", "::1"].includes(new URL(process.env.DATABASE_URL ?? "").hostname); } catch { return false; }
 })();
+if (!["true", "cloudflare"].includes(process.env.TRUST_PROXY_HEADERS ?? "")) {
+  console.warn("TRUST_PROXY_HEADERS n’est ni « true » ni « cloudflare » : les limites de débit par adresse se rabattent sur le User-Agent.");
+}
 if (localDatabase) console.error("DATABASE_URL pointe sur une base locale : utiliser la base de l’environnement (staging ou production).");
 if (missing.length || invalidUrls.length || inactivePolicyMissing || localDatabase) {
   if (missing.length) console.error(`Variables manquantes : ${missing.join(", ")}`);

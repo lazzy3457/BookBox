@@ -63,12 +63,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
         : Promise.resolve([])
     ]);
 
+    const { libraries: _libraries, ...publicBook } = book;
     const averageRating = visibleReviews.length
       ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length
       : null;
 
     return NextResponse.json({
-      book: { ...book, reviews: visibleReviews },
+      book: { ...publicBook, reviews: visibleReviews },
       userBook,
       currentUserReview: currentUserId ? visibleReviews.find((review) => review.userId === currentUserId) ?? null : null,
       stats: {

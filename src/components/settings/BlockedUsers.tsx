@@ -89,7 +89,7 @@ export function BlockedUsers() {
                 <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-ink font-extrabold text-mint">
                   {user.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={user.image} alt="" className="h-full w-full object-cover" />
+                    <img loading="lazy" decoding="async" src={user.image} alt="" className="h-full w-full object-cover" />
                   ) : (
                     (user.name ?? user.username ?? "B").slice(0, 1).toUpperCase()
                   )}

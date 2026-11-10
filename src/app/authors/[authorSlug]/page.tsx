@@ -1,12 +1,12 @@
+import { getSession } from "@/server/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
 import { ArrowRight, Check, ChevronDown, Search, UserRound } from "lucide-react";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { getBlockedUserIds } from "@/server/services/blocks";
 import { slugifyAuthor } from "@/lib/authors";
+import { findAuthorNames } from "@/server/services/authors";
 import { plural } from "@/lib/format";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
 import { AuthorExternalEditions } from "@/components/authors/AuthorExternalEditions";
@@ -27,10 +27,10 @@ type AuthorSummary = {
 };
 
 async function findAuthorBookIds(authorSlug: string) {
-  const books = await prisma.book.findMany({ where: { authors: { isEmpty: false } }, select: { id: true, authors: true }, take: 5000 });
-  const matches = books.filter((book) => book.authors.some((author) => slugifyAuthor(author) === authorSlug));
-  const name = matches[0]?.authors.find((author) => slugifyAuthor(author) === authorSlug) ?? null;
-  return { name, ids: matches.map((book) => book.id) };
+  const names = await findAuthorNames(authorSlug);
+  if (!names.length) return { name: null, ids: [] };
+  const books = await prisma.book.findMany({ where: { authors: { hasSome: names } }, select: { id: true }, take: 5000 });
+  return { name: names[0], ids: books.map((book) => book.id) };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ authorSlug: string }> }): Promise<Metadata> {
@@ -82,7 +82,7 @@ function year(value: string | null) {
 
 export default async function AuthorPage({ params }: { params: Promise<{ authorSlug: string }> }) {
   const { authorSlug } = await params;
-  const [{ name: authorName, ids }, session] = await Promise.all([findAuthorBookIds(authorSlug), getServerSession(authOptions)]);
+  const [{ name: authorName, ids }, session] = await Promise.all([findAuthorBookIds(authorSlug), getSession()]);
   if (!authorName) notFound();
 
   const viewerId = session?.user?.id ?? null;
@@ -178,7 +178,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         <div className="grid h-[72px] w-[72px] place-items-center overflow-hidden rounded-full bg-panelSoft text-muted sm:h-[150px] sm:w-[150px]">
           {authorSummary.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={authorSummary.image} alt="" className="h-full w-full object-cover" />
+            <img loading="lazy" decoding="async" src={authorSummary.image} alt="" className="h-full w-full object-cover" />
           ) : (
             <UserRound size={44} aria-hidden />
           )}

@@ -1,8 +1,7 @@
+import { getSession } from "@/server/auth/session";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { ReadingStatus } from "@prisma/client";
-import { authOptions } from "@/server/auth/options";
 import { prisma } from "@/server/db/prisma";
 import { LibraryWorkspace } from "@/components/library/LibraryWorkspace";
 
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LibraryPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session?.user?.id) {
     return (
