@@ -15,3 +15,9 @@ export async function requireAdmin() {
   }
   return session.user;
 }
+
+// Même définition d'un admin que requireAdmin, pour un utilisateur déjà identifié.
+export async function isActiveAdmin(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, emailVerified: true, suspendedAt: true } });
+  return Boolean(user && user.role === UserRole.ADMIN && user.emailVerified && !user.suspendedAt);
+}
