@@ -61,7 +61,16 @@ type DropdownOption =
 const PAGE_SIZE = 20;
 const statusLabels: Record<Status, string> = { TO_READ: "À lire", READING: "En cours", READ: "Lu" };
 const exploreGenres = ["fantasy", "science-fiction", "romance", "thriller", "policier", "classique", "bd-manga", "poesie", "biographie", "jeunesse"];
-const languageLabels: Record<string, string> = { fr: "Français", en: "Anglais", es: "Espagnol", it: "Italien", de: "Allemand" };
+const languageLabels: Record<string, string> = {
+  fr: "Français", en: "Anglais", es: "Espagnol", it: "Italien", de: "Allemand", pt: "Portugais", nl: "Néerlandais", ja: "Japonais", zh: "Chinois", ru: "Russe",
+  // Codes sur 3 lettres encore présents dans d'anciennes réponses en cache.
+  fre: "Français", eng: "Anglais", spa: "Espagnol", ita: "Italien", ger: "Allemand"
+};
+const sourceLabels: Record<string, string> = { google_books: "Google Books", open_library: "Open Library" };
+
+// Un curseur par source : chaque source reprend après son dernier livre affiché.
+type Cursors = { googleStart: number; openLibraryStart: number };
+const START_CURSORS: Cursors = { googleStart: 0, openLibraryStart: 0 };
 
 function normalizeText(value: string) {
   return value
@@ -133,7 +142,8 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
   const [lastQuery, setLastQuery] = useState("");
   const [items, setItems] = useState<Candidate[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [nextStart, setNextStart] = useState(0);
+  const [cursors, setCursors] = useState<Cursors>(START_CURSORS);
+  const [failedSources, setFailedSources] = useState<string[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [status, setStatus] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -187,10 +197,11 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
     ...suggestions.slice(0, localBooks.length ? 2 : 5).map((book) => ({ kind: "external" as const, book }))
   ], [localAuthor, localBooks, suggestions]);
 
-  const searchUrl = useCallback((searchQuery: string, startIndex: number, pageSize = PAGE_SIZE) => {
+  const searchUrl = useCallback((searchQuery: string, from: Cursors, pageSize = PAGE_SIZE) => {
     const params = new URLSearchParams({
       q: searchQuery,
-      startIndex: String(startIndex),
+      googleStart: String(from.googleStart),
+      openLibraryStart: String(from.openLibraryStart),
       pageSize: String(pageSize),
       mode: isLikelyIsbn(searchQuery) ? "isbn" : "all",
       language: "all",
@@ -210,7 +221,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
       try {
         const [localResponse, externalResponse] = await Promise.all([
           fetch(`/api/books/local?q=${encodeURIComponent(normalized)}`, { signal: controller.signal }),
-          fetch(searchUrl(normalized, 0, 8), { signal: controller.signal })
+          fetch(searchUrl(normalized, START_CURSORS, 8), { signal: controller.signal })
         ]);
         const localPayload = localResponse.ok ? await localResponse.json() : { items: [], author: null };
         const externalPayload = externalResponse.ok ? await externalResponse.json() : { items: [], totalItems: 0 };
@@ -269,7 +280,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
     setStatus("");
     setToast(null);
     try {
-      const response = await fetch(searchUrl(normalized, 0));
+      const response = await fetch(searchUrl(normalized, START_CURSORS));
       const payload = await response.json();
       if (!response.ok) {
         setStatus("La recherche ne répond pas pour le moment. Réessaie dans quelques instants.");
@@ -278,7 +289,8 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
       setLastQuery(normalized);
       setItems(payload.items ?? []);
       setTotalItems(payload.totalItems ?? 0);
-      setNextStart(payload.nextStartIndex ?? PAGE_SIZE);
+      setCursors({ googleStart: payload.googleStart ?? 0, openLibraryStart: payload.openLibraryStart ?? 0 });
+      setFailedSources(payload.failedSources ?? []);
       setHasMore(Boolean(payload.hasMore));
       setSelectedGroupKey(null);
       setSelectedEditionKey(null);
@@ -300,11 +312,16 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
   async function loadMore() {
     setIsLoadingMore(true);
     try {
-      const response = await fetch(searchUrl(lastQuery, nextStart));
+      const response = await fetch(searchUrl(lastQuery, cursors));
       const payload = await response.json();
       if (response.ok) {
-        setItems((current) => [...current, ...(payload.items ?? [])]);
-        setNextStart(payload.nextStartIndex ?? nextStart + PAGE_SIZE);
+        // Les sources renvoient parfois le même volume à deux index différents.
+        setItems((current) => {
+          const known = new Set(current.map(bookKey));
+          return [...current, ...((payload.items ?? []) as Candidate[]).filter((book) => !known.has(bookKey(book)))];
+        });
+        setCursors({ googleStart: payload.googleStart ?? cursors.googleStart, openLibraryStart: payload.openLibraryStart ?? cursors.openLibraryStart });
+        setFailedSources(payload.failedSources ?? []);
         setHasMore(Boolean(payload.hasMore));
       }
     } finally {
@@ -634,6 +651,11 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
                 </div>
               ) : null}
               {status ? <p className="text-sm font-bold text-coral">{status}</p> : null}
+              {failedSources.length ? (
+                <p role="status" className="text-xs text-muted">
+                  Résultats partiels : {failedSources.map((name) => sourceLabels[name] ?? name).join(" et ")} ne répond{failedSources.length > 1 ? "ent" : ""} pas pour le moment.
+                </p>
+              ) : null}
 
               {groups.map((group) => {
                 const isSelected = group.key === selectedGroupKey;

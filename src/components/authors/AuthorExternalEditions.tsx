@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, ChevronDown, ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, SlidersHorizontal } from "lucide-react";
+import { BookCover } from "@/components/books/BookCover";
 import { Toast } from "@/components/ui/Toast";
 
 type SourceFilter = "all" | "google_books" | "open_library";
@@ -27,9 +28,17 @@ export type ExternalEdition = {
 
 type AuthorExternalEditionsProps = {
   authorSlug: string;
+  isSignedIn: boolean;
 };
 
+// Un curseur par source : chaque source reprend après son dernier livre affiché.
+type Cursors = { googleStart: number; openLibraryStart: number };
+type Filters = { source: SourceFilter; language: string; edition: EditionFilter };
+type Group = { key: string; main: ExternalEdition; editions: ExternalEdition[] };
+
 const PAGE_SIZE = 10;
+const START_CURSORS: Cursors = { googleStart: 0, openLibraryStart: 0 };
+const START_FILTERS: Filters = { source: "all", language: "all", edition: "all" };
 const LANGUAGE_OPTIONS = [
   { label: "Toutes", value: "all" },
   { label: "Français", value: "fr" },
@@ -40,26 +49,13 @@ const LANGUAGE_OPTIONS = [
   { label: "Portugais", value: "pt" },
   { label: "Japonais", value: "ja" }
 ];
-
-// Le champ accepte un nom (« français »), un code (« fr ») ou rien : on en déduit le code envoyé à l'API.
-function languageCode(input: string) {
-  const value = input
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-  if (!value) return "all";
-  const match = LANGUAGE_OPTIONS.find(
-    (option) => option.value === value || option.label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().startsWith(value)
-  );
-  if (match) return match.value;
-  return /^[a-z]{2,3}$/.test(value) ? value : "all";
-}
+const languageLabels = new Map(LANGUAGE_OPTIONS.map((option) => [option.value, option.label]));
+const sourceLabels: Record<string, string> = { google_books: "Google Books", open_library: "Open Library" };
 
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -69,24 +65,21 @@ function bookKey(book: ExternalEdition) {
   return book.externalId ?? book.googleBooksVolumeId ?? book.openLibraryKey ?? `${book.title}-${book.authors.join(",")}`;
 }
 
-function sourceLabel(book: ExternalEdition) {
-  return book.source === "open_library" ? "Open Library" : "Google Books";
+function year(value?: string) {
+  return value?.slice(0, 4);
 }
 
 function formatEdition(book: ExternalEdition) {
-  return [book.publisher, book.publishedDate, book.pageCount ? `${book.pageCount} pages` : null, book.language?.toUpperCase()]
-    .filter(Boolean)
-    .join(" - ");
-}
-
-function formatIsbn(book: ExternalEdition) {
   const isbn = [...(book.isbn13 ?? []), ...(book.isbn10 ?? [])][0];
-  return isbn ? `ISBN ${isbn}` : null;
-}
-
-function hasSpecialEditionSignal(book: ExternalEdition) {
-  const text = normalizeText([book.title, book.publisher, book.description].filter(Boolean).join(" "));
-  return ["integrale", "epoque", "deluxe", "collector", "illustre", "illustrated", "omnibus"].some((word) => text.includes(word));
+  return [
+    book.publisher ?? "Éditeur inconnu",
+    year(book.publishedDate),
+    book.pageCount ? `${book.pageCount} pages` : null,
+    book.language ? languageLabels.get(book.language) ?? book.language.toUpperCase() : null,
+    isbn ? `ISBN ${isbn}` : null
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function groupSignature(book: ExternalEdition) {
@@ -99,42 +92,28 @@ function groupSignature(book: ExternalEdition) {
   return `${author}:${title}`;
 }
 
-function paginationItems(currentPage: number, totalPages: number) {
-  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1].filter((page) => page >= 1 && page <= totalPages));
-  const sorted = [...pages].sort((a, b) => a - b);
-  const items: Array<number | "ellipsis"> = [];
-
-  sorted.forEach((page, index) => {
-    const previous = sorted[index - 1];
-    if (previous && page - previous > 1) {
-      items.push("ellipsis");
-    }
-    items.push(page);
-  });
-
-  return items;
+// L'édition mise en avant : de préférence celle qui a une couverture.
+function betterMain(current: ExternalEdition, next: ExternalEdition) {
+  return !current.thumbnailUrl && next.thumbnailUrl ? next : current;
 }
 
-export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsProps) {
+export function AuthorExternalEditions({ authorSlug, isSignedIn }: AuthorExternalEditionsProps) {
   const router = useRouter();
-  const sectionRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<ExternalEdition[]>([]);
-  const [source, setSource] = useState<SourceFilter>("all");
-  const [language, setLanguage] = useState("all");
-  const [languageInput, setLanguageInput] = useState("");
-  const [edition, setEdition] = useState<EditionFilter>("all");
+  const [filters, setFilters] = useState<Filters>(START_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageInput, setPageInput] = useState("1");
-  const [totalItems, setTotalItems] = useState(0);
+  const [cursors, setCursors] = useState<Cursors>(START_CURSORS);
+  const [hasMore, setHasMore] = useState(false);
+  const [failedSources, setFailedSources] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" } | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const visiblePages = paginationItems(currentPage, totalPages);
+
   const groups = useMemo(() => {
-    const grouped = new Map<string, { key: string; main: ExternalEdition; editions: ExternalEdition[] }>();
+    const grouped = new Map<string, Group>();
 
     items.forEach((book) => {
       const key = groupSignature(book);
@@ -146,104 +125,87 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
       }
 
       existing.editions.push(book);
+      existing.main = betterMain(existing.main, book);
     });
 
     return [...grouped.values()];
   }, [items]);
 
+  async function fetchPage(from: Cursors, signal?: AbortSignal) {
+    const params = new URLSearchParams({
+      pageSize: String(PAGE_SIZE),
+      googleStart: String(from.googleStart),
+      openLibraryStart: String(from.openLibraryStart),
+      ...filters
+    });
+    const response = await fetch(`/api/authors/${authorSlug}/books?${params.toString()}`, { signal });
+    if (!response.ok) throw new Error("unavailable");
+    return (await response.json()) as { items?: ExternalEdition[]; hasMore?: boolean; failedSources?: string[] } & Partial<Cursors>;
+  }
+
+  // Première page : à l'arrivée sur la page, puis à chaque changement de filtre.
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadEditions() {
+    async function loadFirstPage() {
       setIsLoading(true);
-      setToast(null);
+      setUnavailable(false);
 
       try {
-        const params = new URLSearchParams({
-          page: String(currentPage),
-          pageSize: String(PAGE_SIZE),
-          source,
-          language: language || "all",
-          edition
-        });
-        const response = await fetch(`/api/authors/${authorSlug}/books?${params.toString()}`, {
-          signal: controller.signal
-        });
-        const payload = await response.json();
-
-        if (!response.ok) {
-          setItems([]);
-          setTotalItems(0);
-          setToast({ tone: "error", message: "Les editions externes ne repondent pas pour le moment." });
-          return;
-        }
-
+        const payload = await fetchPage(START_CURSORS, controller.signal);
         setItems(payload.items ?? []);
-        setTotalItems(payload.totalItems ?? 0);
+        setCursors({ googleStart: payload.googleStart ?? 0, openLibraryStart: payload.openLibraryStart ?? 0 });
+        setHasMore(Boolean(payload.hasMore));
+        setFailedSources(payload.failedSources ?? []);
         setExpandedGroups(new Set());
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           setItems([]);
-          setTotalItems(0);
-          setToast({ tone: "error", message: "Les editions externes ne repondent pas pour le moment." });
+          setHasMore(false);
+          setUnavailable(true);
         }
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
 
-    void loadEditions();
+    void loadFirstPage();
 
     return () => controller.abort();
-  }, [authorSlug, currentPage, edition, language, source]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const code = languageCode(languageInput);
-      if (code !== language) updateFilters(source, code, edition);
-    }, 450);
-    return () => window.clearTimeout(timer);
-    // updateFilters relit l'état courant ; seule la saisie déclenche ce délai.
+    // fetchPage ne dépend que de authorSlug et des filtres, déjà listés.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languageInput]);
+  }, [authorSlug, filters]);
 
-  function updateFilters(nextSource = source, nextLanguage = language, nextEdition = edition) {
-    setSource(nextSource);
-    setLanguage(nextLanguage);
-    setEdition(nextEdition);
-    setCurrentPage(1);
-    setPageInput("1");
-  }
-
-  function changePage(page: number) {
-    const nextPage = Math.min(Math.max(page, 1), totalPages);
-
-    if (nextPage === currentPage) {
-      return;
+  async function loadMore() {
+    setIsLoadingMore(true);
+    try {
+      const payload = await fetchPage(cursors);
+      // Les sources renvoient parfois le même volume à deux index différents.
+      setItems((current) => {
+        const known = new Set(current.map(bookKey));
+        return [...current, ...(payload.items ?? []).filter((book) => !known.has(bookKey(book)))];
+      });
+      setCursors({ googleStart: payload.googleStart ?? cursors.googleStart, openLibraryStart: payload.openLibraryStart ?? cursors.openLibraryStart });
+      setHasMore(Boolean(payload.hasMore));
+      setFailedSources(payload.failedSources ?? []);
+    } catch {
+      setToast({ tone: "error", message: "La suite ne répond pas pour le moment. Réessaie dans quelques instants." });
+    } finally {
+      setIsLoadingMore(false);
     }
-
-    setCurrentPage(nextPage);
-    setPageInput(String(nextPage));
-    window.requestAnimationFrame(() => {
-      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   }
 
-  function goToTypedPage(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const requestedPage = Number(pageInput);
-
-    if (!Number.isFinite(requestedPage)) {
-      setPageInput(String(currentPage));
-      return;
-    }
-
-    changePage(Math.trunc(requestedPage));
+  function goToLogin() {
+    router.push(`/login?callbackUrl=${encodeURIComponent(`/authors/${authorSlug}`)}`);
   }
 
+  // Ouvrir une fiche enregistre le livre dans BooksBox : il faut un compte.
   async function openBook(book: ExternalEdition) {
+    if (!isSignedIn) {
+      goToLogin();
+      return;
+    }
+
     setSavingId(bookKey(book));
     setToast(null);
 
@@ -253,124 +215,77 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(book)
       });
-      const payload = await response.json();
 
-      if (!response.ok) {
-        throw new Error("Ce livre n'a pas pu etre ouvert. Reessaie.");
+      if (response.status === 401) {
+        goToLogin();
+        return;
       }
+      if (!response.ok) throw new Error("save failed");
 
+      const payload = (await response.json()) as { id: string };
       router.push(`/books/${payload.id}`);
-    } catch (error) {
-      setToast({
-        tone: "error",
-        message: error instanceof Error ? error.message : "Ce livre n'a pas pu etre ouvert. Reessaie."
-      });
-    } finally {
+    } catch {
+      setToast({ tone: "error", message: "Ce livre n'a pas pu être ouvert. Réessaie." });
       setSavingId(null);
     }
   }
 
-  function renderEdition(book: ExternalEdition, compact = false) {
-    const key = bookKey(book);
-    const isSaving = savingId === key;
-
-    return (
-      <article className={`w-full min-w-0 max-w-full overflow-hidden rounded border border-line bg-panel/85 p-4 shadow-poster ${compact ? "bg-ink/45" : ""}`}>
-        <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
-          <div className="cover-sheen grid h-28 w-16 shrink-0 place-items-center overflow-hidden rounded border border-line bg-panelSoft shadow-poster min-[360px]:h-32 min-[360px]:w-20 sm:h-36 sm:w-24">
-            {book.thumbnailUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img loading="lazy" decoding="async" src={book.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <BookOpen className="text-mint/30" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="rounded bg-mint/10 px-2 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-mint">
-                {sourceLabel(book)}
-              </span>
-              {hasSpecialEditionSignal(book) ? (
-                <span className="rounded bg-amber/15 px-2 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-amber">
-                  Edition
-                </span>
-              ) : null}
-            </div>
-            <h3 className="text-lg font-extrabold leading-tight text-paper">{book.title}</h3>
-            <p className="mt-1 text-sm text-muted">{book.authors.join(", ") || "Auteur inconnu"}</p>
-            <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-xs font-bold text-muted">
-              {formatEdition(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatEdition(book)}</span> : null}
-              {formatIsbn(book) ? <span className="rounded border border-line bg-ink px-2 py-1">{formatIsbn(book)}</span> : null}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => openBook(book)}
-            disabled={isSaving}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded border border-line bg-ink px-3 text-xs font-extrabold text-paper transition hover:border-mint hover:text-mint disabled:cursor-wait disabled:opacity-60 sm:w-36 sm:shrink-0"
-          >
-            <Plus size={14} />
-            {isSaving ? "Ouverture..." : "Voir la fiche"}
-          </button>
-        </div>
-      </article>
-    );
+  function toggleGroup(key: string) {
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
+  const selectClass = "mt-1.5 h-10 w-full rounded-xl border border-line bg-panel px-3 text-sm font-normal normal-case tracking-normal text-paper outline-none focus:border-mint";
+
   return (
-    <div ref={sectionRef} className="min-w-0 overflow-hidden scroll-mt-24">
+    <div className="flex min-w-0 flex-col gap-3">
       {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => setFiltersOpen((value) => !value)}
-          className="inline-flex h-10 items-center gap-2 rounded border border-line bg-ink px-3 text-sm font-extrabold text-paper transition hover:border-mint hover:text-mint"
+          aria-expanded={filtersOpen}
+          className="inline-flex items-center gap-1.5 text-xs font-extrabold text-mint hover:underline"
         >
-          <SlidersHorizontal size={16} />
-          Filtres
-          <ChevronDown size={16} className={`transition ${filtersOpen ? "rotate-180" : ""}`} />
+          <SlidersHorizontal size={14} aria-hidden />
+          Filtrer
+          <ChevronDown size={14} aria-hidden className={`transition ${filtersOpen ? "rotate-180" : ""}`} />
         </button>
-        <p className="text-xs font-bold text-muted">10 editions par page</p>
+        {failedSources.length ? (
+          <p role="status" className="text-xs text-muted">
+            Résultats partiels : {failedSources.map((name) => sourceLabels[name] ?? name).join(" et ")} ne répond{failedSources.length > 1 ? "ent" : ""} pas pour le moment.
+          </p>
+        ) : null}
       </div>
 
       {filtersOpen ? (
-        <div className="mb-5 grid gap-3 rounded border border-line bg-panel/70 p-4 md:grid-cols-3">
-          <label className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
+        <div className="grid gap-3 rounded-xl bg-ink p-3 sm:grid-cols-3">
+          <label className="bb-label text-muted">
             Source
-            <select
-              value={source}
-              onChange={(event) => updateFilters(event.target.value as SourceFilter, language, edition)}
-              className="mt-2 h-11 w-full rounded border border-line bg-ink px-3 text-sm normal-case tracking-normal text-paper outline-none focus:border-mint"
-            >
+            <select value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value as SourceFilter })} className={selectClass}>
               <option value="all">Toutes</option>
               <option value="google_books">Google Books</option>
               <option value="open_library">Open Library</option>
             </select>
           </label>
-          <label className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
+          <label className="bb-label text-muted">
             Langue
-            <input
-              list="author-language-options"
-              value={languageInput}
-              onChange={(event) => setLanguageInput(event.target.value)}
-              className="mt-2 h-11 w-full rounded-xl border border-line bg-panel px-3 text-sm normal-case tracking-normal text-paper outline-none focus:border-mint"
-              placeholder="Toutes, français, anglais…"
-            />
-            <datalist id="author-language-options">
-              {LANGUAGE_OPTIONS.filter((option) => option.value !== "all").map((option) => (
-                <option key={option.value} value={option.label} />
+            <select value={filters.language} onChange={(event) => setFilters({ ...filters, language: event.target.value })} className={selectClass}>
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
-            </datalist>
+            </select>
           </label>
-          <label className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
-            Edition
-            <select
-              value={edition}
-              onChange={(event) => updateFilters(source, language, event.target.value as EditionFilter)}
-              className="mt-2 h-11 w-full rounded border border-line bg-ink px-3 text-sm normal-case tracking-normal text-paper outline-none focus:border-mint"
-            >
+          <label className="bb-label text-muted">
+            Édition
+            <select value={filters.edition} onChange={(event) => setFilters({ ...filters, edition: event.target.value as EditionFilter })} className={selectClass}>
               <option value="all">Toutes</option>
-              <option value="special">Integrales / epoques</option>
+              <option value="special">Intégrales, éditions spéciales</option>
               <option value="with_isbn">Avec ISBN</option>
               <option value="with_cover">Avec couverture</option>
             </select>
@@ -379,113 +294,75 @@ export function AuthorExternalEditions({ authorSlug }: AuthorExternalEditionsPro
       ) : null}
 
       {isLoading ? (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-2" aria-busy="true">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-44 animate-pulse rounded border border-line bg-panel/65" />
+            <div key={index} className="h-[84px] animate-pulse rounded-xl bg-panelSoft/70" />
           ))}
         </div>
       ) : groups.length ? (
-        <div className="min-w-0 space-y-4 overflow-hidden">
+        <ul className="divide-y divide-line">
           {groups.map((group) => {
             const isExpanded = expandedGroups.has(group.key);
-            const editions = group.editions.filter((book) => bookKey(book) !== bookKey(group.main));
+            const isSaving = savingId === bookKey(group.main);
 
             return (
-              <div key={group.key} className="min-w-0 space-y-2 overflow-hidden">
-                {renderEdition(group.main)}
-                {group.editions.length > 1 ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExpandedGroups((current) => {
-                        const next = new Set(current);
-                        if (next.has(group.key)) {
-                          next.delete(group.key);
-                        } else {
-                          next.add(group.key);
-                        }
-                        return next;
-                      })
-                    }
-                    className="inline-flex h-9 items-center gap-2 rounded border border-line bg-ink px-3 text-xs font-extrabold text-paper transition hover:border-mint hover:text-mint"
-                  >
-                    {isExpanded ? "Masquer les editions" : `Voir les editions (${group.editions.length})`}
-                    <ChevronDown size={14} className={`transition ${isExpanded ? "rotate-180" : ""}`} />
+              <li key={group.key} className="py-3">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                  <button type="button" onClick={() => void openBook(group.main)} disabled={isSaving} className="shrink-0 transition hover:-translate-y-0.5" aria-label={`Ouvrir la fiche de ${group.main.title}`}>
+                    <BookCover title={group.main.title} thumbnailUrl={group.main.thumbnailUrl} className="h-[72px] w-12 rounded-md" iconSize={0} />
                   </button>
-                ) : null}
-                {isExpanded && editions.length ? (
-                  <div className="min-w-0 space-y-2 border-l border-line pl-3">
-                    {editions.map((book) => (
-                      <div key={bookKey(book)}>{renderEdition(book, true)}</div>
-                    ))}
+                  <div className="min-w-0 flex-1">
+                    <button type="button" onClick={() => void openBook(group.main)} disabled={isSaving} className="block max-w-full truncate text-left font-display text-[15px] font-semibold text-paper hover:text-mint">
+                      {group.main.title}
+                    </button>
+                    <p className="truncate text-[11px] text-muted">{formatEdition(group.main)}</p>
+                    {group.editions.length > 1 ? (
+                      <button type="button" onClick={() => toggleGroup(group.key)} aria-expanded={isExpanded} className="mt-1 inline-flex items-center gap-1 text-[11px] font-extrabold text-mint hover:underline">
+                        {group.editions.length} éditions
+                        <ChevronDown size={12} aria-hidden className={`transition ${isExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                    ) : null}
                   </div>
+                  <button type="button" onClick={() => void openBook(group.main)} disabled={isSaving} className="bb-btn-outline shrink-0 px-3 py-1.5 text-xs text-mint disabled:cursor-wait disabled:opacity-60">
+                    {isSaving ? <Loader2 size={14} aria-hidden className="animate-spin" /> : null}
+                    <span className="hidden min-[400px]:inline">{isSaving ? "Ouverture…" : "Voir la fiche"}</span>
+                    {isSaving ? null : <ChevronRight size={14} aria-hidden className="min-[400px]:hidden" />}
+                  </button>
+                </div>
+
+                {isExpanded ? (
+                  <ul className="mt-2 flex flex-col gap-1.5 pl-[60px] sm:pl-16">
+                    {group.editions.map((book) => (
+                      <li key={bookKey(book)}>
+                        <button
+                          type="button"
+                          onClick={() => void openBook(book)}
+                          disabled={savingId === bookKey(book)}
+                          className="flex w-full min-w-0 items-center gap-2 rounded-xl bg-ink px-3 py-2 text-left text-xs text-paper transition hover:text-mint disabled:cursor-wait disabled:opacity-60"
+                        >
+                          <span className="min-w-0 flex-1 truncate">{formatEdition(book)}</span>
+                          {savingId === bookKey(book) ? <Loader2 size={12} aria-hidden className="shrink-0 animate-spin" /> : <ChevronRight size={12} aria-hidden className="shrink-0" />}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 ) : null}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       ) : (
-        <div className="rounded border border-line bg-panel/65 p-6 text-sm text-muted">
-          Aucune edition externe trouvee avec ces filtres.
-        </div>
+        <p className="rounded-xl bg-ink p-4 text-sm text-muted">
+          {unavailable
+            ? "Google Books et Open Library ne répondent pas pour le moment. Réessaie dans quelques instants."
+            : "Aucun autre livre trouvé avec ces filtres."}
+        </p>
       )}
 
-      {totalPages > 1 ? (
-        <nav className="mt-5 flex flex-wrap items-center justify-center gap-2" aria-label="Pagination editions externes">
-          <button
-            type="button"
-            onClick={() => changePage(currentPage - 1)}
-            disabled={currentPage === 1 || isLoading}
-            className="grid h-10 w-10 place-items-center rounded border border-line bg-ink text-paper transition hover:border-mint hover:text-mint disabled:cursor-default disabled:opacity-40"
-            aria-label="Page precedente"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          {visiblePages.map((page, index) =>
-            page === "ellipsis" ? (
-              <span key={`external-ellipsis-${index}`} className="px-2 text-muted">
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                type="button"
-                onClick={() => changePage(page)}
-                disabled={isLoading}
-                className={`h-10 min-w-10 rounded border px-3 text-sm font-extrabold transition ${
-                  currentPage === page ? "border-mint bg-mint text-ink" : "border-line bg-ink text-paper hover:border-mint hover:text-mint"
-                }`}
-              >
-                {page}
-              </button>
-            )
-          )}
-          <form onSubmit={goToTypedPage} className="flex items-center gap-2 sm:ml-2">
-            <label htmlFor="author-external-page" className="text-xs font-bold text-muted">
-              Page
-            </label>
-            <input
-              id="author-external-page"
-              value={pageInput}
-              onChange={(event) => setPageInput(event.target.value)}
-              className="h-10 w-16 rounded border border-line bg-ink px-2 text-center text-sm font-extrabold text-paper outline-none transition focus:border-mint"
-              inputMode="numeric"
-              min={1}
-              max={totalPages}
-              type="number"
-            />
-            <span className="text-xs font-bold text-muted">/ {totalPages}</span>
-          </form>
-          <button
-            type="button"
-            onClick={() => changePage(currentPage + 1)}
-            disabled={currentPage === totalPages || isLoading}
-            className="grid h-10 w-10 place-items-center rounded border border-line bg-ink text-paper transition hover:border-mint hover:text-mint disabled:cursor-default disabled:opacity-40"
-            aria-label="Page suivante"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </nav>
+      {hasMore && !isLoading ? (
+        <button type="button" onClick={() => void loadMore()} disabled={isLoadingMore} className="bb-btn-outline w-fit px-5 py-2.5 text-sm text-mint">
+          {isLoadingMore ? "Chargement…" : "Voir plus de livres"}
+        </button>
       ) : null}
     </div>
   );

@@ -37,8 +37,14 @@ L’ancien client mobile doit transmettre les nouveaux champs juridiques avant d
 ## Livres et découverte
 
 - `GET /api/books/search` : chaque résultat porte `genres` (slugs de `src/lib/genres.ts`).
+  - Pagination : un curseur par source. La réponse renvoie `googleStart` et `openLibraryStart`, à renvoyer tels quels pour la page suivante (`hasMore` dit s'il en reste). L'ancien `startIndex` / `nextStartIndex` reste accepté, en moins précis.
+  - `partial: true` et `failedSources` (`google_books`, `open_library`) signalent qu'une source n'a pas répondu ; les résultats viennent alors de l'autre seulement.
+  - Les mangas sont exclus des résultats (catégories Google, sujets Open Library, éditeurs de mangas). Les BD et comics restent.
+  - Un résultat Open Library décrit une seule édition : éditeur, langue (code sur 2 lettres) et au plus deux ISBN de chaque type.
+- `GET /api/authors/:authorSlug/books` : livres externes d’un auteur absents de BooksBox. Même pagination par curseurs (`googleStart`, `openLibraryStart`, `hasMore`) et mêmes champs `partial` / `failedSources` que la recherche ; le paramètre `page` n’existe plus.
 - `POST /api/books` : accepte `genres` (au plus trois slugs connus) pour un livre externe ou manuel.
 - `GET /api/books/:bookId`
+- `PATCH /api/books/:bookId` : `{ pageCount }` renseigne le nombre de pages d’un livre qui n’en a pas (409 s’il est déjà connu, 404 si le livre n’est pas dans la bibliothèque du lecteur). Un admin peut corriger un nombre déjà renseigné ; les pourcentages des pages notées sont alors recalculés.
 - `GET /api/trending`
 - `GET/POST /api/recommendations`
 

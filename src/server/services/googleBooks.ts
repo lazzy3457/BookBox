@@ -1,5 +1,6 @@
 import { googleBookUpsertSchema } from "@/server/validation/books";
-import type { ExternalBookCandidate } from "@/server/services/externalBooks";
+import { isManga, sanitizeExternalBook } from "@/server/services/externalBooks";
+import type { ExternalBookCandidate, ExternalBookSearchResult } from "@/server/services/externalBooks";
 import { fetchWithTimeout } from "@/server/http/fetchWithTimeout";
 import { genresFromCategories } from "@/lib/genres";
 
@@ -91,31 +92,38 @@ function isbnByType(
     .filter(Boolean);
 }
 
+// Renvoie null pour un volume inutilisable (sans identifiant, par exemple) :
+// l'appelant l'ignore sans perdre le reste de la page.
 export function normalizeGoogleBook(item: GoogleVolume) {
   const volume = item.volumeInfo ?? {};
-  const parsedBook = googleBookUpsertSchema.parse({
+  const parsedBook = googleBookUpsertSchema.safeParse(sanitizeExternalBook({
     googleBooksVolumeId: item.id,
-    title: volume.title ?? "Titre inconnu",
+    title: volume.title?.trim() || "Titre inconnu",
     authors: volume.authors ?? [],
     description: volume.description,
     thumbnailUrl: volume.imageLinks?.thumbnail?.replace("http://", "https://") ?? volume.imageLinks?.smallThumbnail,
     publishedDate: volume.publishedDate,
     publisher: volume.publisher,
+    // Google renvoie souvent pageCount: 0 quand il ne connaît pas la pagination.
     pageCount: volume.pageCount,
     language: volume.language,
     genres: genresFromCategories(volume.categories),
     isbn10: isbnByType(volume.industryIdentifiers, "ISBN_10"),
     isbn13: isbnByType(volume.industryIdentifiers, "ISBN_13")
-  });
+  }));
+
+  if (!parsedBook.success) {
+    return null;
+  }
 
   return {
-    ...parsedBook,
+    ...parsedBook.data,
     externalId: `google-books:${item.id}`,
     source: "google_books" as const
   } satisfies ExternalBookCandidate;
 }
 
-export async function searchGoogleBooks(query: string, startIndex = 0, options: SearchGoogleBooksOptions = {}) {
+export async function searchGoogleBooks(query: string, startIndex = 0, options: SearchGoogleBooksOptions = {}): Promise<ExternalBookSearchResult> {
   const pageSize = Math.min(Math.max(options.pageSize ?? GOOGLE_BOOKS_PAGE_SIZE, 1), 40);
   const url = new URL(GOOGLE_BOOKS_URL);
   url.searchParams.set("q", buildGoogleBooksQuery(query, options.mode ?? "all"));
@@ -138,27 +146,52 @@ export async function searchGoogleBooks(query: string, startIndex = 0, options: 
   if (!response.ok) {
     throw Object.assign(new Error("La recherche Google Books est momentanément indisponible."), {
       status: 502,
-      code: "GOOGLE_BOOKS_UNAVAILABLE"
+      code: "GOOGLE_BOOKS_UNAVAILABLE",
+      // 429 : quota dépassé. Sert au journal serveur, pas à la réponse.
+      upstreamStatus: response.status
     });
   }
 
   const payload = (await response.json()) as GoogleBooksResponse;
-  const items = (payload.items ?? []).map(normalizeGoogleBook);
+  const volumes = payload.items ?? [];
+  const items: ExternalBookCandidate[] = [];
+  const positions: number[] = [];
+  const mangaTitles: string[] = [];
+
+  // Chaque volume est validé séparément : un seul volume invalide ne fait plus
+  // tomber la page entière. Les mangas sont écartés ici, sur les catégories
+  // brutes, avant toute pagination.
+  volumes.forEach((volume, index) => {
+    if (isManga({ categories: volume.volumeInfo?.categories, publisher: volume.volumeInfo?.publisher })) {
+      if (volume.volumeInfo?.title) mangaTitles.push(volume.volumeInfo.title);
+      return;
+    }
+    const book = normalizeGoogleBook(volume);
+    if (!book) return;
+    items.push(book);
+    positions.push(startIndex + index);
+  });
+
+  const totalItems = payload.totalItems ?? 0;
+  const nextStartIndex = startIndex + volumes.length;
 
   return {
     items,
-    totalItems: payload.totalItems ?? 0,
-    nextStartIndex: startIndex + items.length,
-    hasMore: startIndex + items.length < (payload.totalItems ?? 0)
+    positions,
+    mangaTitles,
+    totalItems,
+    nextStartIndex,
+    hasMore: volumes.length > 0 && nextStartIndex < totalItems
   };
 }
 
-// Les résultats de recherche ne renvoient souvent qu'une catégorie générique
-// ("Fiction") ; la fiche du volume donne la catégorie complète
-// ("Fiction / Fantasy / Epic"). Renvoie [] si Google Books est indisponible.
-export async function fetchGoogleBookGenres(volumeId: string) {
+// Une liste de résultats est moins complète que la fiche du volume : catégorie
+// générique ("Fiction" au lieu de "Fiction / Fantasy / Epic"), et souvent ni
+// éditeur ni nombre de pages (pageCount: 0). On lit donc la fiche au moment
+// d'enregistrer le livre. Renvoie des champs vides si Google est indisponible.
+export async function fetchGoogleBookDetails(volumeId: string) {
   const url = new URL(`${GOOGLE_BOOKS_URL}/${encodeURIComponent(volumeId)}`);
-  url.searchParams.set("fields", "volumeInfo/categories");
+  url.searchParams.set("fields", "volumeInfo(categories,pageCount,printedPageCount,publisher)");
 
   if (process.env.GOOGLE_BOOKS_API_KEY) {
     url.searchParams.set("key", process.env.GOOGLE_BOOKS_API_KEY);
@@ -166,10 +199,16 @@ export async function fetchGoogleBookGenres(volumeId: string) {
 
   try {
     const response = await fetchWithTimeout(url, { next: { revalidate: 86_400 } }, 4_000);
-    if (!response.ok) return [];
-    const payload = (await response.json()) as Pick<GoogleVolume, "volumeInfo">;
-    return genresFromCategories(payload.volumeInfo?.categories);
+    if (!response.ok) return { genres: [] };
+    const { volumeInfo } = (await response.json()) as { volumeInfo?: GoogleVolume["volumeInfo"] & { printedPageCount?: number } };
+    const { pageCount, publisher } = sanitizeExternalBook({
+      title: "",
+      authors: [],
+      pageCount: volumeInfo?.pageCount || volumeInfo?.printedPageCount,
+      publisher: volumeInfo?.publisher
+    });
+    return { genres: genresFromCategories(volumeInfo?.categories), pageCount, publisher };
   } catch {
-    return [];
+    return { genres: [] };
   }
 }

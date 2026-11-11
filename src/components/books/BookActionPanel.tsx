@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReadingStatus } from "@prisma/client";
 import { BookOpen, Check, ChevronDown, Heart, ListPlus, PencilLine, Plus, Quote, Trash2 } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
+import { PageCountPrompt } from "@/components/books/PageCountPrompt";
 import { AddToListModal } from "@/components/lists/AddToListModal";
 import { QuoteLikeButton } from "@/components/books/QuoteCard";
 import { toggleFavorite } from "@/server/actions/favorites";
@@ -247,6 +248,7 @@ export function BookActionPanel(props: BookActionPanelProps) {
                 <span className="text-mint">{percent} %</span>
               </div>
               <div className="bb-track"><div className="h-full rounded-full bg-mint" style={{ width: `${percent}%` }} /></div>
+              {props.pageCount || !status ? null : <PageCountPrompt bookId={props.bookId} minimum={latest?.page ?? null} />}
             </div>
           ) : null}
 

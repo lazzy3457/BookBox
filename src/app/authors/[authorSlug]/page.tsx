@@ -196,7 +196,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
             ) : null}
             <dl className="flex gap-5 sm:gap-6">
               {[
-                [books.length, "livres"],
+                [books.length, "livres sur BooksBox"],
                 [allReviews.length, "avis"],
                 [readerCount, "lecteurs"]
               ].map(([value, label]) => (
@@ -243,7 +243,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
         <div className="flex min-w-0 flex-col gap-5">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="bb-h2">Ses livres</h2>
-            <span className="text-right text-xs text-muted">{plural(books.length, "livre")}<span className="hidden sm:inline"> · du premier au dernier</span></span>
+            <span className="text-right text-xs text-muted">{plural(books.length, "livre")} sur BooksBox<span className="hidden sm:inline"> · du premier au dernier</span></span>
           </div>
 
           {cycles.map((cycle) => {
@@ -299,22 +299,14 @@ export default async function AuthorPage({ params }: { params: Promise<{ authorS
             </section>
           ) : null}
 
-          <details className="group rounded border border-dashed border-line bg-panel">
-            <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
-              <Search size={16} aria-hidden className="text-muted" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-extrabold text-paper">Un livre ou une édition manque ?</span>
-                <span className="block text-[11px] text-muted">Cherche dans Google Books et Open Library pour l&apos;ajouter.</span>
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-extrabold text-mint">
-                Chercher d&apos;autres éditions
-                <ChevronDown size={14} aria-hidden className="transition group-open:rotate-180" />
-              </span>
-            </summary>
-            <div className="border-t border-line p-4">
-              <AuthorExternalEditions authorSlug={authorSlug} />
+          {/* Les livres pas encore sur BooksBox sont visibles d'emblée : sans eux, un auteur peu ajouté paraît presque vide. */}
+          <section className="bb-card flex flex-col gap-3 p-4 sm:p-5">
+            <div>
+              <h3 className="bb-h3 text-xl">D&apos;autres livres de {authorName}</h3>
+              <p className="text-xs text-muted">Pas encore sur BooksBox. Trouvés sur Google Books et Open Library : ouvre une fiche pour l&apos;ajouter.</p>
             </div>
-          </details>
+            <AuthorExternalEditions authorSlug={authorSlug} isSignedIn={Boolean(viewerId)} />
+          </section>
         </div>
 
         <aside className="flex flex-col gap-4">

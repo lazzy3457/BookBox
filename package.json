@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "test": "vitest run --configLoader runner",
+    "test:live": "node --env-file=.env node_modules/vitest/vitest.mjs run --configLoader runner --config vitest.live.config.ts",
     "admin:grant": "node scripts/grant-admin.mjs",
     "genres:backfill": "node --env-file=.env scripts/backfill-genres.mjs",
     "preflight": "node --env-file=.env scripts/preflight.mjs",

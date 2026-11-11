@@ -14,6 +14,8 @@ import { StarRating } from "@/components/reviews/StarRating";
 import { BookReviews } from "@/components/reviews/BookReviews";
 import { BookCover } from "@/components/books/BookCover";
 import { BookActionPanel } from "@/components/books/BookActionPanel";
+import { PageCountPrompt } from "@/components/books/PageCountPrompt";
+import { isAdminRole } from "@/server/auth/admin";
 import { ExpandableDescription } from "@/components/books/ExpandableDescription";
 import { Avatar } from "@/components/ui/Avatar";
 import { AddQuoteButton, QuoteCard } from "@/components/books/QuoteCard";
@@ -198,6 +200,8 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
               ))}
             </dl>
           ) : null}
+          {/* Un nombre de pages erroné fausse la progression de tous les lecteurs : seuls les admins le corrigent. */}
+          {isAdminRole(session?.user?.role) && book.pageCount ? <PageCountPrompt bookId={book.id} current={book.pageCount} /> : null}
         </section>
 
         <section id="citations" className="flex scroll-mt-24 flex-col gap-4">

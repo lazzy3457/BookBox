@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Check, PencilLine } from "lucide-react";
 import { BookCover } from "@/components/books/BookCover";
+import { PageCountPrompt } from "@/components/books/PageCountPrompt";
 
 type CurrentReadCardProps = {
   bookId: string;
@@ -104,6 +105,7 @@ export function CurrentReadCard(props: CurrentReadCardProps) {
             <div className="h-full rounded-full bg-mint" style={{ width: `${percent}%` }} />
           </div>
           <div className="text-xs font-bold text-muted">{progressLabel}</div>
+          {props.pageCount ? null : <PageCountPrompt bookId={props.bookId} minimum={props.page} />}
         </div>
       </div>
       <div className="col-span-2 flex min-w-0 flex-col gap-2 sm:col-span-1 sm:col-start-2">
