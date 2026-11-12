@@ -69,6 +69,7 @@ export const externalBookUpsertSchema = z.object({
   source: z.enum(["google_books", "open_library"]).optional(),
   googleBooksVolumeId: z.string().trim().min(1).optional(),
   openLibraryKey: z.string().trim().min(1).optional(),
+  openLibraryWorkKey: z.string().trim().min(1).max(40).optional(),
   isbn10: isbnListSchema,
   isbn13: isbnListSchema,
   title: z.string().trim().min(1).max(180),

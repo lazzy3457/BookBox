@@ -193,6 +193,7 @@ Depuis la racine :
 - `npm run preflight` : contrôle les variables indispensables avant une mise en ligne.
 - `npm run admin:grant -- adresse@email.fr` : accorde manuellement le rôle administrateur à un compte vérifié.
 - `npm run genres:backfill` : renseigne les genres des livres existants depuis Google Books / Open Library (`-- --dry-run` pour simuler, Node.js 22.18+ requis).
+- `npm run catalog:backfill` : après la migration « livres et éditions », complète les clés de rapprochement, crée les fiches auteur et fusionne les livres en double (`-- --dry-run` pour simuler, Node.js 22.18+ requis).
 - `npm run prisma:generate` : genere le client Prisma.
 - `npm run prisma:migrate` : applique les migrations en developpement.
 - `npm run db:deploy` : applique les migrations sans réinitialisation (staging et production).

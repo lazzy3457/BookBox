@@ -3,6 +3,8 @@ import { z } from "zod";
 
 export const libraryMutationSchema = z.object({
   bookId: z.string().min(1),
+  // Édition ajoutée depuis la recherche ; absente quand le lecteur change seulement de statut.
+  editionId: z.string().min(1).optional(),
   status: z.nativeEnum(ReadingStatus)
 });
 

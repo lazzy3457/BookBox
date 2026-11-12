@@ -45,6 +45,8 @@ type RecentBook = {
   title: string;
   authors: string[];
   thumbnailUrl?: string | null;
+  // Édition enregistrée, renvoyée par /api/books ; absente des livres gardés en mémoire locale.
+  editionId?: string;
 };
 
 type ResultGroup = {
@@ -345,11 +347,11 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
     return response.json() as Promise<RecentBook>;
   }
 
-  async function setLibraryStatus(bookId: string, nextStatus: Status) {
+  async function setLibraryStatus(bookId: string, nextStatus: Status, editionId?: string) {
     const response = await fetch("/api/library", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookId, status: nextStatus })
+      body: JSON.stringify({ bookId, status: nextStatus, editionId })
     });
     if (!response.ok) throw new Error("Ce livre n'a pas pu être ajouté à ta bibliothèque.");
   }
@@ -360,7 +362,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
     setToast(null);
     try {
       const saved = await saveBook(book);
-      await setLibraryStatus(saved.id, nextStatus);
+      await setLibraryStatus(saved.id, nextStatus, saved.editionId);
       rememberBook({ id: saved.id, title: saved.title, authors: saved.authors, thumbnailUrl: saved.thumbnailUrl });
       setSavedKeys((current) => new Map(current).set(trackKey, nextStatus));
       setToast({ tone: "success", message: `« ${saved.title} » est rangé dans « ${statusLabels[nextStatus]} ».` });
@@ -441,7 +443,7 @@ export function SearchWorkspace({ initialQuery = "", isSignedIn }: SearchWorkspa
     }
     const payload = (await response.json()) as RecentBook;
     try {
-      await setLibraryStatus(payload.id, "TO_READ");
+      await setLibraryStatus(payload.id, "TO_READ", payload.editionId);
       rememberBook(payload);
       setManualTitle("");
       setManualAuthor("");

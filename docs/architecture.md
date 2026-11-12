@@ -1,6 +1,6 @@
 # Architecture BooksBox
 
-Dernière mise à jour : 26 octobre 2026
+Dernière mise à jour : 12 novembre 2026
 
 Ce document décrit l’architecture réellement utilisée. Les anciens documents produit et UX restent des archives de conception.
 
@@ -73,7 +73,16 @@ L’ancien mécanisme `ADMIN_EMAILS` n’est plus utilisé.
 
 ## Domaines métier
 
-### Livres et genres
+### Livres, éditions et auteurs
+
+- Un `Book` est une œuvre ; ses éditions (poche, broché, traduction…) sont des `Edition`. Les avis, la bibliothèque, les listes, les groupes et la progression par chapitre pointent sur le livre. `UserBook.editionId` retient l’édition qu’un lecteur a ajoutée depuis la recherche.
+- Les identifiants externes (`googleBooksVolumeId`, clé d’édition Open Library, `isbn13`) sont sur `Edition`, chacun unique. Un ISBN-10 est converti en ISBN-13 avant d’être enregistré. Le livre porte seulement la clé d’œuvre Open Library (`openLibraryWorkKey`).
+- `upsertExternalBook` (`src/server/services/books.ts`) reconnaît une édition par identifiant uniquement. Pour une édition nouvelle, le livre est retrouvé par la clé d’œuvre Open Library, sinon par `Book.matchKey` (titre et premier auteur normalisés, `src/lib/catalog.ts`) ; à défaut, un livre est créé. La fiche en base fait foi : seuls ses champs vides sont complétés.
+- Les champs d’affichage de `Book` (couverture, pages, éditeur, langue) sont ceux de la première édition connue ; le pourcentage de lecture se calcule sur `Book.pageCount`.
+- `Author` porte un slug unique, les graphies connues (`aliases`) et les identifiants externes à venir (Open Library, ISNI, VIAF, ark BnF) ; `BookAuthor` relie livres et auteurs avec un rôle. Sans identifiant externe, un auteur est reconnu par son slug. `Book.authors` reste la liste de noms affichée.
+- Deux livres en double se fusionnent avec `npm run catalog:backfill` (option `-- --dry-run`) : le livre le plus présent dans les bibliothèques est conservé, et `BookRedirect` fait suivre l’ancienne adresse `/books/:id`. Quand un lecteur possédait les deux, le statut le plus avancé, l’avis le plus récent et le chapitre le plus loin sont gardés.
+
+### Genres
 
 - `Book.genres` contient au plus trois genres principaux, sous forme de slugs issus de la liste fermée de `src/lib/genres.ts` (Fantasy, Science-fiction, Romance, Thriller, Policier, Horreur, Aventure, Roman historique, Littérature, Classique, Jeunesse, Young adult, BD & manga, Poésie, Théâtre, Biographie, Histoire, Philosophie, Sciences, Développement personnel).
 - `genresFromCategories` convertit les catégories Google Books et les sujets Open Library : un genre doit totaliser au moins la moitié des correspondances du genre dominant, et les genres documentaires sont écartés pour un livre classé « Fiction ».
@@ -144,7 +153,8 @@ Le barème, les plafonds, les badges, les titres de niveau et les étapes du par
 ## Données principales
 
 - Comptes : `User`, `UserPreference`, `LegalAcceptance`, `AccountToken`, et les tables NextAuth `Account`, `Session`, `VerificationToken`.
-- Lecture : `Book`, `UserBook`, `ReadingPeriod`, `ReadingEntry`, `RecommendationDismissal`.
+- Catalogue : `Book`, `Edition`, `Author`, `BookAuthor`, `BookRedirect`.
+- Lecture : `UserBook`, `ReadingPeriod`, `ReadingEntry`, `RecommendationDismissal`.
 - Social : `Review`, `ReviewReaction`, `ReviewComment`, `ReviewCommentReaction`, `Follow`, `UserBlock`, `BookList`, `BookListEntry`.
 - Notifications : `Notification`, `NotificationPreference`, `PushToken`.
 - Progression : `XpEvent`, `ActivityDay`, `UserStats`, `UserBadge`.
@@ -162,7 +172,7 @@ Chaque environnement (développement, staging, production) a sa propre base et s
 1. Renseigner toutes les variables décrites dans `.env.example` chez l’hébergeur.
 2. Choisir et confirmer la politique des comptes inactifs.
 3. Exécuter `npm run preflight` (il refuse aussi une base locale).
-4. Appliquer `npm run db:deploy`, puis `npm run genres:backfill` si des livres antérieurs aux genres existent.
+4. Appliquer `npm run db:deploy`, puis `npm run catalog:backfill` (clés de rapprochement, fiches auteur, fusion des doublons ; sans effet s’il n’y a rien à faire) et `npm run genres:backfill` si des livres antérieurs aux genres existent.
 5. Exécuter tests, lint et build.
 6. Accorder au moins un rôle administrateur.
 7. Vérifier SMTP, sauvegardes et restauration.

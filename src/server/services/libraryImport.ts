@@ -1,5 +1,7 @@
 import { Prisma, ReadingStatus } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
+import { bookMatchKey, candidateIsbns } from "@/lib/catalog";
+import { syncBookAuthors } from "@/server/services/books";
 
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 export const MAX_IMPORT_ROWS = 2000;
@@ -109,7 +111,14 @@ export function parseLibraryImport(text: string): ImportRow[] {
 }
 
 export async function previewLibraryImport(userId: string, rows: ImportRow[]): Promise<ImportPreviewRow[]> {
-  const books = await prisma.book.findMany();
+  // Correspondance par ISBN d'abord, puis par titre et premier auteur normalisés.
+  const isbns = [...new Set(rows.flatMap((row) => candidateIsbns(row.isbn13, row.isbn10)))];
+  const matchKeys = [...new Set(rows.flatMap((row) => bookMatchKey(row.title, row.authors) ?? []))];
+  const [editions, books] = await Promise.all([
+    prisma.edition.findMany({ where: { isbn13: { in: isbns } }, select: { isbn13: true, bookId: true } }),
+    prisma.book.findMany({ where: { matchKey: { in: matchKeys } }, orderBy: { createdAt: "asc" }, select: { id: true, matchKey: true } })
+  ]);
+  const bookIdByIsbn = new Map(editions.map((edition) => [edition.isbn13, edition.bookId]));
   const userBooks = await prisma.userBook.findMany({
     where: { userId },
     include: { readingPeriods: true, book: true }
@@ -118,11 +127,10 @@ export async function previewLibraryImport(userId: string, rows: ImportRow[]): P
 
   return rows.map((row) => {
     if (!row.title || !row.authors.length) return { ...row, state: "invalid", bookId: null, message: "Titre et auteur obligatoires." };
-    const book = books.find((candidate) =>
-      (row.isbn13.length && candidate.isbn13.some((isbn) => row.isbn13.includes(isbn)))
-      || (row.isbn10.length && candidate.isbn10.some((isbn) => row.isbn10.includes(isbn)))
-      || (normalize(candidate.title) === normalize(row.title) && normalize(candidate.authors[0] ?? "") === normalize(row.authors[0] ?? ""))
-    );
+    const matchKey = bookMatchKey(row.title, row.authors);
+    const bookId = candidateIsbns(row.isbn13, row.isbn10).map((isbn) => bookIdByIsbn.get(isbn)).find(Boolean)
+      ?? books.find((candidate) => candidate.matchKey === matchKey)?.id;
+    const book = bookId ? { id: bookId } : null;
     if (!book) return { ...row, state: "new", bookId: null, message: "Nouveau livre." };
     const userBook = userBooks.find((entry) => entry.bookId === book.id);
     const review = reviews.find((entry) => entry.bookId === book.id);
@@ -155,14 +163,13 @@ export async function commitLibraryImport(userId: string, preview: ImportPreview
       let bookId = row.bookId;
       if (!bookId) {
         const book = await tx.book.create({
-          data: {
-            title: row.title,
-            authors: row.authors,
-            isbn10: row.isbn10,
-            isbn13: row.isbn13,
-            source: "import"
-          }
+          data: { title: row.title, authors: row.authors, matchKey: bookMatchKey(row.title, row.authors), source: "import" }
         });
+        await syncBookAuthors(tx, book.id, row.authors);
+        // Deux lignes du fichier peuvent porter le même ISBN : seule la première le garde.
+        const isbn13 = candidateIsbns(row.isbn13, row.isbn10)[0];
+        const isbnTaken = isbn13 ? await tx.edition.findUnique({ where: { isbn13 }, select: { id: true } }) : null;
+        await tx.edition.create({ data: { bookId: book.id, title: row.title, isbn13: isbnTaken ? undefined : isbn13, source: "import" } });
         bookId = book.id;
       }
       const userBook = await tx.userBook.upsert({

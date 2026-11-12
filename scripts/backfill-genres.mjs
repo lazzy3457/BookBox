@@ -33,16 +33,21 @@ async function openLibrarySubjects(key) {
 
 try {
   const books = await prisma.book.findMany({
-    where: { genres: { isEmpty: true }, OR: [{ googleBooksVolumeId: { not: null } }, { openLibraryKey: { not: null } }] },
-    select: { id: true, title: true, googleBooksVolumeId: true, openLibraryKey: true }
+    where: {
+      genres: { isEmpty: true },
+      OR: [{ openLibraryWorkKey: { not: null } }, { editions: { some: { OR: [{ googleBooksVolumeId: { not: null } }, { openLibraryKey: { not: null } }] } } }]
+    },
+    select: { id: true, title: true, openLibraryWorkKey: true, editions: { select: { googleBooksVolumeId: true, openLibraryKey: true } } }
   });
   console.log(`${books.length} livre(s) sans genre à examiner${dryRun ? " (simulation)" : ""}.`);
 
   let updated = 0;
   for (const book of books) {
     try {
-      let genres = book.googleBooksVolumeId ? genresFromCategories(await googleCategories(book.googleBooksVolumeId)) : [];
-      if (!genres.length && book.openLibraryKey) genres = genresFromCategories(await openLibrarySubjects(book.openLibraryKey));
+      const googleId = book.editions.find((edition) => edition.googleBooksVolumeId)?.googleBooksVolumeId;
+      const openLibraryKey = book.openLibraryWorkKey ? `/works/${book.openLibraryWorkKey}` : book.editions.find((edition) => edition.openLibraryKey)?.openLibraryKey;
+      let genres = googleId ? genresFromCategories(await googleCategories(googleId)) : [];
+      if (!genres.length && openLibraryKey) genres = genresFromCategories(await openLibrarySubjects(openLibraryKey));
 
       if (genres.length) {
         updated += 1;

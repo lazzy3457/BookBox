@@ -8,12 +8,12 @@ function startOfToday() {
   return date;
 }
 
-export async function updateLibraryStatus(userId: string, bookId: string, status: ReadingStatus) {
+export async function updateLibraryStatus(userId: string, bookId: string, status: ReadingStatus, editionId?: string) {
   const previous = await prisma.userBook.findUnique({
     where: { userId_bookId: { userId, bookId } },
     select: { status: true }
   });
-  const item = await saveLibraryStatus(userId, bookId, status);
+  const item = await saveLibraryStatus(userId, bookId, status, editionId);
 
   if (!previous) await recordProgress(userId, "LIBRARY_ADD", bookId);
   if (status === ReadingStatus.READ && previous?.status !== ReadingStatus.READ) await recordProgress(userId, "BOOK_READ", bookId);
@@ -21,12 +21,15 @@ export async function updateLibraryStatus(userId: string, bookId: string, status
   return item;
 }
 
-async function saveLibraryStatus(userId: string, bookId: string, status: ReadingStatus) {
+async function saveLibraryStatus(userId: string, bookId: string, status: ReadingStatus, editionId?: string) {
   return prisma.$transaction(async (tx) => {
+    // L'édition n'est retenue que si elle appartient bien à ce livre ; une édition déjà choisie n'est pas remplacée.
+    const edition = editionId ? await tx.edition.findFirst({ where: { id: editionId, bookId }, select: { id: true } }) : null;
+    const existing = await tx.userBook.findUnique({ where: { userId_bookId: { userId, bookId } }, select: { editionId: true } });
     const item = await tx.userBook.upsert({
       where: { userId_bookId: { userId, bookId } },
-      update: { status },
-      create: { userId, bookId, status }
+      update: { status, ...(edition && !existing?.editionId ? { editionId: edition.id } : {}) },
+      create: { userId, bookId, status, editionId: edition?.id }
     });
 
     if (status === ReadingStatus.READING) {

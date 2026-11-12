@@ -50,6 +50,7 @@ Une case non validée signifie que le site n’est pas prêt à être ouvert au 
 npm install
 npm run preflight
 npx prisma migrate deploy
+npm run catalog:backfill
 npm run genres:backfill
 npm test
 npm run lint
