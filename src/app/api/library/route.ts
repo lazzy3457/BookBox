@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   try {
     const userId = await requireCurrentUserId(request);
     const input = libraryMutationSchema.parse(await request.json());
-    const item = await updateLibraryStatus(userId, input.bookId, input.status);
+    const item = await updateLibraryStatus(userId, input.bookId, input.status, input.editionId);
 
     return NextResponse.json(item);
   } catch (error) {

@@ -1,26 +1,20 @@
 import { publicUserSelect } from "@/server/db/selects";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import type { GoogleBookCandidate } from "@/server/services/googleBooks";
 import { MAX_EDITION_ISBNS, normalizeLanguageCode } from "@/server/services/externalBooks";
 import type { ExternalBookCandidate } from "@/server/services/externalBooks";
 import { fetchGoogleBookDetails } from "@/server/services/googleBooks";
 import { normalizeGenres } from "@/lib/genres";
+import { slugifyAuthor } from "@/lib/authors";
+import { bookMatchKey, candidateIsbns, openLibraryKeys } from "@/lib/catalog";
 import { conflict, notFound } from "@/server/http/errors";
 
-const bookFields = new Set(Prisma.dmmf.datamodel.models.find((model) => model.name === "Book")?.fields.map((field) => field.name) ?? []);
+type Candidate = ExternalBookCandidate | GoogleBookCandidate;
+type Db = Prisma.TransactionClient;
 
-function supportsBookField(field: "openLibraryKey" | "isbn10" | "isbn13") {
-  return bookFields.has(field);
-}
-
-function normalizeIdentifiers(values: string[] | undefined) {
-  return [...new Set((values ?? []).map((value) => value.replace(/[^0-9X]/gi, "").toUpperCase()).filter(Boolean))];
-}
-
-function bookData(candidate: ExternalBookCandidate | GoogleBookCandidate) {
-  const data = {
-    googleBooksVolumeId: candidate.googleBooksVolumeId,
+function bookData(candidate: Candidate) {
+  return {
     title: candidate.title,
     authors: candidate.authors,
     description: candidate.description,
@@ -32,114 +26,157 @@ function bookData(candidate: ExternalBookCandidate | GoogleBookCandidate) {
     genres: normalizeGenres(candidate.genres),
     source: candidate.source ?? (candidate.googleBooksVolumeId ? "google_books" : "open_library")
   };
+}
+
+// Identifiants qui désignent UNE édition. Un ISBN n'en fait partie que si la
+// liste du candidat n'en mélange pas plusieurs (au plus MAX_EDITION_ISBNS).
+function editionIdentifiers(candidate: Candidate) {
+  const { editionKey, workKey } = openLibraryKeys(candidate.openLibraryKey, candidate.openLibraryWorkKey);
+  const isbns = candidateIsbns(candidate.isbn13, candidate.isbn10);
 
   return {
-    ...data,
-    ...(supportsBookField("openLibraryKey") ? { openLibraryKey: candidate.openLibraryKey } : {}),
-    ...(supportsBookField("isbn10") ? { isbn10: normalizeIdentifiers(candidate.isbn10).slice(0, MAX_STORED_ISBNS) } : {}),
-    ...(supportsBookField("isbn13") ? { isbn13: normalizeIdentifiers(candidate.isbn13).slice(0, MAX_STORED_ISBNS) } : {})
+    workKey,
+    identifiers: {
+      googleBooksVolumeId: candidate.googleBooksVolumeId,
+      openLibraryKey: editionKey,
+      isbn13: isbns.length <= MAX_EDITION_ISBNS ? isbns[0] : undefined
+    }
   };
 }
 
-type StoredIdentifiers = { openLibraryKey?: string | null; isbn10?: string[]; isbn13?: string[] };
+type EditionIdentifiers = ReturnType<typeof editionIdentifiers>["identifiers"];
+const IDENTIFIER_FIELDS = ["googleBooksVolumeId", "openLibraryKey", "isbn13"] as const;
 
-// Un ISBN ne désigne une édition que si la liste n'en mélange pas plusieurs.
-// Côté candidat : au plus MAX_EDITION_ISBNS par type. Côté livre en base : une
-// fiche qui porte des dizaines d'ISBN (anciens imports Open Library faits au
-// niveau de l'œuvre) correspondrait à n'importe quelle édition, on l'écarte.
-const MAX_STORED_ISBNS = 20;
-const MAX_TRUSTED_STORED_ISBNS = MAX_EDITION_ISBNS * 2;
-
-async function findByIsbn(field: "isbn10" | "isbn13", values: string[]) {
-  if (!supportsBookField(field) || !values.length || values.length > MAX_EDITION_ISBNS) {
-    return null;
+// Rapprochement d'une édition : uniquement par identifiant, du plus sûr
+// (celui de la source) à l'ISBN.
+async function findExistingEdition(identifiers: EditionIdentifiers) {
+  for (const field of IDENTIFIER_FIELDS) {
+    const value = identifiers[field];
+    if (!value) continue;
+    const edition = await prisma.edition.findFirst({ where: { [field]: value }, include: { book: true } });
+    if (edition) return edition;
   }
 
-  const matches = await prisma.book.findMany({
-    where: { [field]: { hasSome: values } },
-    orderBy: { createdAt: "asc" },
-    take: 5
+  return null;
+}
+
+// Rapprochement du livre quand l'édition est nouvelle : la clé d'œuvre Open
+// Library, sinon le titre et le premier auteur normalisés.
+async function findExistingBook(workKey: string | undefined, matchKey: string | null) {
+  if (workKey) {
+    const book = await prisma.book.findUnique({ where: { openLibraryWorkKey: workKey } });
+    if (book) return book;
+  }
+
+  return matchKey ? prisma.book.findFirst({ where: { matchKey }, orderBy: { createdAt: "asc" } }) : null;
+}
+
+// Identifiants du candidat que l'édition n'a pas encore, sauf ceux qu'une
+// autre édition porte déjà (doublon hérité : la fusion s'en charge).
+async function missingIdentifiers(edition: { id: string } & Record<(typeof IDENTIFIER_FIELDS)[number], string | null>, identifiers: EditionIdentifiers) {
+  const wanted = IDENTIFIER_FIELDS.filter((field) => identifiers[field] && !edition[field]);
+  if (!wanted.length) return {};
+
+  const taken = await prisma.edition.findMany({
+    where: { id: { not: edition.id }, OR: wanted.map((field) => ({ [field]: identifiers[field] })) },
+    select: { googleBooksVolumeId: true, openLibraryKey: true, isbn13: true }
   });
 
-  return matches.find((book) => ((book as StoredIdentifiers)[field]?.length ?? 0) <= MAX_TRUSTED_STORED_ISBNS) ?? null;
+  return Object.fromEntries(
+    wanted
+      .filter((field) => !taken.some((other) => other[field] === identifiers[field]))
+      .map((field) => [field, identifiers[field]])
+  );
 }
 
-// Rapprochement : d'abord l'identifiant de la source (sûr), puis l'ISBN
-// seulement quand il désigne une seule édition.
-async function findExistingExternalBook(candidate: ExternalBookCandidate | GoogleBookCandidate) {
-  if (candidate.googleBooksVolumeId) {
-    const book = await prisma.book.findUnique({
-      where: { googleBooksVolumeId: candidate.googleBooksVolumeId }
-    });
+// Crée les fiches auteur manquantes et les relie au livre. Sans identifiant
+// externe, un auteur est reconnu par son slug ; une graphie nouvelle du même
+// nom est gardée en alias.
+export async function syncBookAuthors(db: Db, bookId: string, names: readonly string[]) {
+  for (const [position, name] of names.entries()) {
+    const slug = slugifyAuthor(name);
+    if (!slug) continue;
 
-    if (book) {
-      return book;
+    const existing = await db.author.findUnique({ where: { slug } });
+    const author = existing ?? await db.author.create({ data: { slug, name } });
+    if (existing && existing.name !== name && !existing.aliases.includes(name)) {
+      await db.author.update({ where: { id: existing.id }, data: { aliases: { push: name } } });
     }
+    await db.bookAuthor.createMany({ data: [{ bookId, authorId: author.id, position }], skipDuplicates: true });
   }
-
-  if (supportsBookField("openLibraryKey") && candidate.openLibraryKey) {
-    const book = await prisma.book.findUnique({
-      where: { openLibraryKey: candidate.openLibraryKey }
-    });
-
-    if (book) {
-      return book;
-    }
-  }
-
-  return (await findByIsbn("isbn13", normalizeIdentifiers(candidate.isbn13)))
-    ?? findByIsbn("isbn10", normalizeIdentifiers(candidate.isbn10));
 }
 
-function mergeIsbns(existing: string[] | undefined, incoming: string[] | undefined) {
-  return [...new Set([...(existing ?? []), ...(incoming ?? [])])].slice(0, MAX_STORED_ISBNS);
-}
-
-export async function upsertExternalBook(candidate: ExternalBookCandidate | GoogleBookCandidate) {
-  const existingBook = await findExistingExternalBook(candidate);
+// Enregistre l'édition choisie dans une recherche externe et renvoie son
+// livre. Deux éditions d'une même œuvre arrivent sur le même livre.
+export async function upsertExternalBook(candidate: Candidate) {
+  const { workKey, identifiers } = editionIdentifiers(candidate);
   const data = bookData(candidate);
+  const matchKey = bookMatchKey(data.title, data.authors);
+  const existingEdition = await findExistingEdition(identifiers);
+  const existingBook = existingEdition?.book ?? await findExistingBook(workKey, matchKey);
 
   // La fiche Google du volume complète ce que la liste de résultats ne donne
   // pas : genres précis, nombre de pages (sans lui, pas de pourcentage de
   // lecture), éditeur. Appelée seulement s'il manque quelque chose.
-  const pageCountKnown = existingBook?.pageCount ?? data.pageCount;
-  const publisherKnown = existingBook?.publisher ?? data.publisher;
-  if (data.googleBooksVolumeId && (!existingBook?.genres.length || !pageCountKnown || !publisherKnown)) {
-    const details = await fetchGoogleBookDetails(data.googleBooksVolumeId);
+  const pageCountKnown = existingEdition?.pageCount ?? data.pageCount;
+  const publisherKnown = existingEdition?.publisher ?? data.publisher;
+  if (identifiers.googleBooksVolumeId && (!existingBook?.genres.length || !pageCountKnown || !publisherKnown)) {
+    const details = await fetchGoogleBookDetails(identifiers.googleBooksVolumeId);
     if (details.genres.length && !existingBook?.genres.length) data.genres = details.genres;
     data.pageCount ??= details.pageCount;
     data.publisher ??= details.publisher;
   }
 
-  if (existingBook) {
-    const existingIdentifiers = existingBook as typeof existingBook & StoredIdentifiers;
+  const editionFields = {
+    title: data.title,
+    publisher: data.publisher,
+    publishedDate: data.publishedDate,
+    pageCount: data.pageCount,
+    language: data.language,
+    thumbnailUrl: data.thumbnailUrl
+  };
+  const freeIdentifiers = existingEdition ? await missingIdentifiers(existingEdition, identifiers) : identifiers;
+  const workKeyIsFree = Boolean(workKey && existingBook && !existingBook.openLibraryWorkKey
+    && !(await prisma.book.findUnique({ where: { openLibraryWorkKey: workKey }, select: { id: true } })));
+
+  return prisma.$transaction(async (tx) => {
     // La fiche en base fait foi : on complète ses champs vides, sans jamais
     // remplacer un titre, une couverture ou un éditeur déjà renseignés.
-    const nextData = {
-      authors: existingBook.authors.length ? existingBook.authors : data.authors,
-      description: existingBook.description ?? data.description,
-      thumbnailUrl: existingBook.thumbnailUrl ?? data.thumbnailUrl,
-      publishedDate: existingBook.publishedDate ?? data.publishedDate,
-      publisher: existingBook.publisher ?? data.publisher,
-      pageCount: existingBook.pageCount ?? data.pageCount,
-      language: existingBook.language ?? data.language,
-      googleBooksVolumeId: existingBook.googleBooksVolumeId ?? data.googleBooksVolumeId,
-      genres: existingBook.genres.length ? existingBook.genres : data.genres,
-      ...(supportsBookField("openLibraryKey")
-        ? { openLibraryKey: existingIdentifiers.openLibraryKey ?? data.openLibraryKey }
-        : {}),
-      ...(supportsBookField("isbn10") ? { isbn10: mergeIsbns(existingIdentifiers.isbn10, data.isbn10) } : {}),
-      ...(supportsBookField("isbn13") ? { isbn13: mergeIsbns(existingIdentifiers.isbn13, data.isbn13) } : {})
-    };
+    const book = existingBook
+      ? await tx.book.update({
+          where: { id: existingBook.id },
+          data: {
+            authors: existingBook.authors.length ? existingBook.authors : data.authors,
+            description: existingBook.description ?? data.description,
+            thumbnailUrl: existingBook.thumbnailUrl ?? data.thumbnailUrl,
+            publishedDate: existingBook.publishedDate ?? data.publishedDate,
+            publisher: existingBook.publisher ?? data.publisher,
+            pageCount: existingBook.pageCount ?? data.pageCount,
+            language: existingBook.language ?? data.language,
+            genres: existingBook.genres.length ? existingBook.genres : data.genres,
+            matchKey: existingBook.matchKey ?? matchKey,
+            ...(workKeyIsFree ? { openLibraryWorkKey: workKey } : {})
+          }
+        })
+      : await tx.book.create({ data: { ...data, matchKey, openLibraryWorkKey: workKey } });
 
-    return prisma.book.update({
-      where: { id: existingBook.id },
-      data: nextData
-    });
-  }
+    if (!existingBook?.authors.length) await syncBookAuthors(tx, book.id, book.authors);
 
-  return prisma.book.create({
-    data
+    const edition = existingEdition
+      ? await tx.edition.update({
+          where: { id: existingEdition.id },
+          data: {
+            ...freeIdentifiers,
+            publisher: existingEdition.publisher ?? editionFields.publisher,
+            publishedDate: existingEdition.publishedDate ?? editionFields.publishedDate,
+            pageCount: existingEdition.pageCount ?? editionFields.pageCount,
+            language: existingEdition.language ?? editionFields.language,
+            thumbnailUrl: existingEdition.thumbnailUrl ?? editionFields.thumbnailUrl
+          }
+        })
+      : await tx.edition.create({ data: { bookId: book.id, ...freeIdentifiers, ...editionFields, source: data.source } });
+
+    return { ...book, editionId: edition.id };
   });
 }
 
@@ -168,19 +205,30 @@ export async function createManualBook(input: {
   language?: string;
   genres?: string[];
 }) {
-  return prisma.book.create({
-    data: {
-      title: input.title,
-      authors: input.authors,
-      description: input.description,
-      thumbnailUrl: input.thumbnailUrl,
-      publishedDate: input.publishedDate,
-      publisher: input.publisher,
-      pageCount: input.pageCount,
-      language: input.language,
-      genres: normalizeGenres(input.genres),
-      source: "manual"
-    }
+  const editionFields = {
+    title: input.title,
+    thumbnailUrl: input.thumbnailUrl,
+    publishedDate: input.publishedDate,
+    publisher: input.publisher,
+    pageCount: input.pageCount,
+    language: input.language
+  };
+
+  return prisma.$transaction(async (tx) => {
+    const book = await tx.book.create({
+      data: {
+        ...editionFields,
+        authors: input.authors,
+        description: input.description,
+        genres: normalizeGenres(input.genres),
+        matchKey: bookMatchKey(input.title, input.authors),
+        source: "manual"
+      }
+    });
+    await syncBookAuthors(tx, book.id, book.authors);
+    const edition = await tx.edition.create({ data: { bookId: book.id, ...editionFields, source: "manual" } });
+
+    return { ...book, editionId: edition.id };
   });
 }
 

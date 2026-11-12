@@ -11,6 +11,7 @@ export type GoogleBookCandidate = {
   source?: "google_books";
   googleBooksVolumeId: string;
   openLibraryKey?: string;
+  openLibraryWorkKey?: string;
   isbn10?: string[];
   isbn13?: string[];
   title: string;

@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/prisma";
 import { apiError } from "@/server/http/errors";
 import { enforceRateLimit, getClientIdentifier } from "@/server/security/rateLimit";
 import { authorHref } from "@/lib/authors";
+import { toIsbn13 } from "@/lib/catalog";
 
 const localSearchSchema = z.object({
   q: z.string().trim().min(2, "Recherche trop courte.").max(120)
@@ -19,13 +20,13 @@ export async function GET(request: Request) {
       windowMs: 60_000
     });
     const { q } = localSearchSchema.parse({ q: new URL(request.url).searchParams.get("q") ?? "" });
+    const isbn = toIsbn13(q);
     const books = await prisma.book.findMany({
       where: {
         OR: [
           { title: { contains: q, mode: "insensitive" } },
           { authors: { has: q } },
-          { isbn13: { has: q.replace(/[^0-9X]/gi, "") } },
-          { isbn10: { has: q.replace(/[^0-9X]/gi, "") } }
+          ...(isbn ? [{ editions: { some: { isbn13: isbn } } }] : [])
         ]
       },
       take: 30,

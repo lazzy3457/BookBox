@@ -90,6 +90,7 @@ export function normalizeOpenLibraryBook(doc: OpenLibraryDoc): ExternalBookCandi
     externalId: `open-library:${openLibraryKey}`,
     source: "open_library" as const,
     openLibraryKey,
+    openLibraryWorkKey: doc.key?.replace(/^\/works\//, ""),
     ...splitIsbn(edition?.isbn),
     title,
     authors: doc.author_name ?? [],

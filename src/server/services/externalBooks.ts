@@ -4,7 +4,10 @@ export type ExternalBookCandidate = {
   externalId?: string;
   source?: ExternalBookSource;
   googleBooksVolumeId?: string;
+  // Clé d'édition Open Library (« OL…M ») ; clé d'œuvre quand aucune édition n'est connue.
   openLibraryKey?: string;
+  // Clé de l'œuvre Open Library (« OL…W ») : regroupe les éditions d'un même livre.
+  openLibraryWorkKey?: string;
   isbn10?: string[];
   isbn13?: string[];
   title: string;

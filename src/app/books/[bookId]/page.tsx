@@ -1,6 +1,6 @@
 import { getSession } from "@/server/auth/session";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ArrowRight, Quote, UsersRound } from "lucide-react";
 import { ReadingStatus } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
@@ -61,7 +61,12 @@ export async function generateMetadata({ params }: { params: Promise<{ bookId: s
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
   const [book, session] = await Promise.all([getBookDetails(bookId), getSession()]);
-  if (!book) notFound();
+  if (!book) {
+    // Livre fusionné dans un autre : l'ancienne adresse mène au livre conservé.
+    const merged = await prisma.bookRedirect.findUnique({ where: { fromId: bookId }, select: { bookId: true } });
+    if (merged) permanentRedirect(`/books/${merged.bookId}`);
+    notFound();
+  }
 
   const viewerId = session?.user?.id ?? null;
   const blocked = new Set(viewerId ? await getBlockedUserIds(viewerId) : []);

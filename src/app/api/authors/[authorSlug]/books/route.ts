@@ -62,12 +62,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ auth
 
     // Les livres de l'auteur déjà sur BooksBox sont affichés plus haut dans la
     // page : on ne les propose pas une seconde fois.
-    const authorBooks = await prisma.book.findMany({
-      where: { authors: { hasSome: authorNames } },
+    const authorEditions = await prisma.edition.findMany({
+      where: { book: { authors: { hasSome: authorNames } } },
       select: { googleBooksVolumeId: true, openLibraryKey: true }
     });
-    const existingGoogleIds = new Set(authorBooks.map((book) => book.googleBooksVolumeId));
-    const existingOpenLibraryKeys = new Set(authorBooks.map((book) => book.openLibraryKey));
+    const existingGoogleIds = new Set(authorEditions.map((edition) => edition.googleBooksVolumeId));
+    const existingOpenLibraryKeys = new Set(authorEditions.map((edition) => edition.openLibraryKey));
 
     const result = await searchExternalBooks({
       query: authorName,

@@ -1,6 +1,6 @@
 # BooksBox — Contexte agent
 
-Dernière mise à jour : 26 octobre 2026
+Dernière mise à jour : 12 novembre 2026
 
 ## Produit
 
@@ -8,7 +8,7 @@ BooksBox est une application sociale de lecture francophone inspirée de Letterb
 
 Fonctions actuelles :
 
-- recherche Google Books/Open Library et ajout manuel ;
+- recherche Google Books/Open Library et ajout manuel ; un livre (`Book`) regroupe ses éditions (`Edition`), qui portent les identifiants externes ;
 - genres principaux en badges, déduits des sources externes ou choisis manuellement ;
 - bibliothèque, favoris, statuts et date d’ajout ;
 - journal daté avec lectures, relectures et progression par page, pourcentage ou chapitre ;
@@ -40,6 +40,7 @@ Fonctions actuelles :
 - Un contenu masqué ou un compte suspendu ne doit apparaître sur aucune surface publique.
 - Le blocage s’applique dans les deux directions.
 - L’XP ne s’attribue que côté serveur, via `recordProgress` après une mutation existante ; jamais par une route dédiée. Barème, badges et niveaux vivent dans `src/lib/progression.ts`.
+- Une édition ne se reconnaît que par identifiant (Google Books, Open Library, ISBN-13) ; un auteur ou un livre ne se dédoublonne jamais sur un nom seul en dehors des règles de `src/lib/catalog.ts`.
 - Une migration qui modifie le schéma se teste sur une base de branche (`npm run db:branch`), pas sur la base partagée de `master`.
 - Ne jamais exposer e-mails, secrets, hash, jetons ou entrées privées.
 - Les signalements légaux sont accessibles sans compte ; leur suivi exige code et e-mail.
